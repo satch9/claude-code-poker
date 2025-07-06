@@ -1,8 +1,8 @@
-import { UIDemo } from './core/components/UI/UIDemo'
+import { AppMain } from './core/components/App/AppMain'
 import './App.css'
 
 function App() {
-  return <UIDemo />
+  return <AppMain />
 }
 
 export default App
