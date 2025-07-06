@@ -1,0 +1,6 @@
+/* App specific styles */
+.poker-table {
+  background: radial-gradient(ellipse at center, #2d5a27 0%, #1e3a1c 100%);
+  border: 3px solid #8b6914;
+  border-radius: 50%;
+}
