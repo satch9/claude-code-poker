@@ -41,7 +41,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-poker-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
             {user.name.charAt(0).toUpperCase()}
@@ -53,9 +53,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         </div>
         
         {showLogout && (
-          <Button variant="ghost" size="sm" onClick={logout}>
-            Logout
-          </Button>
+          <div className="self-start sm:self-auto">
+            <Button variant="ghost" size="sm" onClick={logout}>
+              Logout
+            </Button>
+          </div>
         )}
       </div>
 

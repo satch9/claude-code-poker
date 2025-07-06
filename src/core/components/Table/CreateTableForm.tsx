@@ -128,7 +128,7 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
                     : 'border-gray-300 hover:border-gray-400'
                 )}
               >
-                <div className="font-medium">Cash Game</div>
+                <div className="font-medium text-gray-900">Cash Game</div>
                 <div className="text-sm text-gray-500">
                   Entrée et sortie libres
                 </div>
@@ -143,7 +143,7 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
                     : 'border-gray-300 hover:border-gray-400'
                 )}
               >
-                <div className="font-medium">Tournoi</div>
+                <div className="font-medium text-gray-900">Tournoi</div>
                 <div className="text-sm text-gray-500">
                   Buy-in fixe, élimination
                 </div>

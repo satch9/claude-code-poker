@@ -1,8 +1,12 @@
-import { Demo } from './demo'
-import './App.css'
+import { AppMain } from "./core/components/App/AppMain";
+import "./App.css";
 
 function App() {
-  return <Demo />
+  return (
+    <div>
+      <AppMain />
+    </div>
+  );
 }
 
-export default App
+export default App;
