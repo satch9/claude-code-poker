@@ -1,8 +1,8 @@
-import { AppMain } from './core/components/App/AppMain'
+import { Demo } from './demo'
 import './App.css'
 
 function App() {
-  return <AppMain />
+  return <Demo />
 }
 
 export default App

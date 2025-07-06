@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider } from '../Auth/AuthProvider';
 import { LoginForm } from '../Auth/LoginForm';
 import { Lobby } from '../Lobby/Lobby';
+import { CreateTableForm, CreateTableData } from '../Table/CreateTableForm';
 import { useAuth } from '../../hooks/useAuth';
 
 type AppView = 'lobby' | 'table' | 'create-table';
@@ -20,8 +21,17 @@ const AppContent: React.FC = () => {
 
   const handleCreateTable = () => {
     setCurrentView('create-table');
-    console.log('Creating new table');
-    // TODO: Implement table creation logic
+  };
+
+  const handleTableCreated = (tableData: CreateTableData) => {
+    console.log('Table created:', tableData);
+    // TODO: Create table via Convex API
+    // For now, just return to lobby
+    setCurrentView('lobby');
+  };
+
+  const handleCancelCreateTable = () => {
+    setCurrentView('lobby');
   };
 
   if (isLoading) {
@@ -78,22 +88,11 @@ const AppContent: React.FC = () => {
       );
     
     case 'create-table':
-      // TODO: Implement CreateTable component
       return (
-        <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-8 shadow-xl text-center">
-            <h2 className="text-2xl font-bold mb-4">Créer une Table</h2>
-            <p className="text-gray-500 mb-6">
-              Formulaire de création de table en cours de développement...
-            </p>
-            <button
-              onClick={() => setCurrentView('lobby')}
-              className="bg-poker-green-600 text-white px-4 py-2 rounded hover:bg-poker-green-700"
-            >
-              Retour au lobby
-            </button>
-          </div>
-        </div>
+        <CreateTableForm
+          onSubmit={handleTableCreated}
+          onCancel={handleCancelCreateTable}
+        />
       );
     
     default:
