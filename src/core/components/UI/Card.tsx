@@ -5,10 +5,13 @@ import { Card as CardType } from '../../../shared/types';
 interface PlayingCardProps {
   card?: CardType;
   isHidden?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   isHighlighted?: boolean;
   onClick?: () => void;
   className?: string;
+  variant?: 'default' | 'elegant' | 'minimal';
+  animation?: 'none' | 'flip' | 'slide' | 'deal' | 'highlight' | 'shake';
+  animationDelay?: number;
 }
 
 const PlayingCard: React.FC<PlayingCardProps> = ({
@@ -18,11 +21,24 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   isHighlighted = false,
   onClick,
   className,
+  variant = 'default',
+  animation = 'none',
+  animationDelay = 0,
 }) => {
   const sizeClasses = {
-    sm: 'w-8 h-12',
-    md: 'w-12 h-16',
-    lg: 'w-16 h-24',
+    xs: 'w-6 h-9',
+    sm: 'w-10 h-14',
+    md: 'w-14 h-20',
+    lg: 'w-18 h-26',
+    xl: 'w-24 h-36',
+  };
+
+  const fontSizes = {
+    xs: { rank: 'text-xs', symbol: 'text-xs', center: 'text-sm' },
+    sm: { rank: 'text-sm', symbol: 'text-sm', center: 'text-base' },
+    md: { rank: 'text-base', symbol: 'text-base', center: 'text-xl' },
+    lg: { rank: 'text-lg', symbol: 'text-lg', center: 'text-2xl' },
+    xl: { rank: 'text-xl', symbol: 'text-xl', center: 'text-3xl' },
   };
 
   const getSuitSymbol = (suit: CardType['suit']) => {
@@ -36,36 +52,86 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   };
 
   const getSuitColor = (suit: CardType['suit']) => {
-    return suit === 'hearts' || suit === 'diamonds' ? 'text-red-600' : 'text-black';
+    const colors = {
+      hearts: 'text-red-500',
+      diamonds: 'text-red-500',
+      clubs: 'text-gray-800',
+      spades: 'text-gray-800',
+    };
+    return colors[suit];
   };
+
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'elegant':
+        return 'bg-gradient-to-b from-white to-gray-50 border-gray-400 shadow-xl';
+      case 'minimal':
+        return 'bg-white border-gray-300 shadow-md';
+      default:
+        return 'bg-white border-gray-300 shadow-lg';
+    }
+  };
+
+  const getAnimationClasses = () => {
+    switch (animation) {
+      case 'flip':
+        return 'card-flip';
+      case 'slide':
+        return 'card-slide';
+      case 'deal':
+        return 'card-deal';
+      case 'highlight':
+        return 'card-highlight';
+      case 'shake':
+        return 'card-shake';
+      default:
+        return '';
+    }
+  };
+
+  const animationStyle = animationDelay > 0 
+    ? { animationDelay: `${animationDelay}ms` } 
+    : undefined;
 
   if (isHidden) {
     return (
       <div
         className={cn(
-          'bg-gradient-to-br from-blue-900 to-blue-800 border-2 border-blue-700 rounded-lg flex items-center justify-center shadow-lg cursor-pointer transform transition-transform hover:scale-105',
+          'bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 border-2 border-indigo-700 rounded-xl flex items-center justify-center shadow-2xl cursor-pointer transform transition-all duration-300',
           sizeClasses[size],
-          onClick && 'hover:shadow-xl',
+          onClick && 'hover:scale-105 hover:shadow-3xl hover:border-indigo-500',
+          'relative overflow-hidden',
+          getAnimationClasses(),
           className
         )}
         onClick={onClick}
+        style={animationStyle}
       >
-        <div className="text-blue-300 text-xs font-bold transform rotate-45">
-          ♠♥♣♦
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+        
+        {/* Card back pattern */}
+        <div className="relative z-10 text-indigo-300 font-bold transform rotate-12 opacity-80">
+          <div className={cn('grid grid-cols-2 gap-0.5', fontSizes[size].center)}>
+            <span>♠</span><span>♥</span>
+            <span>♣</span><span>♦</span>
+          </div>
         </div>
       </div>
     );
   }
 
   if (!card) {
-    // Empty card slot
     return (
       <div
         className={cn(
-          'border-2 border-dashed border-gray-300 rounded-lg bg-gray-50',
+          'border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50 backdrop-blur-sm',
           sizeClasses[size],
+          'transition-all duration-200 hover:border-gray-400 hover:bg-gray-100/50',
+          getAnimationClasses(),
           className
         )}
+        style={animationStyle}
       />
     );
   }
@@ -73,30 +139,42 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   return (
     <div
       className={cn(
-        'bg-white border-2 border-gray-300 rounded-lg shadow-lg flex flex-col justify-between p-1 cursor-pointer transform transition-all duration-200',
+        'border-2 rounded-xl flex flex-col justify-between relative cursor-pointer transform transition-all duration-300',
         sizeClasses[size],
-        isHighlighted && 'ring-2 ring-poker-gold-500 border-poker-gold-500',
-        onClick && 'hover:scale-105 hover:shadow-xl',
+        getVariantClasses(),
+        getAnimationClasses(),
+        isHighlighted && 'ring-4 ring-yellow-400 border-yellow-500 shadow-2xl scale-105',
+        onClick && 'hover:scale-105 hover:shadow-2xl hover:border-gray-400',
+        'select-none',
         className
       )}
       onClick={onClick}
+      style={animationStyle}
     >
-      {/* Top-left corner */}
-      <div className={cn('text-xs font-bold leading-none', getSuitColor(card.suit))}>
-        <div>{card.rank}</div>
-        <div className="-mt-1">{getSuitSymbol(card.suit)}</div>
+      {/* Card content */}
+      <div className="flex flex-col justify-between h-full p-2">
+        {/* Top-left corner */}
+        <div className={cn('flex flex-col items-center leading-none font-bold', getSuitColor(card.suit))}>
+          <div className={fontSizes[size].rank}>{card.rank}</div>
+          <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
+        </div>
+
+        {/* Center symbol */}
+        <div className={cn('flex items-center justify-center flex-1', getSuitColor(card.suit))}>
+          <div className={cn(fontSizes[size].center, 'font-bold drop-shadow-sm')}>
+            {getSuitSymbol(card.suit)}
+          </div>
+        </div>
+
+        {/* Bottom-right corner (upside down) */}
+        <div className={cn('flex flex-col items-center leading-none font-bold transform rotate-180 self-end', getSuitColor(card.suit))}>
+          <div className={fontSizes[size].rank}>{card.rank}</div>
+          <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
+        </div>
       </div>
 
-      {/* Center symbol */}
-      <div className={cn('text-lg text-center', getSuitColor(card.suit))}>
-        {getSuitSymbol(card.suit)}
-      </div>
-
-      {/* Bottom-right corner (upside down) */}
-      <div className={cn('text-xs font-bold leading-none transform rotate-180 self-end', getSuitColor(card.suit))}>
-        <div>{card.rank}</div>
-        <div className="-mt-1">{getSuitSymbol(card.suit)}</div>
-      </div>
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/5 rounded-xl pointer-events-none" />
     </div>
   );
 };

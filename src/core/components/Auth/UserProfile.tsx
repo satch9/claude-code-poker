@@ -1,16 +1,16 @@
-import React from 'react';
-import { Button } from '../UI/Button';
-import { ChipStack } from '../UI/Chip';
-import { useAuth } from '../../hooks/useAuth';
+import React from "react";
+import { Button } from "../UI/Button";
+import { ChipStack } from "../UI/Chip";
+import { useAuth } from "../../hooks/useAuth";
 
 interface UserProfileProps {
   showLogout?: boolean;
   compact?: boolean;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ 
-  showLogout = true, 
-  compact = false 
+export const UserProfile: React.FC<UserProfileProps> = ({
+  showLogout = true,
+  compact = false,
 }) => {
   const { user, logout } = useAuth();
 
@@ -21,7 +21,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     { value: 100, count: Math.floor((user.chips % 1000) / 100) },
     { value: 25, count: Math.floor((user.chips % 100) / 25) },
     { value: 5, count: Math.floor((user.chips % 25) / 5) },
-  ].filter(chip => chip.count > 0);
+  ].filter((chip) => chip.count > 0);
 
   if (compact) {
     return (
@@ -50,15 +50,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
+          {showLogout && (
+            <div className="self-start sm:self-auto">
+              <Button variant="ghost" size="sm" onClick={logout}>
+                Logout
+              </Button>
+            </div>
+          )}
         </div>
-        
-        {showLogout && (
-          <div className="self-start sm:self-auto">
-            <Button variant="ghost" size="sm" onClick={logout}>
-              Logout
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="space-y-4">
@@ -83,10 +82,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <div>
               <span className="text-gray-500">Last seen:</span>
               <div className="font-medium">
-                {user.lastSeen 
+                {user.lastSeen
                   ? new Date(user.lastSeen).toLocaleString()
-                  : 'Now'
-                }
+                  : "Now"}
               </div>
             </div>
           </div>

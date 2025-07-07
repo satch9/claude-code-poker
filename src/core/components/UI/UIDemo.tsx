@@ -97,6 +97,40 @@ const UIDemo: React.FC = () => {
                 <Card size="sm" /> {/* Empty slot */}
               </div>
             </div>
+
+            {/* Different Sizes */}
+            <div>
+              <h3 className="text-lg font-medium mb-2">Tailles différentes</h3>
+              <div className="flex gap-4 items-end">
+                <Card card={sampleCards[0]} size="xs" />
+                <Card card={sampleCards[1]} size="sm" />
+                <Card card={sampleCards[2]} size="md" />
+                <Card card={sampleCards[3]} size="lg" />
+                <Card card={sampleCards[4]} size="xl" />
+              </div>
+            </div>
+
+            {/* Different Variants */}
+            <div>
+              <h3 className="text-lg font-medium mb-2">Variantes de style</h3>
+              <div className="flex gap-4">
+                <Card card={sampleCards[0]} variant="default" />
+                <Card card={sampleCards[1]} variant="elegant" />
+                <Card card={sampleCards[2]} variant="minimal" />
+              </div>
+            </div>
+
+            {/* Animations */}
+            <div>
+              <h3 className="text-lg font-medium mb-2">Animations</h3>
+              <div className="flex gap-4">
+                <Card card={sampleCards[0]} animation="deal" />
+                <Card card={sampleCards[1]} animation="slide" animationDelay={200} />
+                <Card card={sampleCards[2]} animation="flip" animationDelay={400} />
+                <Card card={sampleCards[3]} animation="highlight" />
+                <Card card={sampleCards[4]} animation="shake" />
+              </div>
+            </div>
           </div>
         </div>
 

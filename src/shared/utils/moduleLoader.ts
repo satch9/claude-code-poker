@@ -1,3 +1,4 @@
+import React from 'react';
 import { ModuleName } from '../types';
 import { isModuleEnabled, areModuleDependenciesMet } from '../../config/modules';
 
@@ -72,7 +73,7 @@ export function withModuleCheck<P extends object>(
       return null;
     }
     
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }
 
@@ -85,5 +86,5 @@ export function ConditionalFeature({
   children: React.ReactNode; 
 }) {
   const { isEnabled } = useModule(module);
-  return isEnabled ? <>{children}</> : null;
+  return isEnabled ? React.createElement(React.Fragment, null, children) : null;
 }
