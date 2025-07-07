@@ -26,19 +26,19 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   animationDelay = 0,
 }) => {
   const sizeClasses = {
-    xs: 'w-6 h-9',
-    sm: 'w-10 h-14',
-    md: 'w-14 h-20',
-    lg: 'w-18 h-26',
+    xs: 'w-8 h-12',
+    sm: 'w-12 h-16',
+    md: 'w-16 h-24',
+    lg: 'w-20 h-28',
     xl: 'w-24 h-36',
   };
 
   const fontSizes = {
-    xs: { rank: 'text-xs', symbol: 'text-xs', center: 'text-sm' },
-    sm: { rank: 'text-sm', symbol: 'text-sm', center: 'text-base' },
-    md: { rank: 'text-base', symbol: 'text-base', center: 'text-xl' },
-    lg: { rank: 'text-lg', symbol: 'text-lg', center: 'text-2xl' },
-    xl: { rank: 'text-xl', symbol: 'text-xl', center: 'text-3xl' },
+    xs: { rank: 'text-xs', symbol: 'text-xs', center: 'text-xs' },
+    sm: { rank: 'text-sm', symbol: 'text-sm', center: 'text-sm' },
+    md: { rank: 'text-base', symbol: 'text-base', center: 'text-lg' },
+    lg: { rank: 'text-lg', symbol: 'text-lg', center: 'text-xl' },
+    xl: { rank: 'text-xl', symbol: 'text-xl', center: 'text-2xl' },
   };
 
   const getSuitSymbol = (suit: CardType['suit']) => {
@@ -152,22 +152,22 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
       style={animationStyle}
     >
       {/* Card content */}
-      <div className="flex flex-col justify-between h-full p-2">
+      <div className="flex flex-col justify-between h-full p-1">
         {/* Top-left corner */}
-        <div className={cn('flex flex-col items-center leading-none font-bold', getSuitColor(card.suit))}>
+        <div className={cn('flex flex-col items-start leading-none font-bold', getSuitColor(card.suit))}>
           <div className={fontSizes[size].rank}>{card.rank}</div>
           <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
         </div>
 
         {/* Center symbol */}
         <div className={cn('flex items-center justify-center flex-1', getSuitColor(card.suit))}>
-          <div className={cn(fontSizes[size].center, 'font-bold drop-shadow-sm')}>
+          <div className={cn(fontSizes[size].center, 'font-normal')}>
             {getSuitSymbol(card.suit)}
           </div>
         </div>
 
         {/* Bottom-right corner (upside down) */}
-        <div className={cn('flex flex-col items-center leading-none font-bold transform rotate-180 self-end', getSuitColor(card.suit))}>
+        <div className={cn('flex flex-col items-end leading-none font-bold transform rotate-180 self-end', getSuitColor(card.suit))}>
           <div className={fontSizes[size].rank}>{card.rank}</div>
           <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
         </div>
