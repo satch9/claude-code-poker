@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { PlayerSeat } from './PlayerSeat';
 import { CommunityCards } from './CommunityCards';
 import { BettingControls } from './BettingControls';
+import { ActionFeed } from './ActionFeed';
+import { ActionTimer } from './ActionTimer';
+import { HandStats } from './HandStats';
 import { Button } from '../UI/Button';
 import { Player, GameState, Table, User } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
@@ -36,6 +39,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     getPotOdds,
     getHandStrength,
     getGameStats,
+    actionHistory,
+    handNumber,
+    handleTimeOut,
   } = useGameLogic(tableId);
 
   // Early return if no data
@@ -209,6 +215,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </div>
             )}
 
+            {/* Action Timer (for current player) */}
+            {isMyTurn && gameState.phase !== 'waiting' && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+                <ActionTimer
+                  isActive={true}
+                  timeLimit={30}
+                  onTimeOut={handleTimeOut}
+                />
+              </div>
+            )}
+
             {/* Game info button */}
             <div className="absolute top-4 right-4 z-50">
               <button
@@ -333,6 +350,28 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             />
           </div>
         )}
+
+        {/* Side panels */}
+        <div className="flex gap-6 mt-6">
+          {/* Left panel - Action Feed */}
+          <div className="w-80">
+            <ActionFeed actions={actionHistory} />
+          </div>
+
+          {/* Right panel - Hand Stats */}
+          <div className="w-80">
+            {gameStats && (
+              <HandStats
+                handNumber={handNumber}
+                potSize={gameState.pot}
+                totalPlayers={players.length}
+                activePlayers={players.filter(p => !p.isFolded).length}
+                bigBlind={table.bigBlind}
+                averageStack={gameStats.averageChips}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Waiting for other players */}
         {gameState.phase === 'waiting' && (

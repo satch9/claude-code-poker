@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Logique de Jeu Poker - Phase 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .poker-green { background: linear-gradient(135deg, #059669, #047857); }
+        
+        /* Timer animation */
+        @keyframes countdown {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: 100.53; }
+        }
+        
+        .timer-progress { animation: countdown 30s linear; }
+        
+        /* Action feed animations */
+        @keyframes slideInRight {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        .action-item { animation: slideInRight 0.3s ease-out; }
+        
+        /* Betting controls pulse */
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgb(34, 197, 94); }
+            50% { border-color: rgb(22, 163, 74); }
+        }
+        
+        .betting-active { animation: pulse-border 2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="min-h-screen poker-green text-white">
+    <div class="max-w-7xl mx-auto p-4">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold">Test Phase 3 - Logique de Jeu</h1>
+                <p class="text-green-200">Système de mises et actions des joueurs</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="simulateAction('call')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
+                    Simuler Call
+                </button>
+                <button onclick="simulateAction('raise')" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors">
+                    Simuler Raise
+                </button>
+            </div>
+        </div>
+
+        <!-- Main game area -->
+        <div class="grid grid-cols-3 gap-6">
+            <!-- Left panel - Action Feed -->
+            <div class="bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-white">Actions récentes</h3>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-400">Live</span>
+                    </div>
+                </div>
+                
+                <div id="actionFeed" class="space-y-2 max-h-80 overflow-y-auto">
+                    <!-- Actions will be added here -->
+                </div>
+            </div>
+
+            <!-- Center - Game Table -->
+            <div class="relative bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 rounded-full border-8 border-amber-400 shadow-2xl h-96 overflow-hidden">
+                <!-- Action Timer -->
+                <div id="actionTimer" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+                    <div class="relative w-16 h-16">
+                        <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="16" fill="none" class="stroke-gray-600" stroke-width="2"/>
+                            <circle id="timerProgress" cx="18" cy="18" r="16" fill="none" class="stroke-green-500 timer-progress" 
+                                stroke-width="2" stroke-dasharray="100.53" stroke-dashoffset="0" stroke-linecap="round"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="timerText" class="text-lg font-bold text-green-500">30</span>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
+                        <div class="text-xs font-medium px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                            À vous de jouer
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center info -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                    <div class="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                        <div class="text-lg font-bold text-white mb-2">Pot: <span id="potAmount">2,500</span></div>
+                        <div class="text-sm text-green-200">Phase: <span id="gamePhase">FLOP</span></div>
+                    </div>
+                </div>
+
+                <!-- Players around table -->
+                <div class="absolute" style="left: 20%; top: 30%;">
+                    <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-3 w-48 h-14 flex items-center gap-3 ring-2 ring-yellow-400">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">J1</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-white">Joueur 1 (Vous)</div>
+                            <div class="text-xs text-green-400 font-bold">5,250</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <div class="w-8 h-12 bg-white rounded-lg shadow border border-gray-300"></div>
+                            <div class="w-8 h-12 bg-white rounded-lg shadow border border-gray-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute" style="left: 50%; top: 10%; transform: translateX(-50%);">
+                    <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-3 w-48 h-14 flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">J2</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-white">Joueur 2</div>
+                            <div class="text-xs text-green-400 font-bold">3,750</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <div class="w-8 h-12 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-lg shadow border border-indigo-700"></div>
+                            <div class="w-8 h-12 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-lg shadow border border-indigo-700"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right panel - Hand Stats -->
+            <div class="bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-white">Statistiques de la main</h3>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span class="text-xs text-gray-400">Live</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">🃏</span>
+                            <span class="text-xs text-gray-400 font-medium">Main #</span>
+                        </div>
+                        <div class="text-sm font-bold text-blue-400" id="handNumber">15</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">💰</span>
+                            <span class="text-xs text-gray-400 font-medium">Pot</span>
+                        </div>
+                        <div class="text-sm font-bold text-green-400" id="statsPot">2,500</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">👥</span>
+                            <span class="text-xs text-gray-400 font-medium">Joueurs</span>
+                        </div>
+                        <div class="text-sm font-bold text-purple-400">2/6</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs text-gray-400 font-medium">Big Blind</span>
+                        </div>
+                        <div class="text-sm font-bold text-yellow-400">100</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">📊</span>
+                            <span class="text-xs text-gray-400 font-medium">Stack moyen</span>
+                        </div>
+                        <div class="text-sm font-bold text-cyan-400">4,500</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">📈</span>
+                            <span class="text-xs text-gray-400 font-medium">Pot/BB</span>
+                        </div>
+                        <div class="text-sm font-bold text-orange-400">25.0x</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Betting Controls -->
+        <div class="mt-6">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 betting-active max-w-4xl mx-auto">
+                <div class="space-y-4">
+                    <!-- Game info -->
+                    <div class="flex justify-between items-center text-sm text-gray-300">
+                        <div class="flex gap-4">
+                            <span>Pot: <span class="text-green-400 font-bold">2,500</span></span>
+                            <span>Your chips: <span class="text-blue-400 font-bold">5,250</span></span>
+                            <span>Odds: <span class="text-yellow-400 font-bold">3.5:1</span></span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-gray-400">Hand:</span>
+                            <span class="font-bold text-green-400">Strong</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary actions -->
+                    <div class="flex gap-2">
+                        <button onclick="performAction('fold')" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                            Fold
+                        </button>
+                        <button onclick="performAction('call')" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                            Call 100
+                        </button>
+                        <button onclick="toggleRaiseControls()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Raise
+                        </button>
+                        <button onclick="performAction('all-in')" class="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                            All-In (5,250)
+                        </button>
+                    </div>
+
+                    <!-- Raise controls (hidden by default) -->
+                    <div id="raiseControls" class="hidden border-t border-gray-600 pt-4 space-y-3">
+                        <!-- Quick raise buttons -->
+                        <div class="grid grid-cols-4 gap-2">
+                            <button onclick="setRaiseAmount(200)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded text-xs transition-colors">
+                                Min
+                            </button>
+                            <button onclick="setRaiseAmount(1250)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded text-xs transition-colors">
+                                1/2 Pot
+                            </button>
+                            <button onclick="setRaiseAmount(2500)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded text-xs transition-colors">
+                                Pot
+                            </button>
+                            <button onclick="setRaiseAmount(5000)" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded text-xs transition-colors">
+                                2x Pot
+                            </button>
+                        </div>
+
+                        <!-- Raise slider -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm text-gray-400">
+                                <span>Min: 200</span>
+                                <span>Max: 5,250</span>
+                            </div>
+                            
+                            <input type="range" min="200" max="5250" value="500" 
+                                id="raiseSlider" onchange="updateRaiseAmount(this.value)"
+                                class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"/>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="200" max="5250" value="500" 
+                                    id="raiseInput" onchange="updateRaiseAmount(this.value)"
+                                    class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-center text-white"/>
+                                <button onclick="performRaise()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                                    Raise to <span id="raiseAmountText">500</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action status -->
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400" id="actionStatus">
+                            Your turn - choose an action
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let actionCount = 0;
+        let handNumber = 15;
+        let potAmount = 2500;
+        let timerActive = true;
+        let timeLeft = 30;
+
+        // Timer countdown
+        function startTimer() {
+            const timer = setInterval(() => {
+                if (!timerActive) {
+                    clearInterval(timer);
+                    return;
+                }
+                
+                timeLeft--;
+                document.getElementById('timerText').textContent = timeLeft;
+                
+                if (timeLeft <= 10) {
+                    document.getElementById('timerProgress').classList.remove('stroke-green-500');
+                    document.getElementById('timerProgress').classList.add('stroke-yellow-500');
+                }
+                
+                if (timeLeft <= 5) {
+                    document.getElementById('timerProgress').classList.remove('stroke-yellow-500');
+                    document.getElementById('timerProgress').classList.add('stroke-red-500');
+                    document.getElementById('timerText').classList.add('animate-pulse');
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    performAction('fold', true);
+                }
+            }, 1000);
+        }
+
+        // Add action to feed
+        function addActionToFeed(playerName, action, amount = null) {
+            const feed = document.getElementById('actionFeed');
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'action-item flex items-center justify-between text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800/70 transition-colors';
+            
+            const actionColors = {
+                'fold': 'text-red-400',
+                'check': 'text-gray-400',
+                'call': 'text-blue-400',
+                'raise': 'text-green-400',
+                'all-in': 'text-purple-400'
+            };
+            
+            const actionTexts = {
+                'fold': 'se couche',
+                'check': 'check',
+                'call': `suit${amount ? ` (${amount.toLocaleString()})` : ''}`,
+                'raise': `relance à ${amount?.toLocaleString()}`,
+                'all-in': `fait tapis${amount ? ` (${amount.toLocaleString()})` : ''}`
+            };
+            
+            actionDiv.innerHTML = `
+                <div class="font-medium ${actionColors[action]}">
+                    ${playerName} ${actionTexts[action]}
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date().toLocaleTimeString('fr-FR')}
+                </div>
+            `;
+            
+            feed.insertBefore(actionDiv, feed.firstChild);
+            
+            // Keep only last 10 actions
+            const actions = feed.children;
+            while (actions.length > 10) {
+                feed.removeChild(actions[actions.length - 1]);
+            }
+        }
+
+        // Perform action
+        function performAction(action, isTimeout = false) {
+            let amount = null;
+            
+            switch (action) {
+                case 'call':
+                    amount = 100;
+                    potAmount += amount;
+                    break;
+                case 'raise':
+                    amount = parseInt(document.getElementById('raiseInput').value);
+                    potAmount += amount;
+                    break;
+                case 'all-in':
+                    amount = 5250;
+                    potAmount += amount;
+                    break;
+            }
+            
+            const playerName = isTimeout ? 'Joueur 1 (timeout)' : 'Joueur 1';
+            addActionToFeed(playerName, action, amount);
+            
+            // Update pot display
+            document.getElementById('potAmount').textContent = potAmount.toLocaleString();
+            document.getElementById('statsPot').textContent = potAmount.toLocaleString();
+            
+            // Reset timer
+            resetTimer();
+            
+            // Update status
+            document.getElementById('actionStatus').textContent = isTimeout ? 'Action timeout - folded automatically' : 'Action performed successfully';
+            
+            // Hide raise controls
+            document.getElementById('raiseControls').classList.add('hidden');
+            
+            // Simulate opponent action after delay
+            setTimeout(() => {
+                simulateOpponentAction();
+            }, 2000);
+        }
+
+        // Simulate opponent action
+        function simulateOpponentAction() {
+            const actions = ['call', 'raise', 'fold'];
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            let amount = null;
+            
+            switch (action) {
+                case 'call':
+                    amount = 100;
+                    potAmount += amount;
+                    break;
+                case 'raise':
+                    amount = 300;
+                    potAmount += amount;
+                    break;
+            }
+            
+            addActionToFeed('Joueur 2', action, amount);
+            
+            // Update pot
+            document.getElementById('potAmount').textContent = potAmount.toLocaleString();
+            document.getElementById('statsPot').textContent = potAmount.toLocaleString();
+            
+            // Start new hand if both folded
+            if (action === 'fold') {
+                setTimeout(startNewHand, 3000);
+            }
+        }
+
+        // Start new hand
+        function startNewHand() {
+            handNumber++;
+            document.getElementById('handNumber').textContent = handNumber;
+            addActionToFeed('Système', 'new_hand', null);
+            resetTimer();
+            document.getElementById('actionStatus').textContent = 'New hand started - your turn';
+        }
+
+        // Reset timer
+        function resetTimer() {
+            timeLeft = 30;
+            timerActive = true;
+            document.getElementById('timerText').textContent = timeLeft;
+            document.getElementById('timerProgress').className = 'stroke-green-500 timer-progress';
+            document.getElementById('timerText').classList.remove('animate-pulse');
+        }
+
+        // Toggle raise controls
+        function toggleRaiseControls() {
+            const controls = document.getElementById('raiseControls');
+            controls.classList.toggle('hidden');
+        }
+
+        // Set raise amount
+        function setRaiseAmount(amount) {
+            document.getElementById('raiseSlider').value = amount;
+            document.getElementById('raiseInput').value = amount;
+            document.getElementById('raiseAmountText').textContent = amount.toLocaleString();
+        }
+
+        // Update raise amount
+        function updateRaiseAmount(amount) {
+            document.getElementById('raiseSlider').value = amount;
+            document.getElementById('raiseInput').value = amount;
+            document.getElementById('raiseAmountText').textContent = parseInt(amount).toLocaleString();
+        }
+
+        // Perform raise
+        function performRaise() {
+            performAction('raise');
+        }
+
+        // Simulate action (for testing)
+        function simulateAction(action) {
+            performAction(action);
+        }
+
+        // Start timer on load
+        startTimer();
+        
+        // Add initial actions
+        addActionToFeed('Joueur 2', 'call', 50);
+        addActionToFeed('Joueur 1', 'raise', 100);
+        addActionToFeed('Système', 'new_phase', null);
+    </script>
+</body>
+</html>

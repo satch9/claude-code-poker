@@ -15,6 +15,8 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [actionHistory, setActionHistory] = useState<any[]>([]);
+  const [handNumber, setHandNumber] = useState(1);
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
@@ -97,7 +99,32 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     }
   };
 
-  // Auto-fold on timeout (simplified)
+  // Track action history
+  useEffect(() => {
+    if (!players) return;
+
+    const newActions = players
+      .filter(p => p.lastAction)
+      .map(p => ({
+        id: `${p._id}-${p.lastAction}-${Date.now()}`,
+        playerName: p.user?.name || 'Joueur',
+        action: p.lastAction as any,
+        amount: p.currentBet,
+        timestamp: Date.now(),
+      }))
+      .slice(-10); // Keep only last 10 actions
+
+    setActionHistory(prev => {
+      const combined = [...prev, ...newActions];
+      // Remove duplicates and keep only recent ones
+      const unique = combined.filter((action, index, arr) => 
+        arr.findIndex(a => a.id === action.id) === index
+      ).slice(-10);
+      return unique;
+    });
+  }, [players]);
+
+  // Auto-fold on timeout (30 seconds)
   useEffect(() => {
     if (!isMyTurn || !user) return;
 
@@ -107,6 +134,13 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
     return () => clearTimeout(timeoutId);
   }, [isMyTurn, user, tableId, forcePlayerFold]);
+
+  // Track hand number
+  useEffect(() => {
+    if (gameState?.phase === 'preflop' && gameState?.pot === 0) {
+      setHandNumber(prev => prev + 1);
+    }
+  }, [gameState?.phase, gameState?.pot]);
 
   // Calculate betting info
   const getBettingInfo = () => {
@@ -192,6 +226,13 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     };
   };
 
+  // Handle timeout
+  const handleTimeOut = () => {
+    if (user && isMyTurn) {
+      forcePlayerFold({ tableId, userId: user._id });
+    }
+  };
+
   return {
     // Game state
     table,
@@ -213,12 +254,17 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     handleCall,
     handleRaise,
     handleAllIn,
+    handleTimeOut,
     
     // Betting utilities
     getBettingInfo,
     getPotOdds,
     getHandStrength,
     getGameStats,
+    
+    // Game tracking
+    actionHistory,
+    handNumber,
     
     // UI state
     selectedAction,
