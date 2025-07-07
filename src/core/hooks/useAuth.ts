@@ -1,10 +1,13 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { User } from '../../shared/types';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, name: string) => Promise<void>;
+  isAuthenticated: boolean;
+  login: () => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -20,67 +23,41 @@ export function useAuth() {
 }
 
 export function useAuthState() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoading: convexIsLoading, isAuthenticated } = useConvexAuth();
+  const user = useQuery(api.users.getCurrentUser);
+  const createOrUpdateUser = useMutation(api.users.createOrUpdateUser);
 
-  // Simulate Convex authentication - in real app, this would use Convex auth
-  useEffect(() => {
-    const storedUser = localStorage.getItem('poker-user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('poker-user');
-      }
-    }
-    setIsLoading(false);
-  }, []);
+  const isLoading = convexIsLoading || (isAuthenticated && user === undefined);
 
-  const login = async (email: string, name: string): Promise<void> => {
-    setIsLoading(true);
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real app, this would call Convex createUser mutation
-      const newUser: User = {
-        _id: `user_${Date.now()}` as any, // Mock ID
-        email,
-        name,
-        chips: 10000, // Starting chips
-        createdAt: Date.now(),
-        lastSeen: Date.now(),
-      };
-      
-      setUser(newUser);
-      localStorage.setItem('poker-user', JSON.stringify(newUser));
-    } catch (error) {
-      console.error('Login error:', error);
-      throw new Error('Failed to login');
-    } finally {
-      setIsLoading(false);
-    }
+  const login = () => {
+    // Cette fonction sera appelée par le composant de connexion
+    // L'authentification sera gérée par Convex Auth
+    window.location.href = "/auth/signin";
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('poker-user');
+    // Cette fonction sera appelée par le composant de déconnexion
+    window.location.href = "/auth/signout";
   };
 
-  const updateUser = (updates: Partial<User>) => {
-    if (!user) return;
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user || !isAuthenticated) return;
     
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('poker-user', JSON.stringify(updatedUser));
+    try {
+      await createOrUpdateUser({
+        email: user.email,
+        name: updates.name || user.name,
+        avatar: updates.avatar || user.avatar,
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
   };
 
   return {
     user,
     isLoading,
+    isAuthenticated,
     login,
     logout,
     updateUser,

@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     avatar: v.optional(v.string()),
+    password: v.optional(v.string()), // For email/password auth
     chips: v.number(),
     createdAt: v.number(),
     lastSeen: v.optional(v.number()),

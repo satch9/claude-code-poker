@@ -22,6 +22,8 @@ import {
   getNextPhase,
   getNextDealerPosition
 } from "../utils/turnManager";
+import { internal } from "../_generated/api";
+
 
 // Start a new game
 export const startGame = mutation({
@@ -59,7 +61,7 @@ export const startGame = mutation({
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .unique();
-    
+
     let dealerPosition: number;
     if (currentGameState && currentGameState.dealerPosition >= 0) {
       // Advance dealer position for next hand
@@ -69,7 +71,7 @@ export const startGame = mutation({
       // Random dealer for first game
       dealerPosition = players[Math.floor(Math.random() * players.length)].seatPosition;
     }
-    
+
     const playerPositions = players.map(p => p.seatPosition);
     const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
 
@@ -136,202 +138,202 @@ export const startGame = mutation({
 });
 
 // Handle player action
-export const playerAction = mutation({
-  args: {
-    tableId: v.id("tables"),
-    userId: v.id("users"),
-    action: v.union(
-      v.literal("fold"),
-      v.literal("check"),
-      v.literal("call"),
-      v.literal("raise"),
-      v.literal("all-in")
-    ),
-    amount: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const table = await ctx.db.get(args.tableId);
-    if (!table) {
-      throw new Error("Table not found");
-    }
-
-    const gameState = await ctx.db
-      .query("gameStates")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .unique();
-
-    if (!gameState) {
-      throw new Error("Game state not found");
-    }
-
-    const player = await ctx.db
-      .query("players")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .filter((q) => q.eq(q.field("userId"), args.userId))
-      .unique();
-
-    if (!player) {
-      throw new Error("Player not found");
-    }
-
-    // Validate it's player's turn
-    if (gameState.currentPlayerPosition !== player.seatPosition) {
-      throw new Error("Not your turn");
-    }
-
-    // Validate action
-    const callAmount = gameState.currentBet - player.currentBet;
-    let betAmount = 0;
-    let newChips = player.chips;
-    let newCurrentBet = player.currentBet;
-    let isAllIn = false;
-
-    switch (args.action) {
-      case "fold":
-        await ctx.db.patch(player._id, {
-          isFolded: true,
-          hasActed: true,
-          lastAction: "fold",
-        });
-        break;
-
-      case "check":
-        if (callAmount > 0) {
-          throw new Error(`Cannot check when there's a bet of ${callAmount} to call. Must call, raise, or fold.`);
-        }
-        await ctx.db.patch(player._id, {
-          hasActed: true,
-          lastAction: "check",
-        });
-        break;
-
-      case "call":
-        if (callAmount <= 0) {
-          throw new Error("Nothing to call");
-        }
-        betAmount = Math.min(callAmount, player.chips);
-        newChips = player.chips - betAmount;
-        newCurrentBet = player.currentBet + betAmount;
-        isAllIn = newChips === 0;
-
-        await ctx.db.patch(player._id, {
-          chips: newChips,
-          currentBet: newCurrentBet,
-          hasActed: true,
-          isAllIn,
-          lastAction: "call",
-        });
-        break;
-
-      case "raise":
-        if (!args.amount) {
-          throw new Error("Raise amount required");
-        }
-        
-        const minRaise = calculateMinRaise(gameState.currentBet, table.bigBlind);
-        if (args.amount < minRaise) {
-          throw new Error(`Minimum raise is ${minRaise}`);
-        }
-
-        betAmount = Math.min(args.amount - player.currentBet, player.chips);
-        newChips = player.chips - betAmount;
-        newCurrentBet = player.currentBet + betAmount;
-        isAllIn = newChips === 0;
-
-        await ctx.db.patch(player._id, {
-          chips: newChips,
-          currentBet: newCurrentBet,
-          hasActed: true,
-          isAllIn,
-          lastAction: "raise",
-        });
-
-        // Update current bet and last raiser
-        await ctx.db.patch(gameState._id, {
-          currentBet: newCurrentBet,
-          lastRaiserPosition: player.seatPosition,
-        });
-        break;
-
-      case "all-in":
-        betAmount = player.chips;
-        newChips = 0;
-        newCurrentBet = player.currentBet + betAmount;
-        isAllIn = true;
-
-        await ctx.db.patch(player._id, {
-          chips: newChips,
-          currentBet: newCurrentBet,
-          hasActed: true,
-          isAllIn: true,
-          lastAction: "all-in",
-        });
-
-        // Update current bet if all-in is higher
-        if (newCurrentBet > gameState.currentBet) {
-          await ctx.db.patch(gameState._id, {
-            currentBet: newCurrentBet,
-            lastRaiserPosition: player.seatPosition,
-          });
-        }
-        break;
-    }
-
-    // Update pot
-    const newPot = gameState.pot + betAmount;
-    await ctx.db.patch(gameState._id, {
-      pot: newPot,
-      updatedAt: Date.now(),
-    });
-
-    // Check if hand should end immediately (only one player left)
-    const allPlayers = await ctx.db
-      .query("players")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .collect();
-
-    if (shouldEndHand(allPlayers)) {
-      await endHand(ctx, args.tableId);
-      return { success: true };
-    }
-
-    const updatedGameState = await ctx.db.get(gameState._id);
-    if (!updatedGameState) {
-      throw new Error("Game state not found after update");
-    }
-
-    // Check if betting round is complete
-    if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition)) {
-      // Move to next phase
-      await advanceToNextPhase(ctx, args.tableId);
-    } else {
-      // Move to next active player
-      const activePlayers = allPlayers
-        .filter(p => !p.isFolded && !p.isAllIn)
-        .map(p => p.seatPosition);
-      
-      const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
-
-      if (nextPlayer === -1) {
-        // No more active players, end betting round
-        await advanceToNextPhase(ctx, args.tableId);
-      } else {
-        await ctx.db.patch(gameState._id, {
-          currentPlayerPosition: nextPlayer,
-          updatedAt: Date.now(),
-        });
-      }
-    }
-
-    return { success: true };
-  },
-});
+// export const playerAction = mutation({
+//   args: {
+//     tableId: v.id("tables"),
+//     userId: v.id("users"),
+//     action: v.union(
+//       v.literal("fold"),
+//       v.literal("check"),
+//       v.literal("call"),
+//       v.literal("raise"),
+//       v.literal("all-in")
+//     ),
+//     amount: v.optional(v.number()),
+//   },
+//   handler: async (ctx, args) => {
+//     const table = await ctx.db.get(args.tableId);
+//     if (!table) {
+//       throw new Error("Table not found");
+//     }
+//
+//     const gameState = await ctx.db
+//       .query("gameStates")
+//       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+//       .unique();
+//
+//     if (!gameState) {
+//       throw new Error("Game state not found");
+//     }
+//
+//     const player = await ctx.db
+//       .query("players")
+//       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+//       .filter((q) => q.eq(q.field("userId"), args.userId))
+//       .unique();
+//
+//     if (!player) {
+//       throw new Error("Player not found");
+//     }
+//
+//     // Validate it's player's turn
+//     if (gameState.currentPlayerPosition !== player.seatPosition) {
+//       throw new Error("Not your turn");
+//     }
+//
+//     // Validate action
+//     const callAmount = gameState.currentBet - player.currentBet;
+//     let betAmount = 0;
+//     let newChips = player.chips;
+//     let newCurrentBet = player.currentBet;
+//     let isAllIn = false;
+//
+//     switch (args.action) {
+//       case "fold":
+//         await ctx.db.patch(player._id, {
+//           isFolded: true,
+//           hasActed: true,
+//           lastAction: "fold",
+//         });
+//         break;
+//
+//       case "check":
+//         if (callAmount > 0) {
+//           throw new Error(`Cannot check when there's a bet of ${callAmount} to call. Must call, raise, or fold.`);
+//         }
+//         await ctx.db.patch(player._id, {
+//           hasActed: true,
+//           lastAction: "check",
+//         });
+//         break;
+//
+//       case "call":
+//         if (callAmount <= 0) {
+//           throw new Error("Nothing to call");
+//         }
+//         betAmount = Math.min(callAmount, player.chips);
+//         newChips = player.chips - betAmount;
+//         newCurrentBet = player.currentBet + betAmount;
+//         isAllIn = newChips === 0;
+//
+//         await ctx.db.patch(player._id, {
+//           chips: newChips,
+//           currentBet: newCurrentBet,
+//           hasActed: true,
+//           isAllIn,
+//           lastAction: "call",
+//         });
+//         break;
+//
+//       case "raise":
+//         if (!args.amount) {
+//           throw new Error("Raise amount required");
+//         }
+//         
+//         const minRaise = calculateMinRaise(gameState.currentBet, table.bigBlind);
+//         if (args.amount < minRaise) {
+//           throw new Error(`Minimum raise is ${minRaise}`);
+//         }
+//
+//         betAmount = Math.min(args.amount - player.currentBet, player.chips);
+//         newChips = player.chips - betAmount;
+//         newCurrentBet = player.currentBet + betAmount;
+//         isAllIn = newChips === 0;
+//
+//         await ctx.db.patch(player._id, {
+//           chips: newChips,
+//           currentBet: newCurrentBet,
+//           hasActed: true,
+//           isAllIn,
+//           lastAction: "raise",
+//         });
+//
+//         // Update current bet and last raiser
+//         await ctx.db.patch(gameState._id, {
+//           currentBet: newCurrentBet,
+//           lastRaiserPosition: player.seatPosition,
+//         });
+//         break;
+//
+//       case "all-in":
+//         betAmount = player.chips;
+//         newChips = 0;
+//         newCurrentBet = player.currentBet + betAmount;
+//         isAllIn = true;
+//
+//         await ctx.db.patch(player._id, {
+//           chips: newChips,
+//           currentBet: newCurrentBet,
+//           hasActed: true,
+//           isAllIn: true,
+//           lastAction: "all-in",
+//         });
+//
+//         // Update current bet if all-in is higher
+//         if (newCurrentBet > gameState.currentBet) {
+//           await ctx.db.patch(gameState._id, {
+//             currentBet: newCurrentBet,
+//             lastRaiserPosition: player.seatPosition,
+//           });
+//         }
+//         break;
+//     }
+//
+//     // Update pot
+//     const newPot = gameState.pot + betAmount;
+//     await ctx.db.patch(gameState._id, {
+//       pot: newPot,
+//       updatedAt: Date.now(),
+//     });
+//
+//     // Check if hand should end immediately (only one player left)
+//     const allPlayers = await ctx.db
+//       .query("players")
+//       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+//       .collect();
+//
+//     if (shouldEndHand(allPlayers)) {
+//       await endHand(ctx, args.tableId);
+//       return { success: true };
+//     }
+//
+//     const updatedGameState = await ctx.db.get(gameState._id);
+//     if (!updatedGameState) {
+//       throw new Error("Game state not found after update");
+//     }
+//
+//     // Check if betting round is complete
+//     if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition)) {
+//       // Move to next phase
+//       await advanceToNextPhase(ctx, args.tableId);
+//     } else {
+//       // Move to next active player
+//       const activePlayers = allPlayers
+//         .filter(p => !p.isFolded && !p.isAllIn)
+//         .map(p => p.seatPosition);
+//       
+//       const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
+//
+//       if (nextPlayer === -1) {
+//         // No more active players, end betting round
+//         await advanceToNextPhase(ctx, args.tableId);
+//       } else {
+//         await ctx.db.patch(gameState._id, {
+//           currentPlayerPosition: nextPlayer,
+//           updatedAt: Date.now(),
+//         });
+//       }
+//     }
+//
+//     return { success: true };
+//   },
+// });
 
 // Advance to next phase
 async function advanceToNextPhase(ctx: any, tableId: string) {
   const gameState = await ctx.db
     .query("gameStates")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique();
 
   if (!gameState) {
@@ -340,10 +342,10 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   const players = await ctx.db
     .query("players")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
-  const activePlayers = players.filter(p => !p.isFolded);
+  const activePlayers = players.filter((p: any) => !p.isFolded);
 
   // Check if hand is over (only one player left)
   if (shouldEndHand(players)) {
@@ -354,7 +356,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
   // Reset players for next betting round
   const playersToReset = resetPlayersForNewRound(players);
   await Promise.all(
-    playersToReset.map(({ playerId, resetData }) => 
+    playersToReset.map(({ playerId, resetData }) =>
       ctx.db.patch(playerId, resetData)
     )
   );
@@ -362,25 +364,25 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
   // Get next phase
   const nextPhase = getNextPhase(gameState.phase);
   let communityCards = [...gameState.communityCards];
-  
+
   // Deal community cards for new phase
   if (nextPhase !== 'showdown') {
     // Create deck for community cards (simplified - in real game, use remaining deck)
     const deck = shuffleDeck(createDeck());
-    
+
     switch (nextPhase) {
       case "flop":
         // Deal 3 community cards
         const flopCards = dealCards(deck, 3);
         communityCards = flopCards.dealtCards.map(cardToString);
         break;
-        
+
       case "turn":
         // Deal 1 community card
         const turnCard = dealCards(deck, 1);
         communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
         break;
-        
+
       case "river":
         // Deal 1 community card
         const riverCard = dealCards(deck, 1);
@@ -396,13 +398,13 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   // Find first player to act (post-flop)
   const playerPositions = activePlayers
-    .filter(p => !p.isAllIn)
-    .map(p => p.seatPosition)
-    .sort((a, b) => a - b);
-    
+    .filter((p: any) => !p.isAllIn)
+    .map((p: any) => p.seatPosition)
+    .sort((a: any, b: any) => a - b);
+
   const firstPlayerPosition = getFirstPlayerToAct(
-    gameState.dealerPosition, 
-    playerPositions, 
+    gameState.dealerPosition,
+    playerPositions,
     'postflop'
   );
 
@@ -420,7 +422,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 async function determineWinner(ctx: any, tableId: string) {
   const gameState = await ctx.db
     .query("gameStates")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique();
 
   if (!gameState) {
@@ -429,10 +431,10 @@ async function determineWinner(ctx: any, tableId: string) {
 
   const players = await ctx.db
     .query("players")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
-  const activePlayers = players.filter(p => !p.isFolded);
+  const activePlayers = players.filter((p: any) => !p.isFolded);
 
   if (activePlayers.length === 0) {
     throw new Error("No active players");
@@ -447,11 +449,11 @@ async function determineWinner(ctx: any, tableId: string) {
   } else {
     // Evaluate hands and determine winner(s)
     const communityCards = gameState.communityCards.map(stringToCard);
-    const playerHands = activePlayers.map(player => {
+    const playerHands = activePlayers.map((player: any) => {
       const holeCards = player.cards.map(stringToCard);
       const allCards = [...holeCards, ...communityCards];
       const handRank = evaluateHand(allCards);
-      
+
       return {
         player,
         handRank,
@@ -460,11 +462,11 @@ async function determineWinner(ctx: any, tableId: string) {
     });
 
     // Sort by hand rank (highest first)
-    playerHands.sort((a, b) => b.handRank.rank - a.handRank.rank);
+    playerHands.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
 
     // Handle side pots
     const sidePots = calculateSidePots(
-      players.map(p => ({
+      players.map((p: any) => ({
         chips: p.chips,
         currentBet: p.currentBet,
         isAllIn: p.isAllIn,
@@ -473,11 +475,11 @@ async function determineWinner(ctx: any, tableId: string) {
     );
 
     // Distribute main pot to winner(s)
-    const winners = playerHands.filter(ph => ph.handRank.rank === playerHands[0].handRank.rank);
+    const winners = playerHands.filter((ph: any) => ph.handRank.rank === playerHands[0].handRank.rank);
     const winAmount = Math.floor(gameState.pot / winners.length);
 
     await Promise.all(
-      winners.map(winner => 
+      winners.map((winner: any) =>
         ctx.db.patch(winner.player._id, {
           chips: winner.player.chips + winAmount,
         })
@@ -507,7 +509,7 @@ async function endHand(ctx: any, tableId: string) {
 
   const gameState = await ctx.db
     .query("gameStates")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique();
 
   if (!gameState) {
@@ -517,10 +519,10 @@ async function endHand(ctx: any, tableId: string) {
   // Check if we should start a new hand automatically
   const players = await ctx.db
     .query("players")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
-  const playersWithChips = players.filter(p => p.chips > 0);
+  const playersWithChips = players.filter((p: any) => p.chips > 0);
 
   if (playersWithChips.length >= 2) {
     // Prepare for next hand
@@ -536,11 +538,11 @@ async function prepareNextHand(ctx: any, tableId: string) {
   // Reset players for new hand
   const players = await ctx.db
     .query("players")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
   await Promise.all(
-    players.map(player => 
+    players.map((player: any) =>
       ctx.db.patch(player._id, {
         cards: [],
         currentBet: 0,
@@ -555,7 +557,7 @@ async function prepareNextHand(ctx: any, tableId: string) {
   // Reset game state but keep dealer position for rotation
   const gameState = await ctx.db
     .query("gameStates")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique();
 
   if (gameState) {
@@ -582,9 +584,9 @@ async function endGame(ctx: any, tableId: string) {
   // Reset game state completely
   await ctx.db
     .query("gameStates")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique()
-    .then(async (gameState) => {
+    .then(async (gameState: any) => {
       if (gameState) {
         await ctx.db.patch(gameState._id, {
           phase: "waiting",
@@ -602,11 +604,11 @@ async function endGame(ctx: any, tableId: string) {
   // Reset players
   const players = await ctx.db
     .query("players")
-    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
   await Promise.all(
-    players.map(player => 
+    players.map((player: any) =>
       ctx.db.patch(player._id, {
         cards: [],
         currentBet: 0,
@@ -685,10 +687,10 @@ export const getAvailableActions = query({
 });
 
 // Force player to fold if they timeout
-export const forcePlayerFold = mutation({
+export const forcePlayerFold: any = mutation({
   args: { tableId: v.id("tables"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.runMutation(internal.core.gameEngine.playerAction, {
+    return await ctx.runMutation((internal as any)["internal/gameEngine"].playerAction, {
       tableId: args.tableId,
       userId: args.userId,
       action: "fold",
@@ -696,10 +698,9 @@ export const forcePlayerFold = mutation({
   },
 });
 
-import { internal } from "../_generated/api";
 
 // Start next hand (called after previous hand ends)
-export const startNextHand = mutation({
+export const startNextHand: any = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
     const gameState = await ctx.db
@@ -723,10 +724,11 @@ export const startNextHand = mutation({
     }
 
     // Start the next hand
-    return await ctx.runMutation(internal.core.gameEngine.startGame, {
+    return await ctx.runMutation((internal as any)["core/gameEngine"].startGame, {
       tableId: args.tableId,
     });
   },
 });
 
-export { internal };
+export { endHand, advanceToNextPhase };
+

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { TableList } from "./TableList";
 import { UserProfile } from "../Auth/UserProfile";
 import { useAuth } from "../../hooks/useAuth";
-import { Table } from "../../../shared/types";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface LobbyProps {
   onJoinTable: (tableId: string) => void;
@@ -11,78 +12,9 @@ interface LobbyProps {
 
 export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
   const { user } = useAuth();
-  const [tables] = useState<Table[]>([
-    // Mock data for demonstration
-    {
-      _id: "table1" as any,
-      name: "Table des débutants",
-      maxPlayers: 6,
-      gameType: "cash",
-      smallBlind: 5,
-      bigBlind: 10,
-      isPrivate: false,
-      creatorId: "user1" as any,
-      status: "waiting",
-      createdAt: Date.now() - 3600000,
-      playerCount: 3,
-    },
-    {
-      _id: "table2" as any,
-      name: "High Stakes",
-      maxPlayers: 9,
-      gameType: "cash",
-      buyIn: 10000,
-      smallBlind: 50,
-      bigBlind: 100,
-      isPrivate: false,
-      creatorId: "user2" as any,
-      status: "waiting",
-      createdAt: Date.now() - 1800000,
-      playerCount: 5,
-    },
-    {
-      _id: "table3" as any,
-      name: "Tournoi du vendredi",
-      maxPlayers: 8,
-      gameType: "tournament",
-      buyIn: 1000,
-      smallBlind: 10,
-      bigBlind: 20,
-      isPrivate: false,
-      creatorId: "user3" as any,
-      status: "waiting",
-      createdAt: Date.now() - 900000,
-      playerCount: 6,
-    },
-    {
-      _id: "table4" as any,
-      name: "Table Mixte",
-      maxPlayers: 7,
-      gameType: "cash",
-      smallBlind: 15,
-      bigBlind: 30,
-      isPrivate: false,
-      creatorId: "user4" as any,
-      status: "waiting",
-      createdAt: Date.now() - 1200000,
-      playerCount: 2,
-    },
-    {
-      _id: "table5" as any,
-      name: "Partie privée VIP",
-      maxPlayers: 4,
-      gameType: "cash",
-      buyIn: 5000,
-      smallBlind: 25,
-      bigBlind: 50,
-      isPrivate: true,
-      inviteCode: "VIP123",
-      creatorId: "user5" as any,
-      status: "waiting",
-      createdAt: Date.now() - 600000,
-      playerCount: 2,
-    },
-  ]);
+  // Appel Convex pour récupérer les tables publiques
+  const tables = useQuery(api.tables.getPublicTables);
+  const loading = tables === undefined;
 
   if (!user) return null;
 
@@ -93,10 +25,11 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
         <div className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Welcome to the Lobby
+              Votre tableau de jeu
             </h1>
             <p className="text-gray-600">
-              Choose a table and start playing poker with other players
+              Choisissez une table et commencez à jouer au poker avec d'autres
+              joueurs
             </p>
           </div>
 
@@ -110,9 +43,10 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
           {/* Tables list - main content */}
           <div className="lg:col-span-3">
             <TableList
-              tables={tables}
+              tables={tables || []}
               onJoinTable={onJoinTable}
               onCreateTable={onCreateTable}
+              loading={loading}
             />
           </div>
 

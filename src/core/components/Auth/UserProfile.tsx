@@ -50,13 +50,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
-          {showLogout && (
-            <div className="self-start sm:self-auto">
-              <Button variant="ghost" size="sm" onClick={logout}>
-                Logout
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -72,14 +65,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         </div>
 
         <div className="pt-4 border-t border-gray-200">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
+          <div className="flex flex-col gap-4 text-sm">
+            <div className="flex flex-row gap-2 justify-between">
               <span className="text-gray-500">Member since:</span>
               <div className="font-medium">
                 {new Date(user.createdAt).toLocaleDateString()}
               </div>
-            </div>
-            <div>
+
               <span className="text-gray-500">Last seen:</span>
               <div className="font-medium">
                 {user.lastSeen
@@ -87,6 +79,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   : "Now"}
               </div>
             </div>
+            {showLogout && (
+              <div className="self-center sm:self-auto">
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  Logout
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
