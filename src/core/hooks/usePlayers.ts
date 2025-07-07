@@ -18,7 +18,7 @@ export function usePlayers(tableId?: Id<"tables">) {
   return {
     players,
     activePlayers,
-    isLoading: players === undefined,
+    isLoading: tableId ? players === undefined : false,
   };
 }
 
@@ -100,7 +100,7 @@ export function usePlayerByUserAndTable(tableId?: Id<"tables">, userId?: Id<"use
 
   return {
     player,
-    isLoading: player === undefined,
+    isLoading: (tableId && userId) ? player === undefined : false,
     isInTable: player !== null,
   };
 }

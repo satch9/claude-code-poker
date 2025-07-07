@@ -25,7 +25,7 @@ export function useTable(tableId?: Id<"tables">) {
   return {
     table,
     gameState,
-    isLoading: table === undefined || gameState === undefined,
+    isLoading: tableId ? (table === undefined || gameState === undefined) : false,
   };
 }
 
