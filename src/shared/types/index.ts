@@ -20,7 +20,6 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  chips: number;
   createdAt: number;
   lastSeen?: number;
 }

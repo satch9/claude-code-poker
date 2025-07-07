@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../UI/Button';
 
 interface EmailPasswordFormProps {
@@ -15,8 +14,7 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const signUp = useMutation(api.auth.signUpWithPassword);
-  const signIn = useMutation(api.auth.signInWithPassword);
+  const { signUp, signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,9 +23,9 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
 
     try {
       if (isSignUp) {
-        await signUp({ email, password, name });
+        await signUp(email, password, name);
       } else {
-        await signIn({ email, password });
+        await signIn(email, password);
       }
       onSuccess?.();
     } catch (err: any) {
@@ -108,13 +106,17 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-blue-600 hover:text-blue-800 text-sm"
           >
             {isSignUp ? 'Déjà un compte ? Se connecter' : 'Pas de compte ? Créer un compte'}
           </button>
+          
+          <p className="text-xs text-gray-500">
+            Les chips sont gérées par table, pas par utilisateur
+          </p>
         </div>
       </div>
     </div>

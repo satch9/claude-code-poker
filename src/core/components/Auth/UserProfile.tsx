@@ -16,12 +16,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   if (!user) return null;
 
-  const chipStack = [
-    { value: 1000, count: Math.floor(user.chips / 1000) },
-    { value: 100, count: Math.floor((user.chips % 1000) / 100) },
-    { value: 25, count: Math.floor((user.chips % 100) / 25) },
-    { value: 5, count: Math.floor((user.chips % 25) / 5) },
-  ].filter((chip) => chip.count > 0);
+  // Les chips sont maintenant gérées par table, pas par utilisateur
 
   if (compact) {
     return (
@@ -32,7 +27,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         <div>
           <div className="font-medium text-sm text-gray-900">{user.name}</div>
           <div className="text-xs text-gray-500">
-            {user.chips.toLocaleString()} chips
+            Joueur en ligne
           </div>
         </div>
       </div>
@@ -55,12 +50,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
       <div className="space-y-4">
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Your Chips</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Statut</h4>
           <div className="flex items-center gap-4">
-            <div className="text-2xl font-bold text-poker-green-600">
-              {user.chips.toLocaleString()}
+            <div className="text-lg font-bold text-poker-green-600">
+              Joueur actif
             </div>
-            <ChipStack chips={chipStack} size="sm" />
+            <div className="text-sm text-gray-500">
+              Les chips sont gérées par table
+            </div>
           </div>
         </div>
 

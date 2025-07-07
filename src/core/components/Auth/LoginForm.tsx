@@ -65,11 +65,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
-            Vous commencerez avec{" "}
+            Vos chips seront attribués{" "}
             <span className="font-semibold text-poker-green-600">
-              10,000 chips
+            à chaque table
             </span>{" "}
-            pour jouer
+            selon les règles du jeu
           </p>
         </div>
       </div>

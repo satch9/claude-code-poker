@@ -1,7 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import { Password } from "@convex-dev/auth/providers/Password";
-import { ConvexError } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // Sign up with email and password
 export const signUpWithPassword = mutation({
@@ -21,14 +19,13 @@ export const signUpWithPassword = mutation({
       throw new ConvexError("User already exists with this email");
     }
 
-    // Create user with hashed password
-    const hashedPassword = await Password.hash(args.password);
+    // Pour simplifier, on stocke le mot de passe en hash simple (en production, utiliser bcrypt)
+    const hashedPassword = await hashPassword(args.password);
     
     const userId = await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
       password: hashedPassword,
-      chips: 10000,
       createdAt: Date.now(),
       lastSeen: Date.now(),
     });
@@ -55,7 +52,7 @@ export const signInWithPassword = mutation({
     }
 
     // Verify password
-    const isValidPassword = await Password.verify(args.password, user.password);
+    const isValidPassword = await verifyPassword(args.password, user.password);
     
     if (!isValidPassword) {
       throw new ConvexError("Invalid email or password");
@@ -70,30 +67,25 @@ export const signInWithPassword = mutation({
   },
 });
 
-// Sign out
-export const signOut = mutation({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity) {
-      await ctx.auth.signOut();
-    }
-    return { success: true };
-  },
-});
+// Simple password hashing (en production, utiliser bcrypt)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + "salt"); // Ajouter un vrai salt en production
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
-// Get current user session
+async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  const passwordHash = await hashPassword(password);
+  return passwordHash === hashedPassword;
+}
+
+// Get current authenticated user
 export const getCurrentSession = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
-    return user;
+    // Pour l'instant, pas d'authentification session-based
+    // TODO: Implémenter la session après configuration OAuth
+    return null;
   },
 });

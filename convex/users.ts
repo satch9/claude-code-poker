@@ -39,7 +39,6 @@ export const createUser = mutation({
       email: args.email,
       name: args.name,
       avatar: args.avatar,
-      chips: 10000, // Starting chips
       createdAt: Date.now(),
     });
   },
@@ -77,7 +76,6 @@ export const createOrUpdateUser = mutation({
         email: args.email,
         name: args.name,
         avatar: args.avatar,
-        chips: 10000, // Starting chips
         createdAt: Date.now(),
         lastSeen: Date.now(),
       });
@@ -104,19 +102,7 @@ export const getUser = query({
   },
 });
 
-// Update user chips
-export const updateUserChips = mutation({
-  args: {
-    userId: v.id("users"),
-    chips: v.number(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, {
-      chips: args.chips,
-      lastSeen: Date.now(),
-    });
-  },
-});
+// Les chips sont gérés dans la table players, pas users
 
 // Update user last seen
 export const updateLastSeen = mutation({

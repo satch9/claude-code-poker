@@ -5,12 +5,14 @@ import { Lobby } from "../Lobby/Lobby";
 import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
 import { PokerTable } from "../Game/PokerTable";
 import { useAuth } from "../../hooks/useAuth";
+import { useTableActions } from "../../hooks/useTables";
 import { Table, Player, GameState } from "../../../shared/types";
 
 type AppView = "lobby" | "table" | "create-table";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const { createTable } = useTableActions();
   const [currentView, setCurrentView] = useState<AppView>("lobby");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
@@ -23,11 +25,22 @@ const AppContent: React.FC = () => {
     setCurrentView("create-table");
   };
 
-  const handleTableCreated = (tableData: CreateTableData) => {
-    console.log("Table created:", tableData);
-    // TODO: Create table via Convex API
-    // For now, just return to lobby
-    setCurrentView("lobby");
+  const handleTableCreated = async (tableData: CreateTableData) => {
+    if (!user) return;
+    
+    try {
+      const tableId = await createTable({
+        ...tableData,
+        creatorId: user._id,
+      });
+      
+      // Automatically join the created table
+      setSelectedTableId(tableId);
+      setCurrentView("table");
+    } catch (error) {
+      console.error("Error creating table:", error);
+      // TODO: Show error to user
+    }
   };
 
   const handleCancelCreateTable = () => {
@@ -95,7 +108,6 @@ const AppContent: React.FC = () => {
         _id: "user2" as any,
         name: "Alice",
         email: "alice@test.com",
-        chips: 1800,
         createdAt: Date.now(),
       },
     },
@@ -116,7 +128,6 @@ const AppContent: React.FC = () => {
         _id: "user3" as any,
         name: "Bob",
         email: "bob@test.com",
-        chips: 3200,
         createdAt: Date.now(),
       },
     },
