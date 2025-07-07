@@ -97,6 +97,105 @@
   animation: cardShake 0.5s ease-in-out;
 }
 
+/* Animations spécifiques au poker */
+@keyframes cardDealFromDeck {
+  0% {
+    transform: translateX(200px) translateY(-100px) rotate(15deg) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100px) translateY(-50px) rotate(8deg) scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes chipBet {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+  }
+  100% {
+    transform: translateY(-50px) scale(0.9);
+  }
+}
+
+@keyframes chipStack {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  75% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes potGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.7);
+  }
+}
+
+@keyframes cardReveal {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes winnerPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(34, 197, 94, 0);
+  }
+}
+
+.card-deal-from-deck {
+  animation: cardDealFromDeck 0.8s ease-out;
+}
+
+.chip-bet {
+  animation: chipBet 0.6s ease-out forwards;
+}
+
+.chip-stack {
+  animation: chipStack 0.4s ease-in-out;
+}
+
+.pot-glow {
+  animation: potGlow 2s ease-in-out infinite;
+}
+
+.card-reveal {
+  animation: cardReveal 0.6s ease-in-out;
+}
+
+.winner-pulse {
+  animation: winnerPulse 1.5s ease-in-out infinite;
+}
+
 body {
   margin: 0;
   display: flex;

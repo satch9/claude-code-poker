@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { UIDemo } from './core/components/UI/UIDemo';
 import { AppMain } from './core/components/App/AppMain';
+import { GameAnimations } from './core/components/Game/GameAnimations';
 import { Button } from './core/components/UI/Button';
 
-type DemoMode = 'app' | 'ui';
+type DemoMode = 'app' | 'ui' | 'animations';
 
 export const Demo: React.FC = () => {
   const [mode, setMode] = useState<DemoMode>('app');
@@ -26,10 +27,25 @@ export const Demo: React.FC = () => {
         >
           UI Demo
         </Button>
+        <Button
+          variant={mode === 'animations' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setMode('animations')}
+        >
+          Animations
+        </Button>
       </div>
 
       {/* Render selected demo */}
-      {mode === 'app' ? <AppMain /> : <UIDemo />}
+      {mode === 'app' ? (
+        <AppMain />
+      ) : mode === 'ui' ? (
+        <UIDemo />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900">
+          <GameAnimations />
+        </div>
+      )}
     </div>
   );
 };

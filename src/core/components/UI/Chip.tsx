@@ -8,6 +8,8 @@ interface ChipProps {
   count?: number;
   onClick?: () => void;
   className?: string;
+  animation?: 'none' | 'bet' | 'stack' | 'bounce' | 'pulse';
+  animationDelay?: number;
 }
 
 const Chip: React.FC<ChipProps> = ({
@@ -17,6 +19,8 @@ const Chip: React.FC<ChipProps> = ({
   count = 1,
   onClick,
   className,
+  animation = 'none',
+  animationDelay = 0,
 }) => {
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
@@ -55,6 +59,25 @@ const Chip: React.FC<ChipProps> = ({
     return value.toString();
   };
 
+  const getAnimationClasses = () => {
+    switch (animation) {
+      case 'bet':
+        return 'chip-bet';
+      case 'stack':
+        return 'chip-stack';
+      case 'bounce':
+        return 'animate-bounce';
+      case 'pulse':
+        return 'animate-pulse';
+      default:
+        return '';
+    }
+  };
+
+  const animationStyle = animationDelay > 0 
+    ? { animationDelay: `${animationDelay}ms` } 
+    : undefined;
+
   return (
     <div className="relative inline-block">
       {/* Stack effect for multiple chips */}
@@ -87,10 +110,12 @@ const Chip: React.FC<ChipProps> = ({
           'relative rounded-full border-4 shadow-lg flex items-center justify-center font-bold cursor-pointer transform transition-all duration-200 z-10',
           sizeClasses[size],
           colorClasses[chipColor],
+          getAnimationClasses(),
           onClick && 'hover:scale-110 hover:shadow-xl active:scale-95',
           className
         )}
         onClick={onClick}
+        style={animationStyle}
       >
         {/* Decorative dots around the edge */}
         <div className="absolute inset-1 rounded-full border border-current opacity-30" />
