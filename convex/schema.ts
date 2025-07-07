@@ -95,6 +95,7 @@ export default defineSchema({
     currentBet: v.number(),
     dealerPosition: v.number(),
     currentPlayerPosition: v.number(),
+    lastRaiserPosition: v.optional(v.number()),
     sidePots: v.array(v.object({
       amount: v.number(),
       eligiblePlayers: v.array(v.id("users")),

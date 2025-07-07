@@ -197,7 +197,7 @@ export const playerAction = mutation({
 
       case "check":
         if (callAmount > 0) {
-          throw new Error("Cannot check, must call or fold");
+          throw new Error(`Cannot check when there's a bet of ${callAmount} to call. Must call, raise, or fold.`);
         }
         await ctx.db.patch(player._id, {
           hasActed: true,
@@ -246,9 +246,10 @@ export const playerAction = mutation({
           lastAction: "raise",
         });
 
-        // Update current bet
+        // Update current bet and last raiser
         await ctx.db.patch(gameState._id, {
           currentBet: newCurrentBet,
+          lastRaiserPosition: player.seatPosition,
         });
         break;
 
@@ -270,6 +271,7 @@ export const playerAction = mutation({
         if (newCurrentBet > gameState.currentBet) {
           await ctx.db.patch(gameState._id, {
             currentBet: newCurrentBet,
+            lastRaiserPosition: player.seatPosition,
           });
         }
         break;
@@ -299,7 +301,7 @@ export const playerAction = mutation({
     }
 
     // Check if betting round is complete
-    if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet)) {
+    if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition)) {
       // Move to next phase
       await advanceToNextPhase(ctx, args.tableId);
     } else {
@@ -409,6 +411,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     communityCards,
     currentBet: 0,
     currentPlayerPosition: firstPlayerPosition,
+    lastRaiserPosition: undefined, // Reset last raiser for new betting round
     updatedAt: Date.now(),
   });
 }
@@ -652,7 +655,8 @@ export const getAvailableActions = query({
     // Always can fold
     actions.push({ action: "fold", amount: 0 });
 
-    // Check if can check
+    // Check if can check - only if no additional money needed to call
+    // This means either no bet, or player already matches the current bet
     if (callAmount === 0) {
       actions.push({ action: "check", amount: 0 });
     }

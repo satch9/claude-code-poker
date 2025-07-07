@@ -38,6 +38,7 @@ export function isBettingRoundComplete(
     hasActed: boolean;
     isFolded: boolean;
     isAllIn: boolean;
+    lastAction?: string;
   }>,
   currentBet: number,
   lastRaiserPosition?: number
@@ -51,20 +52,49 @@ export function isBettingRoundComplete(
   const playersNotAllIn = activePlayers.filter(p => !p.isAllIn);
   if (playersNotAllIn.length <= 1) return true;
   
-  // Check if all active players have acted and matched the current bet
+  // If there's a current bet, all players must either:
+  // 1. Match the bet (call/raise) or be all-in
+  // 2. Have folded
+  if (currentBet > 0) {
+    const playersWhoNeedToAct = activePlayers.filter(p => !p.isAllIn);
+    
+    // Check if all non-all-in players have matched the current bet
+    const allMatched = playersWhoNeedToAct.every(p => p.currentBet === currentBet);
+    
+    if (!allMatched) return false;
+    
+    // If there was a raise, everyone after the raiser must have acted
+    if (lastRaiserPosition !== undefined) {
+      // Find who raised last
+      const lastRaiser = players.find(p => p.seatPosition === lastRaiserPosition);
+      if (!lastRaiser) return false;
+      
+      // All players who can still act must have acted since the last raise
+      const playersAfterRaise = playersWhoNeedToAct.filter(p => 
+        p.seatPosition !== lastRaiserPosition
+      );
+      
+      // They must have either called, raised again, or folded after the raise
+      const allActedAfterRaise = playersAfterRaise.every(p => 
+        p.hasActed && (
+          p.currentBet === currentBet || 
+          p.lastAction === 'fold' ||
+          p.lastAction === 'call' ||
+          p.lastAction === 'raise' ||
+          p.lastAction === 'all-in'
+        )
+      );
+      
+      return allActedAfterRaise;
+    }
+  }
+  
+  // For no-bet rounds (like initial preflop or post-flop), all must have acted
   const allActed = activePlayers.every(p => 
     p.hasActed && (p.currentBet === currentBet || p.isAllIn)
   );
   
-  if (!allActed) return false;
-  
-  // If there was a raiser, make sure we've gone around to them
-  if (lastRaiserPosition !== undefined) {
-    const raiser = players.find(p => p.seatPosition === lastRaiserPosition);
-    return raiser ? raiser.hasActed : true;
-  }
-  
-  return true;
+  return allActed;
 }
 
 // Get blind positions based on number of players
@@ -154,13 +184,14 @@ export function resetPlayersForNewRound(
     lastAction?: undefined;
   };
 }> {
+  // Reset ALL players who are not folded (including all-in players for consistency)
   return players
-    .filter(p => !p.isFolded && !p.isAllIn)
+    .filter(p => !p.isFolded)
     .map(p => ({
       playerId: p._id,
       resetData: {
         currentBet: 0,
-        hasActed: false,
+        hasActed: p.isAllIn, // All-in players have "acted" automatically
         lastAction: undefined,
       }
     }));
