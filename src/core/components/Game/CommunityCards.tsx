@@ -85,14 +85,16 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       </div>
 
       {/* Community cards */}
-      <div className="flex gap-2 justify-center mb-4">
-        {/* Show revealed cards */}
+      <div className="flex gap-3 justify-center mb-6">
+        {/* Show revealed cards with animations */}
         {cardsToShow.map((cardStr, index) => (
           <Card
             key={index}
             card={parseCard(cardStr)}
             size="md"
-            className="shadow-lg"
+            animation="deal"
+            animationDelay={index * 300}
+            className="shadow-xl transform hover:scale-105 transition-transform duration-200"
           />
         ))}
         
@@ -101,16 +103,35 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
           <Card
             key={`empty-${index}`}
             size="md"
-            className="opacity-30"
+            className="opacity-20 border-dashed"
           />
         ))}
       </div>
 
-      {/* Pot */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-xl px-6 py-3 shadow-lg">
-        <div className="text-sm text-gray-600 mb-1">Pot</div>
-        <div className="text-2xl font-bold text-gray-900">
-          {pot.toLocaleString()}
+      {/* Pot with enhanced styling */}
+      <div className="relative">
+        <div className={cn(
+          "bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-2xl px-8 py-4 shadow-xl border-2 border-amber-200",
+          pot > 0 && "border-amber-400"
+        )}>
+          {/* Pot label */}
+          <div className="flex items-center justify-center mb-2">
+            <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
+            <span className="text-sm font-medium text-gray-700 uppercase tracking-wide">POT TOTAL</span>
+          </div>
+          
+          {/* Pot amount */}
+          <div className={cn(
+            "text-3xl font-bold text-center",
+            pot > 0 ? "text-green-600" : "text-gray-500"
+          )}>
+            {pot > 0 ? pot.toLocaleString() : '0'}
+          </div>
+          
+          {/* Pot glow effect when there's money */}
+          {pot > 0 && (
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-100/50 to-yellow-100/50 rounded-2xl -z-10 blur-sm"></div>
+          )}
         </div>
       </div>
     </div>
