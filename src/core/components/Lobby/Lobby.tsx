@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { TableList } from './TableList';
-import { UserProfile } from '../Auth/UserProfile';
-import { useAuth } from '../../hooks/useAuth';
-import { Table } from '../../../shared/types';
+import React, { useState } from "react";
+import { TableList } from "./TableList";
+import { UserProfile } from "../Auth/UserProfile";
+import { useAuth } from "../../hooks/useAuth";
+import { Table } from "../../../shared/types";
 
 interface LobbyProps {
   onJoinTable: (tableId: string) => void;
@@ -14,71 +14,71 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
   const [tables] = useState<Table[]>([
     // Mock data for demonstration
     {
-      _id: 'table1' as any,
-      name: 'Table des débutants',
+      _id: "table1" as any,
+      name: "Table des débutants",
       maxPlayers: 6,
-      gameType: 'cash',
+      gameType: "cash",
       smallBlind: 5,
       bigBlind: 10,
       isPrivate: false,
-      creatorId: 'user1' as any,
-      status: 'waiting',
+      creatorId: "user1" as any,
+      status: "waiting",
       createdAt: Date.now() - 3600000,
       playerCount: 3,
     },
     {
-      _id: 'table2' as any,
-      name: 'High Stakes',
+      _id: "table2" as any,
+      name: "High Stakes",
       maxPlayers: 9,
-      gameType: 'cash',
+      gameType: "cash",
       buyIn: 10000,
       smallBlind: 50,
       bigBlind: 100,
       isPrivate: false,
-      creatorId: 'user2' as any,
-      status: 'waiting',
+      creatorId: "user2" as any,
+      status: "waiting",
       createdAt: Date.now() - 1800000,
       playerCount: 5,
     },
     {
-      _id: 'table3' as any,
-      name: 'Tournoi du vendredi',
+      _id: "table3" as any,
+      name: "Tournoi du vendredi",
       maxPlayers: 8,
-      gameType: 'tournament',
+      gameType: "tournament",
       buyIn: 1000,
       smallBlind: 10,
       bigBlind: 20,
       isPrivate: false,
-      creatorId: 'user3' as any,
-      status: 'waiting',
+      creatorId: "user3" as any,
+      status: "waiting",
       createdAt: Date.now() - 900000,
       playerCount: 6,
     },
     {
-      _id: 'table4' as any,
-      name: 'Table Mixte',
+      _id: "table4" as any,
+      name: "Table Mixte",
       maxPlayers: 7,
-      gameType: 'cash',
+      gameType: "cash",
       smallBlind: 15,
       bigBlind: 30,
       isPrivate: false,
-      creatorId: 'user4' as any,
-      status: 'waiting',
+      creatorId: "user4" as any,
+      status: "waiting",
       createdAt: Date.now() - 1200000,
       playerCount: 2,
     },
     {
-      _id: 'table5' as any,
-      name: 'Partie privée VIP',
+      _id: "table5" as any,
+      name: "Partie privée VIP",
       maxPlayers: 4,
-      gameType: 'cash',
+      gameType: "cash",
       buyIn: 5000,
       smallBlind: 25,
       bigBlind: 50,
       isPrivate: true,
-      inviteCode: 'VIP123',
-      creatorId: 'user5' as any,
-      status: 'waiting',
+      inviteCode: "VIP123",
+      creatorId: "user5" as any,
+      status: "waiting",
       createdAt: Date.now() - 600000,
       playerCount: 2,
     },
@@ -99,7 +99,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
               Choose a table and start playing poker with other players
             </p>
           </div>
-          
+
           <div className="w-full lg:w-auto">
             <UserProfile compact />
           </div>
@@ -127,22 +127,34 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
                 Actions rapides
               </h3>
               <div className="space-y-3">
-                <button 
+                <button
                   onClick={onCreateTable}
                   className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">Créer une table</div>
-                  <div className="text-sm text-gray-500">Commencer une nouvelle partie</div>
+                  <div className="font-medium text-gray-900">
+                    Créer une table
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Commencer une nouvelle partie
+                  </div>
                 </button>
-                
+
                 <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="font-medium text-gray-900">Rejoindre par code</div>
-                  <div className="text-sm text-gray-500">Table privée avec code d'invitation</div>
+                  <div className="font-medium text-gray-900">
+                    Rejoindre par code
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Table privée avec code d'invitation
+                  </div>
                 </button>
-                
+
                 <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="font-medium text-gray-900">Parties rapides</div>
-                  <div className="text-sm text-gray-500">Rejoindre automatiquement</div>
+                  <div className="font-medium text-gray-900">
+                    Parties rapides
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Rejoindre automatiquement
+                  </div>
                 </button>
               </div>
             </div>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Animations Poker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animations pour les cartes */
+        @keyframes cardFlip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        @keyframes cardSlide {
+            0% {
+                transform: translateX(-100px) rotateY(90deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0) rotateY(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes cardDeal {
+            0% {
+                transform: scale(0.8) rotate(10deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes cardDealFromDeck {
+            0% {
+                transform: translateX(200px) translateY(-100px) rotate(15deg) scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: translateX(100px) translateY(-50px) rotate(8deg) scale(0.9);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes chipBet {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+            100% { transform: translateY(-50px) scale(0.9); }
+        }
+
+        @keyframes potGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.7); }
+        }
+
+        .card-flip { animation: cardFlip 0.6s ease-in-out; }
+        .card-slide { animation: cardSlide 0.5s ease-out; }
+        .card-deal { animation: cardDeal 0.4s ease-out; }
+        .card-deal-from-deck { animation: cardDealFromDeck 0.8s ease-out; }
+        .chip-bet { animation: chipBet 0.6s ease-out forwards; }
+        .pot-glow { animation: potGlow 2s ease-in-out infinite; }
+
+        .poker-green { background: linear-gradient(135deg, #1e7e34, #155724); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="min-h-screen poker-green p-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold text-center mb-8">🃏 Test Animations Poker</h1>
+            
+            <!-- Contrôles -->
+            <div class="text-center mb-8">
+                <div class="flex gap-4 justify-center">
+                    <button id="dealCards" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Distribuer les cartes
+                    </button>
+                    <button id="animateChips" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Animer les jetons
+                    </button>
+                    <button id="animatePot" class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Animer le pot
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zone de jeu -->
+            <div class="bg-green-800 rounded-2xl p-8 min-h-96 relative overflow-hidden shadow-2xl">
+                
+                <!-- Cartes distribuées (flop) -->
+                <div class="absolute top-8 left-1/2 transform -translate-x-1/2">
+                    <div class="flex gap-2" id="communityCards">
+                        <!-- Les cartes apparaîtront ici -->
+                    </div>
+                </div>
+
+                <!-- Paquet de cartes -->
+                <div class="absolute top-8 right-8">
+                    <div id="deck" class="w-16 h-24 bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 border-2 border-indigo-700 rounded-xl flex items-center justify-center shadow-2xl">
+                        <div class="text-indigo-300 text-xs font-bold transform rotate-12">♠♥♣♦</div>
+                    </div>
+                </div>
+
+                <!-- Jetons -->
+                <div class="absolute bottom-8 left-8 flex gap-2" id="chipArea">
+                    <div class="chip w-12 h-12 bg-red-600 border-4 border-red-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">100</div>
+                    <div class="chip w-12 h-12 bg-green-600 border-4 border-green-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">500</div>
+                    <div class="chip w-12 h-12 bg-purple-600 border-4 border-purple-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg">1K</div>
+                </div>
+
+                <!-- Pot central -->
+                <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                    <div id="pot" class="bg-white rounded-lg px-6 py-3 shadow-lg transition-all duration-1000">
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-gray-800">Pot</div>
+                            <div class="text-2xl font-bold text-green-600">2,500</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cartes joueur -->
+                <div class="absolute bottom-8 right-8">
+                    <div class="flex gap-1" id="playerCards">
+                        <!-- Les cartes du joueur apparaîtront ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cards = ['A♥', 'K♠', 'Q♦', 'J♣', '10♥'];
+        const suits = {
+            '♥': 'text-red-500',
+            '♦': 'text-red-500', 
+            '♠': 'text-gray-800',
+            '♣': 'text-gray-800'
+        };
+
+        function createCard(cardText, delay = 0) {
+            const card = document.createElement('div');
+            card.className = 'w-16 h-24 bg-white border-2 border-gray-300 rounded-xl shadow-lg flex flex-col justify-between relative card-deal-from-deck';
+            card.style.animationDelay = delay + 'ms';
+            
+            const suit = cardText.slice(-1);
+            const rank = cardText.slice(0, -1);
+            const colorClass = suits[suit] || 'text-gray-800';
+            
+            card.innerHTML = `
+                <div class="absolute top-1 left-1 flex flex-col items-start leading-none font-bold ${colorClass}">
+                    <div class="text-sm">${rank}</div>
+                    <div class="text-sm">${suit}</div>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center ${colorClass}">
+                    <div class="text-xl font-normal">${suit}</div>
+                </div>
+                <div class="absolute bottom-1 right-1 flex flex-col items-end leading-none font-bold transform rotate-180 ${colorClass}">
+                    <div class="text-sm">${rank}</div>
+                    <div class="text-sm">${suit}</div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        document.getElementById('dealCards').addEventListener('click', function() {
+            const communityCards = document.getElementById('communityCards');
+            const playerCards = document.getElementById('playerCards');
+            const deck = document.getElementById('deck');
+            
+            // Clear existing cards
+            communityCards.innerHTML = '';
+            playerCards.innerHTML = '';
+            
+            // Animate deck
+            deck.classList.add('animate-pulse');
+            
+            // Deal community cards
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    const cardElement = createCard(card, 0);
+                    communityCards.appendChild(cardElement);
+                }, index * 500);
+            });
+            
+            // Deal player cards
+            setTimeout(() => {
+                const playerCard1 = createCard('A♥', 0);
+                const playerCard2 = createCard('K♠', 200);
+                playerCard1.className += ' card-slide';
+                playerCard2.className += ' card-slide';
+                playerCards.appendChild(playerCard1);
+                playerCards.appendChild(playerCard2);
+            }, 2500);
+            
+            setTimeout(() => {
+                deck.classList.remove('animate-pulse');
+            }, 4000);
+        });
+
+        document.getElementById('animateChips').addEventListener('click', function() {
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach((chip, index) => {
+                setTimeout(() => {
+                    chip.classList.add('chip-bet');
+                    setTimeout(() => {
+                        chip.classList.remove('chip-bet');
+                    }, 600);
+                }, index * 200);
+            });
+        });
+
+        document.getElementById('animatePot').addEventListener('click', function() {
+            const pot = document.getElementById('pot');
+            pot.classList.add('pot-glow', 'scale-110');
+            setTimeout(() => {
+                pot.classList.remove('pot-glow', 'scale-110');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

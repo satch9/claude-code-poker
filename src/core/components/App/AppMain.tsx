@@ -1,76 +1,76 @@
-import React, { useState } from 'react';
-import { AuthProvider } from '../Auth/AuthProvider';
-import { LoginForm } from '../Auth/LoginForm';
-import { Lobby } from '../Lobby/Lobby';
-import { CreateTableForm, CreateTableData } from '../Table/CreateTableForm';
-import { PokerTable } from '../Game/PokerTable';
-import { useAuth } from '../../hooks/useAuth';
-import { Table, Player, GameState } from '../../../shared/types';
+import React, { useState } from "react";
+import { AuthProvider } from "../Auth/AuthProvider";
+import { LoginForm } from "../Auth/LoginForm";
+import { Lobby } from "../Lobby/Lobby";
+import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
+import { PokerTable } from "../Game/PokerTable";
+import { useAuth } from "../../hooks/useAuth";
+import { Table, Player, GameState } from "../../../shared/types";
 
-type AppView = 'lobby' | 'table' | 'create-table';
+type AppView = "lobby" | "table" | "create-table";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
-  const [currentView, setCurrentView] = useState<AppView>('lobby');
+  const [currentView, setCurrentView] = useState<AppView>("lobby");
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
 
   const handleJoinTable = (tableId: string) => {
     setSelectedTableId(tableId);
-    setCurrentView('table');
+    setCurrentView("table");
   };
 
   const handleCreateTable = () => {
-    setCurrentView('create-table');
+    setCurrentView("create-table");
   };
 
   const handleTableCreated = (tableData: CreateTableData) => {
-    console.log('Table created:', tableData);
+    console.log("Table created:", tableData);
     // TODO: Create table via Convex API
     // For now, just return to lobby
-    setCurrentView('lobby');
+    setCurrentView("lobby");
   };
 
   const handleCancelCreateTable = () => {
-    setCurrentView('lobby');
+    setCurrentView("lobby");
   };
 
   const handleLeaveTable = () => {
-    setCurrentView('lobby');
+    setCurrentView("lobby");
     setSelectedTableId(null);
   };
 
   const handlePlayerAction = (action: string, amount?: number) => {
-    console.log('Player action:', action, amount);
+    console.log("Player action:", action, amount);
     // TODO: Implement player action logic
   };
 
   const handleJoinSeat = (position: number) => {
-    console.log('Joining seat:', position);
+    console.log("Joining seat:", position);
     // TODO: Implement join seat logic
   };
 
   // Mock data for table view
   const mockTable: Table = {
     _id: selectedTableId as any,
-    name: 'Table de démonstration',
+    name: "Table de démonstration",
     maxPlayers: 6,
-    gameType: 'cash',
+    gameType: "cash",
     smallBlind: 10,
     bigBlind: 20,
     isPrivate: false,
     creatorId: user?._id as any,
-    status: 'playing',
+    status: "playing",
     createdAt: Date.now(),
   };
 
   const mockPlayers: Player[] = [
     {
-      _id: 'player1' as any,
+      _id: "player1" as any,
       userId: user?._id as any,
       tableId: selectedTableId as any,
       seatPosition: 0,
       chips: 2500,
-      cards: ['Ah', 'Kh'],
+      cards: ["Ah", "Kh"],
       currentBet: 0,
       hasActed: false,
       isAllIn: false,
@@ -79,42 +79,54 @@ const AppContent: React.FC = () => {
       user: user,
     },
     {
-      _id: 'player2' as any,
-      userId: 'user2' as any,
+      _id: "player2" as any,
+      userId: "user2" as any,
       tableId: selectedTableId as any,
       seatPosition: 2,
       chips: 1800,
-      cards: ['??', '??'],
+      cards: ["??", "??"],
       currentBet: 20,
       hasActed: true,
       isAllIn: false,
       isFolded: false,
-      lastAction: 'call',
+      lastAction: "call",
       joinedAt: Date.now(),
-      user: { _id: 'user2' as any, name: 'Alice', email: 'alice@test.com', chips: 1800, createdAt: Date.now() },
+      user: {
+        _id: "user2" as any,
+        name: "Alice",
+        email: "alice@test.com",
+        chips: 1800,
+        createdAt: Date.now(),
+      },
     },
     {
-      _id: 'player3' as any,
-      userId: 'user3' as any,
+      _id: "player3" as any,
+      userId: "user3" as any,
       tableId: selectedTableId as any,
       seatPosition: 4,
       chips: 3200,
-      cards: ['??', '??'],
+      cards: ["??", "??"],
       currentBet: 0,
       hasActed: false,
       isAllIn: false,
       isFolded: true,
-      lastAction: 'fold',
+      lastAction: "fold",
       joinedAt: Date.now(),
-      user: { _id: 'user3' as any, name: 'Bob', email: 'bob@test.com', chips: 3200, createdAt: Date.now() },
+      user: {
+        _id: "user3" as any,
+        name: "Bob",
+        email: "bob@test.com",
+        chips: 3200,
+        createdAt: Date.now(),
+      },
     },
   ];
 
   const mockGameState: GameState = {
-    _id: 'gamestate1' as any,
+    _id: "gamestate1" as any,
     tableId: selectedTableId as any,
-    phase: 'flop',
-    communityCards: ['Ac', 'Kd', '7h'],
+    phase: "flop",
+    communityCards: ["Ac", "Kd", "7h"],
     pot: 150,
     currentBet: 20,
     dealerPosition: 4,
@@ -146,15 +158,15 @@ const AppContent: React.FC = () => {
 
   // Render different views based on current state
   switch (currentView) {
-    case 'lobby':
+    case "lobby":
       return (
-        <Lobby 
+        <Lobby
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
         />
       );
-    
-    case 'table':
+
+    case "table":
       if (!user || !selectedTableId) {
         return (
           <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center">
@@ -164,7 +176,7 @@ const AppContent: React.FC = () => {
                 Impossible de charger la table
               </p>
               <button
-                onClick={() => setCurrentView('lobby')}
+                onClick={() => setCurrentView("lobby")}
                 className="bg-poker-green-600 text-white px-4 py-2 rounded hover:bg-poker-green-700"
               >
                 Retour au lobby
@@ -173,7 +185,7 @@ const AppContent: React.FC = () => {
           </div>
         );
       }
-      
+
       return (
         <PokerTable
           table={mockTable}
@@ -185,18 +197,18 @@ const AppContent: React.FC = () => {
           onJoinSeat={handleJoinSeat}
         />
       );
-    
-    case 'create-table':
+
+    case "create-table":
       return (
         <CreateTableForm
           onSubmit={handleTableCreated}
           onCancel={handleCancelCreateTable}
         />
       );
-    
+
     default:
       return (
-        <Lobby 
+        <Lobby
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
         />
