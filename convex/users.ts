@@ -1,6 +1,23 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Get current authenticated user
+export const getCurrentUser = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .first();
+
+    return user;
+  },
+});
+
 // Create a new user
 export const createUser = mutation({
   args: {
@@ -25,6 +42,46 @@ export const createUser = mutation({
       chips: 10000, // Starting chips
       createdAt: Date.now(),
     });
+  },
+});
+
+// Create or update user on auth
+export const createOrUpdateUser = mutation({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    avatar: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingUser) {
+      // Update existing user
+      await ctx.db.patch(existingUser._id, {
+        name: args.name,
+        avatar: args.avatar,
+        lastSeen: Date.now(),
+      });
+      return existingUser._id;
+    } else {
+      // Create new user
+      return await ctx.db.insert("users", {
+        email: args.email,
+        name: args.name,
+        avatar: args.avatar,
+        chips: 10000, // Starting chips
+        createdAt: Date.now(),
+        lastSeen: Date.now(),
+      });
+    }
   },
 });
 

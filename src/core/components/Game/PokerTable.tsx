@@ -5,31 +5,56 @@ import { BettingControls } from './BettingControls';
 import { Button } from '../UI/Button';
 import { Player, GameState, Table, User } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
+import { useGameLogic } from '../../hooks/useGameLogic';
+import { Id } from '../../../convex/_generated/dataModel';
 
 interface PokerTableProps {
-  table: Table;
-  players: Player[];
-  gameState: GameState;
-  currentUser: User;
+  tableId: Id<'tables'>;
   onLeaveTable: () => void;
-  onPlayerAction: (action: string, amount?: number) => void;
   onJoinSeat: (position: number) => void;
 }
 
 export const PokerTable: React.FC<PokerTableProps> = ({
-  table,
-  players,
-  gameState,
-  currentUser,
+  tableId,
   onLeaveTable,
-  onPlayerAction,
   onJoinSeat,
 }) => {
-  const [showControls, setShowControls] = useState(true);
+  const [showGameInfo, setShowGameInfo] = useState(false);
+  
+  // Use game logic hook
+  const {
+    gameState,
+    players,
+    currentPlayer,
+    isGameActive,
+    isMyTurn,
+    isProcessing,
+    availableActions,
+    handleStartGame,
+    handlePlayerAction,
+    getBettingInfo,
+    getPotOdds,
+    getHandStrength,
+    getGameStats,
+  } = useGameLogic(tableId);
 
-  // Get current player
-  const currentPlayer = players.find(p => p.userId === currentUser._id);
-  const isCurrentPlayerTurn = currentPlayer && gameState.currentPlayerPosition === currentPlayer.seatPosition;
+  // Early return if no data
+  if (!gameState || !players || !table) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading table...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Get game info
+  const bettingInfo = getBettingInfo();
+  const potOdds = getPotOdds();
+  const handStrength = getHandStrength();
+  const gameStats = getGameStats();
 
   // Calculate seat positions for oval table
   const getSeatPosition = (position: number, maxPlayers: number) => {
@@ -57,7 +82,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       player,
       isEmpty,
       isDealer: gameState.dealerPosition === position,
-      isCurrentPlayer: player?.userId === currentUser._id,
+      isCurrentPlayer: player?.userId === currentPlayer?.userId,
       isSmallBlind: getSmallBlindPosition() === position,
       isBigBlind: getBigBlindPosition() === position,
       isActivePlayer: gameState.currentPlayerPosition === position,
@@ -77,22 +102,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     }
     return (gameState.dealerPosition + 2) % table.maxPlayers;
   }
-
-  // Betting logic
-  const currentBet = gameState.currentBet;
-  const playerCurrentBet = currentPlayer?.currentBet || 0;
-  const callAmount = currentBet - playerCurrentBet;
-  const canCheck = callAmount === 0;
-  const canCall = callAmount > 0 && callAmount < (currentPlayer?.chips || 0);
-  const minRaise = currentBet + table.bigBlind;
-  const maxBet = (currentPlayer?.chips || 0) + playerCurrentBet;
-
-  const handlePlayerAction = (action: string, amount?: number) => {
-    onPlayerAction(action, amount);
-    if (action === 'fold') {
-      setShowControls(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4">
@@ -200,20 +209,55 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </div>
             )}
 
-            {/* Game info panel */}
-            <div className="absolute top-4 right-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50 min-w-48">
-              <div className="space-y-2">
+            {/* Game info button */}
+            <div className="absolute top-4 right-4 z-50">
+              <button
+                onClick={() => setShowGameInfo(!showGameInfo)}
+                className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+              >
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Game info modal */}
+        {showGameInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+              onClick={() => setShowGameInfo(false)}
+            />
+            
+            {/* Modal content */}
+            <div className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 min-w-80 max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Informations de la partie</h3>
+                <button
+                  onClick={() => setShowGameInfo(false)}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-3">
                 {/* Players count */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Joueurs:</span>
-                  <span className="font-semibold text-gray-800">{players.length}/{table.maxPlayers}</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Joueurs connectés</span>
+                  <span className="font-semibold text-gray-900">{players.length}/{table.maxPlayers}</span>
                 </div>
                 
                 {/* Game phase */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Phase:</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Phase actuelle</span>
                   <span className={cn(
-                    "font-semibold px-2 py-1 rounded-full text-xs",
+                    "font-semibold px-3 py-1 rounded-full text-sm",
                     gameState.phase === 'waiting' && "bg-gray-200 text-gray-700",
                     gameState.phase === 'preflop' && "bg-blue-200 text-blue-700",
                     gameState.phase === 'flop' && "bg-green-200 text-green-700",
@@ -227,49 +271,65 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 
                 {/* Current bet */}
                 {currentBet > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Mise:</span>
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600 font-medium">Mise actuelle</span>
                     <span className="font-semibold text-red-600">{currentBet.toLocaleString()}</span>
                   </div>
                 )}
                 
                 {/* Blinds */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Blinds:</span>
-                  <span className="font-semibold text-gray-800">{table.smallBlind}/{table.bigBlind}</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Blinds</span>
+                  <span className="font-semibold text-gray-900">{table.smallBlind}/{table.bigBlind}</span>
                 </div>
                 
                 {/* Table type */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Type:</span>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600 font-medium">Type de partie</span>
                   <span className={cn(
-                    "font-semibold px-2 py-1 rounded-full text-xs",
+                    "font-semibold px-3 py-1 rounded-full text-sm",
                     table.gameType === 'tournament' ? "bg-purple-200 text-purple-700" : "bg-green-200 text-green-700"
                   )}>
-                    {table.gameType === 'tournament' ? 'TOURNOI' : 'CASH'}
+                    {table.gameType === 'tournament' ? 'TOURNOI' : 'CASH GAME'}
                   </span>
+                </div>
+                
+                {/* Pot amount */}
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Pot total</span>
+                  <span className="font-bold text-green-600 text-lg">{gameState.pot.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Start game button */}
+        {gameState.phase === 'waiting' && players.length >= 2 && currentPlayer && (
+          <div className="mt-6 text-center">
+            <Button
+              onClick={handleStartGame}
+              disabled={isProcessing}
+              size="lg"
+              variant="primary"
+            >
+              {isProcessing ? 'Starting...' : 'Start Game'}
+            </Button>
+          </div>
+        )}
 
         {/* Betting controls */}
-        {currentPlayer && isCurrentPlayerTurn && showControls && gameState.phase !== 'waiting' && (
+        {currentPlayer && isMyTurn && gameState.phase !== 'waiting' && availableActions.length > 0 && (
           <div className="mt-6">
             <BettingControls
-              currentBet={currentBet}
-              minRaise={minRaise}
-              maxBet={maxBet}
+              availableActions={availableActions}
               playerChips={currentPlayer.chips}
-              canCheck={canCheck}
-              canCall={canCall}
-              callAmount={callAmount}
-              onFold={() => handlePlayerAction('fold')}
-              onCheck={() => handlePlayerAction('check')}
-              onCall={() => handlePlayerAction('call')}
-              onRaise={(amount) => handlePlayerAction('raise', amount)}
-              onAllIn={() => handlePlayerAction('all-in')}
+              currentBet={gameState.currentBet}
+              potSize={gameState.pot}
+              onAction={handlePlayerAction}
+              disabled={isProcessing}
+              potOdds={potOdds?.ratio}
+              handStrength={handStrength}
             />
           </div>
         )}

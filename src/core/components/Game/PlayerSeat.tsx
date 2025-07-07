@@ -33,14 +33,19 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
     return (
       <div 
         className={cn(
-          'w-32 h-24 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center bg-poker-green-100 hover:bg-poker-green-200 cursor-pointer transition-colors',
+          'bg-gray-700/50 border-2 border-dashed border-gray-500 rounded-2xl p-3 hover:bg-gray-600/50 cursor-pointer transition-all duration-200 backdrop-blur-sm',
           className
         )}
         onClick={onSeatClick}
       >
-        <div className="text-center text-gray-600">
-          <div className="text-sm font-medium">Siège {position + 1}</div>
-          <div className="text-xs">Cliquez pour rejoindre</div>
+        <div className="text-center">
+          <div className="w-12 h-12 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-gray-300">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+          <div className="text-sm font-medium text-gray-300">Siège libre</div>
+          <div className="text-xs text-gray-400">Cliquez pour rejoindre</div>
         </div>
       </div>
     );
@@ -58,74 +63,77 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   return (
     <div 
       className={cn(
-        'relative bg-white rounded-lg shadow-lg p-3 transition-all duration-200',
-        isCurrentPlayer && 'ring-2 ring-poker-gold-500 shadow-xl',
+        'relative bg-gray-800/90 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 shadow-xl w-52 h-16',
+        isCurrentPlayer && 'ring-2 ring-yellow-400 shadow-2xl',
         player.isFolded && 'opacity-50',
         className
       )}
     >
       {/* Dealer button */}
       {isDealer && (
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-poker-gold-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-sm font-bold shadow-lg border-2 border-yellow-600">
           D
         </div>
       )}
 
       {/* Blind indicators */}
       {(isSmallBlind || isBigBlind) && (
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
           {isSmallBlind ? 'SB' : 'BB'}
         </div>
       )}
 
-      {/* Player info */}
-      <div className="text-center mb-2">
-        <div className="w-10 h-10 bg-poker-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm mx-auto mb-1">
-          {(player.user?.name || 'Player').charAt(0).toUpperCase()}
+      {/* Horizontal layout */}
+      <div className="flex items-center gap-3 h-full">
+        {/* Player avatar and info */}
+        <div className="flex items-center gap-2 flex-1">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+            {(player.user?.name || 'Player').charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-white truncate">
+              {player.user?.name || 'Player'}
+            </div>
+            <div className="text-xs text-green-400 font-bold">
+              {player.chips.toLocaleString()}
+            </div>
+          </div>
         </div>
-        <div className="text-sm font-medium text-gray-900 truncate">
-          {player.user?.name || 'Player'}
-        </div>
-        <div className="text-xs text-gray-500">
-          {player.chips.toLocaleString()} chips
+
+        {/* Cards */}
+        <div className="flex gap-1">
+          {player.cards.length > 0 ? (
+            player.cards.map((cardStr, index) => (
+              <Card
+                key={index}
+                card={showCards ? parseCard(cardStr) : undefined}
+                isHidden={!showCards}
+                size="sm"
+              />
+            ))
+          ) : (
+            <>
+              <Card size="sm" />
+              <Card size="sm" />
+            </>
+          )}
         </div>
       </div>
 
-      {/* Cards */}
-      <div className="flex gap-1 justify-center mb-2">
-        {player.cards.length > 0 ? (
-          player.cards.map((cardStr, index) => (
-            <Card
-              key={index}
-              card={showCards ? parseCard(cardStr) : undefined}
-              isHidden={!showCards}
-              size="sm"
-            />
-          ))
-        ) : (
-          <>
-            <Card size="sm" />
-            <Card size="sm" />
-          </>
-        )}
-      </div>
-
-      {/* Current bet */}
+      {/* Current bet indicator */}
       {player.currentBet > 0 && (
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">Mise</div>
-          <ChipStack 
-            chips={[{ value: player.currentBet, count: 1 }]}
-            size="sm"
-          />
+        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+          <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+            {player.currentBet.toLocaleString()}
+          </div>
         </div>
       )}
 
       {/* Last action */}
       {player.lastAction && (
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
           <span className={cn(
-            'px-2 py-1 rounded-full text-xs font-medium',
+            'px-2 py-1 rounded-full text-xs font-bold shadow-lg',
             getActionColor(player.lastAction)
           )}>
             {getActionLabel(player.lastAction)}
@@ -135,8 +143,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* All-in indicator */}
       {player.isAllIn && (
-        <div className="absolute top-0 left-0 w-full h-full bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-          <span className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+        <div className="absolute inset-0 bg-red-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+          <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
             ALL-IN
           </span>
         </div>
