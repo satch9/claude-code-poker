@@ -27,6 +27,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   
   // Use game logic hook
   const {
+    table,
     gameState,
     players,
     currentPlayer,

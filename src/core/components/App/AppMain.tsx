@@ -15,10 +15,10 @@ const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { createTable } = useTableActions();
   const [currentView, setCurrentView] = useState<AppView>("lobby");
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(null);
 
   const handleJoinTable = (tableId: string) => {
-    setSelectedTableId(tableId);
+    setSelectedTableId(tableId as Id<"tables">);
     setCurrentView("table");
   };
 
@@ -113,9 +113,10 @@ const AppContent: React.FC = () => {
         );
       }
 
+      // selectedTableId est garanti d'être non-null ici grâce au check ci-dessus
       return (
         <PokerTable
-          tableId={selectedTableId as Id<"tables">}
+          tableId={selectedTableId}
           onLeaveTable={handleLeaveTable}
           onJoinSeat={handleJoinSeat}
         />

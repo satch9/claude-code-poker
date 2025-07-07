@@ -26,12 +26,21 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
   // Queries
   const user = useQuery(api.users.getCurrentUser);
-  const table = useQuery(api.tables.getTable, { tableId });
-  const gameState = useQuery(api.tables.getGameState, { tableId });
-  const players = useQuery(api.players.getTablePlayers, { tableId });
+  const table = useQuery(
+    api.tables.getTable, 
+    tableId ? { tableId } : "skip"
+  );
+  const gameState = useQuery(
+    api.tables.getGameState, 
+    tableId ? { tableId } : "skip"
+  );
+  const players = useQuery(
+    api.players.getTablePlayers, 
+    tableId ? { tableId } : "skip"
+  );
   const availableActions = useQuery(
     api.core.gameEngine.getAvailableActions,
-    user ? { tableId, userId: user._id } : 'skip'
+    user && tableId ? { tableId, userId: user._id } : 'skip'
   );
 
   // Game state helpers
