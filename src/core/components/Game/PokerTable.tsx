@@ -5,6 +5,7 @@ import { BettingControls } from './BettingControls';
 import { ActionFeed } from './ActionFeed';
 import { ActionTimer } from './ActionTimer';
 import { HandStats } from './HandStats';
+import { TurnIndicator } from './TurnIndicator';
 import { Button } from '../UI/Button';
 import { Player, GameState, Table, User } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
@@ -42,6 +43,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     actionHistory,
     handNumber,
     handleTimeOut,
+    handleStartNextHand,
     addActionToHistory,
   } = useGameLogic(tableId);
 
@@ -341,15 +343,30 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
         {/* Start game button */}
         {gameState.phase === 'waiting' && players.length >= 2 && currentPlayer && (
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <Button
               onClick={handleStartGame}
               disabled={isProcessing}
               size="lg"
               variant="primary"
             >
-              {isProcessing ? 'Starting...' : 'Start Game'}
+              {isProcessing ? 'Démarrage...' : 'Démarrer la partie'}
             </Button>
+            
+            {/* Start next hand button (if a game was already played) */}
+            {handNumber > 1 && (
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-sm text-gray-400">ou</div>
+                <Button
+                  onClick={handleStartNextHand}
+                  disabled={isProcessing}
+                  size="md"
+                  variant="secondary"
+                >
+                  {isProcessing ? 'Démarrage...' : 'Main suivante'}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -370,14 +387,25 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         )}
 
         {/* Side panels */}
-        <div className="flex gap-6 mt-6">
+        <div className="grid grid-cols-3 gap-6 mt-6">
           {/* Left panel - Action Feed */}
-          <div className="w-80">
+          <div>
             <ActionFeed actions={actionHistory} />
           </div>
 
+          {/* Center panel - Turn Indicator */}
+          <div>
+            <TurnIndicator
+              currentPhase={gameState.phase}
+              currentPlayerPosition={gameState.currentPlayerPosition}
+              dealerPosition={gameState.dealerPosition}
+              isMyTurn={isMyTurn}
+              playerName={players.find(p => p.seatPosition === gameState.currentPlayerPosition)?.user?.name}
+            />
+          </div>
+
           {/* Right panel - Hand Stats */}
-          <div className="w-80">
+          <div>
             {gameStats && (
               <HandStats
                 handNumber={handNumber}

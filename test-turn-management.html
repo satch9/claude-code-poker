@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gestion des Tours et Phases - Phase 3 Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .poker-green { background: linear-gradient(135deg, #059669, #047857); }
+        
+        /* Phase transition animation */
+        @keyframes phaseTransition {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .phase-change { animation: phaseTransition 0.8s ease-out; }
+        
+        /* Turn indicator pulse */
+        @keyframes turnPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        
+        .turn-active { animation: turnPulse 2s ease-in-out infinite; }
+        
+        /* Progress bar animation */
+        @keyframes progressFill {
+            0% { width: 0%; }
+            100% { width: var(--progress-width); }
+        }
+        
+        .progress-bar { animation: progressFill 1s ease-out; }
+    </style>
+</head>
+<body class="min-h-screen poker-green text-white">
+    <div class="max-w-7xl mx-auto p-4">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold">Test Phase 3 Final - Gestion des Tours et Phases</h1>
+                <p class="text-green-200">Système complet de rotation et progression</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="nextPhase()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
+                    Phase Suivante
+                </button>
+                <button onclick="nextHand()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors">
+                    Main Suivante
+                </button>
+                <button onclick="rotateDealer()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors">
+                    Rotation Dealer
+                </button>
+            </div>
+        </div>
+
+        <!-- Main game interface -->
+        <div class="grid grid-cols-3 gap-6">
+            <!-- Left panel - Action Feed -->
+            <div class="bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-white">Actions récentes</h3>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-400">Live</span>
+                    </div>
+                </div>
+                
+                <div id="actionFeed" class="space-y-2 max-h-80 overflow-y-auto">
+                    <!-- Actions will be added here -->
+                </div>
+            </div>
+
+            <!-- Center panel - Turn Indicator -->
+            <div class="bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div class="space-y-3">
+                    <!-- Phase indicator -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-400 font-medium">Phase actuelle</span>
+                        <div id="phaseIndicator" class="flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-medium bg-blue-500">
+                            <span id="phaseIcon">🃏</span>
+                            <span id="phaseName">Pré-Flop</span>
+                        </div>
+                    </div>
+
+                    <!-- Current player turn -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-400 font-medium">Tour de</span>
+                        <div id="turnIndicator" class="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border-2 bg-yellow-500/20 text-yellow-400 border-yellow-500 turn-active">
+                            <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                            <span id="currentPlayerName">Joueur 1</span>
+                        </div>
+                    </div>
+
+                    <!-- Dealer position -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-400 font-medium">Donneur</span>
+                        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-sm font-medium">
+                            <div class="w-6 h-6 bg-amber-500 text-black rounded-full flex items-center justify-center text-xs font-bold">D</div>
+                            <span id="dealerPosition">Position 1</span>
+                        </div>
+                    </div>
+
+                    <!-- Turn progress indicator -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Progression de la main</span>
+                            <span id="progressPercent">20%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="progressBar" class="h-2 rounded-full transition-all duration-500 bg-blue-500 progress-bar" style="width: 20%; --progress-width: 20%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action required indicator -->
+                    <div id="actionRequired" class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                        <div class="flex items-center gap-2 text-yellow-400">
+                            <div class="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                            <span class="text-sm font-medium">Action requise - À vous de jouer !</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right panel - Hand Stats -->
+            <div class="bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-white">Statistiques</h3>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span class="text-xs text-gray-400">Live</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">🃏</span>
+                            <span class="text-xs text-gray-400 font-medium">Main #</span>
+                        </div>
+                        <div class="text-sm font-bold text-blue-400" id="handNumber">1</div>
+                    </div>
+                    
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">🔄</span>
+                            <span class="text-xs text-gray-400 font-medium">Tour</span>
+                        </div>
+                        <div class="text-sm font-bold text-green-400" id="turnNumber">1</div>
+                    </div>
+                    
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">👑</span>
+                            <span class="text-xs text-gray-400 font-medium">Dealer</span>
+                        </div>
+                        <div class="text-sm font-bold text-yellow-400" id="dealerName">Joueur 1</div>
+                    </div>
+                    
+                    <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm">⏱️</span>
+                            <span class="text-xs text-gray-400 font-medium">Phase</span>
+                        </div>
+                        <div class="text-sm font-bold text-purple-400" id="phaseCounter">1/5</div>
+                    </div>
+                </div>
+
+                <!-- Betting Round Info -->
+                <div class="mt-4 pt-3 border-t border-gray-700">
+                    <h4 class="text-sm font-medium text-gray-300 mb-2">Tour de mise</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">Joueurs actifs</span>
+                            <span class="text-white font-medium" id="activePlayers">3/4</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">Mise actuelle</span>
+                            <span class="text-green-400 font-medium" id="currentBet">100</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">Actions restantes</span>
+                            <span class="text-yellow-400 font-medium" id="actionsLeft">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game table visualization -->
+        <div class="mt-8 relative bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 rounded-full border-8 border-amber-400 shadow-2xl h-80 overflow-hidden">
+            <!-- Dealer button -->
+            <div id="dealerButton" class="absolute z-30 w-8 h-8 bg-white border-2 border-gray-800 rounded-full flex items-center justify-center text-xs font-bold text-gray-800 shadow-lg transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000" 
+                 style="left: 20%; top: 30%;">
+                D
+            </div>
+
+            <!-- Player positions -->
+            <div id="player1" class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500" style="left: 20%; top: 30%;">
+                <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 w-32 h-12 flex items-center gap-2 ring-2 ring-yellow-400">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
+                    <div class="text-xs text-white">Joueur 1</div>
+                </div>
+            </div>
+
+            <div id="player2" class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500" style="left: 50%; top: 15%;">
+                <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 w-32 h-12 flex items-center gap-2">
+                    <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                    <div class="text-xs text-white">Joueur 2</div>
+                </div>
+            </div>
+
+            <div id="player3" class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500" style="left: 80%; top: 30%;">
+                <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 w-32 h-12 flex items-center gap-2">
+                    <div class="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                    <div class="text-xs text-white">Joueur 3</div>
+                </div>
+            </div>
+
+            <div id="player4" class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500" style="left: 50%; top: 70%;">
+                <div class="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 w-32 h-12 flex items-center gap-2">
+                    <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
+                    <div class="text-xs text-white">Joueur 4</div>
+                </div>
+            </div>
+
+            <!-- Center pot -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                <div class="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <div class="text-lg font-bold text-white mb-1">Pot: <span id="potAmount">500</span></div>
+                    <div class="text-sm text-green-200">Phase: <span id="gamePhaseName">Pré-Flop</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control buttons -->
+        <div class="mt-6 text-center space-x-4">
+            <button onclick="simulatePlayerAction()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                Simuler Action Joueur
+            </button>
+            <button onclick="endBettingRound()" class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors">
+                Finir Tour de Mise
+            </button>
+            <button onclick="resetGame()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                Réinitialiser
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentHand = 1;
+        let currentTurn = 1;
+        let currentPhase = 'preflop';
+        let currentPlayer = 1;
+        let dealerPos = 1;
+        let actionsInRound = 0;
+
+        const phases = [
+            { name: 'preflop', display: 'Pré-Flop', icon: '🃏', color: 'bg-blue-500', progress: 20 },
+            { name: 'flop', display: 'Flop', icon: '🎯', color: 'bg-green-500', progress: 40 },
+            { name: 'turn', display: 'Turn', icon: '🔄', color: 'bg-yellow-500', progress: 60 },
+            { name: 'river', display: 'River', icon: '🌊', color: 'bg-orange-500', progress: 80 },
+            { name: 'showdown', display: 'Abattage', icon: '👁️', color: 'bg-purple-500', progress: 100 }
+        ];
+
+        const players = ['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4'];
+        const playerPositions = [
+            { left: '20%', top: '30%' },
+            { left: '50%', top: '15%' },
+            { left: '80%', top: '30%' },
+            { left: '50%', top: '70%' }
+        ];
+
+        function addActionToFeed(message, type = 'info') {
+            const feed = document.getElementById('actionFeed');
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'flex items-center justify-between text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 transition-all duration-300';
+            
+            const colors = {
+                'info': 'text-blue-400',
+                'success': 'text-green-400',
+                'warning': 'text-yellow-400',
+                'phase': 'text-purple-400'
+            };
+            
+            actionDiv.innerHTML = `
+                <div class="font-medium ${colors[type] || colors.info}">
+                    ${message}
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date().toLocaleTimeString('fr-FR')}
+                </div>
+            `;
+            
+            feed.insertBefore(actionDiv, feed.firstChild);
+            
+            // Keep only last 10 actions
+            while (feed.children.length > 10) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function updatePhaseDisplay() {
+            const phaseInfo = phases.find(p => p.name === currentPhase);
+            if (!phaseInfo) return;
+
+            const indicator = document.getElementById('phaseIndicator');
+            const icon = document.getElementById('phaseIcon');
+            const name = document.getElementById('phaseName');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const phaseCounter = document.getElementById('phaseCounter');
+            const gamePhaseName = document.getElementById('gamePhaseName');
+
+            // Add phase change animation
+            indicator.classList.add('phase-change');
+            setTimeout(() => indicator.classList.remove('phase-change'), 800);
+
+            indicator.className = `flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-medium ${phaseInfo.color} phase-change`;
+            icon.textContent = phaseInfo.icon;
+            name.textContent = phaseInfo.display;
+            progressBar.style.width = `${phaseInfo.progress}%`;
+            progressBar.style.setProperty('--progress-width', `${phaseInfo.progress}%`);
+            progressPercent.textContent = `${phaseInfo.progress}%`;
+            phaseCounter.textContent = `${phases.findIndex(p => p.name === currentPhase) + 1}/5`;
+            gamePhaseName.textContent = phaseInfo.display;
+        }
+
+        function updateTurnDisplay() {
+            const turnIndicator = document.getElementById('turnIndicator');
+            const currentPlayerName = document.getElementById('currentPlayerName');
+            
+            currentPlayerName.textContent = players[currentPlayer - 1];
+            
+            // Update player highlighting
+            for (let i = 1; i <= 4; i++) {
+                const player = document.getElementById(`player${i}`);
+                const ring = player.querySelector('div');
+                if (i === currentPlayer) {
+                    ring.classList.add('ring-2', 'ring-yellow-400');
+                } else {
+                    ring.classList.remove('ring-2', 'ring-yellow-400');
+                }
+            }
+        }
+
+        function updateDealerPosition() {
+            const dealerButton = document.getElementById('dealerButton');
+            const dealerPosition = document.getElementById('dealerPosition');
+            const dealerName = document.getElementById('dealerName');
+            
+            const pos = playerPositions[dealerPos - 1];
+            dealerButton.style.left = pos.left;
+            dealerButton.style.top = pos.top;
+            
+            dealerPosition.textContent = `Position ${dealerPos}`;
+            dealerName.textContent = players[dealerPos - 1];
+        }
+
+        function nextPhase() {
+            const currentIndex = phases.findIndex(p => p.name === currentPhase);
+            if (currentIndex < phases.length - 1) {
+                currentPhase = phases[currentIndex + 1].name;
+                updatePhaseDisplay();
+                addActionToFeed(`Nouvelle phase: ${phases[currentIndex + 1].display}`, 'phase');
+                actionsInRound = 0;
+                document.getElementById('actionsLeft').textContent = '4';
+            } else {
+                nextHand();
+            }
+        }
+
+        function nextHand() {
+            currentHand++;
+            currentTurn++;
+            currentPhase = 'preflop';
+            dealerPos = (dealerPos % 4) + 1; // Rotate dealer
+            currentPlayer = (dealerPos % 4) + 1; // Next player after dealer starts
+            actionsInRound = 0;
+            
+            document.getElementById('handNumber').textContent = currentHand;
+            document.getElementById('turnNumber').textContent = currentTurn;
+            document.getElementById('actionsLeft').textContent = '4';
+            
+            updatePhaseDisplay();
+            updateTurnDisplay();
+            updateDealerPosition();
+            
+            addActionToFeed(`Nouvelle main #${currentHand} - Dealer: ${players[dealerPos - 1]}`, 'success');
+        }
+
+        function rotateDealer() {
+            dealerPos = (dealerPos % 4) + 1;
+            updateDealerPosition();
+            addActionToFeed(`Dealer rotation: ${players[dealerPos - 1]}`, 'warning');
+        }
+
+        function simulatePlayerAction() {
+            const actions = ['fold', 'call', 'raise', 'check'];
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            
+            addActionToFeed(`${players[currentPlayer - 1]} ${action}`, 'info');
+            
+            // Move to next player
+            currentPlayer = (currentPlayer % 4) + 1;
+            updateTurnDisplay();
+            
+            actionsInRound++;
+            const actionsLeft = Math.max(0, 4 - actionsInRound);
+            document.getElementById('actionsLeft').textContent = actionsLeft;
+            
+            if (actionsLeft === 0) {
+                setTimeout(endBettingRound, 1000);
+            }
+        }
+
+        function endBettingRound() {
+            addActionToFeed('Tour de mise terminé', 'warning');
+            setTimeout(nextPhase, 1000);
+        }
+
+        function resetGame() {
+            currentHand = 1;
+            currentTurn = 1;
+            currentPhase = 'preflop';
+            currentPlayer = 1;
+            dealerPos = 1;
+            actionsInRound = 0;
+            
+            document.getElementById('handNumber').textContent = currentHand;
+            document.getElementById('turnNumber').textContent = currentTurn;
+            document.getElementById('actionsLeft').textContent = '4';
+            
+            updatePhaseDisplay();
+            updateTurnDisplay();
+            updateDealerPosition();
+            
+            // Clear action feed
+            document.getElementById('actionFeed').innerHTML = '';
+            addActionToFeed('Jeu réinitialisé', 'success');
+        }
+
+        // Initialize
+        updatePhaseDisplay();
+        updateTurnDisplay();
+        updateDealerPosition();
+        addActionToFeed('Système de gestion des tours et phases initialisé', 'success');
+    </script>
+</body>
+</html>

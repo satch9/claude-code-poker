@@ -20,6 +20,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
+  const startNextHand = useMutation(api.core.gameEngine.startNextHand);
   const playerAction = useMutation(api.core.gameEngine.playerAction);
   const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
 
@@ -48,6 +49,20 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
       await startGame({ tableId });
     } catch (error) {
       console.error('Failed to start game:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleStartNextHand = async () => {
+    if (!isAuthenticated || !user) return;
+    
+    setIsProcessing(true);
+    try {
+      await startNextHand({ tableId });
+      setHandNumber(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to start next hand:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -260,6 +275,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     
     // Action handlers
     handleStartGame,
+    handleStartNextHand,
     handlePlayerAction,
     handleFold,
     handleCheck,

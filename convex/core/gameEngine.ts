@@ -6,14 +6,22 @@ import {
   dealCards,
   cardToString,
   getNextPlayerPosition,
-  isBettingRoundComplete,
   calculateMinRaise,
-  getBlindPositions,
   calculateSidePots,
   evaluateHand,
   stringToCard,
   type Card
 } from "../utils/poker";
+import {
+  getBlindPositions,
+  getFirstPlayerToAct,
+  isBettingRoundComplete,
+  getNextActivePlayer,
+  resetPlayersForNewRound,
+  shouldEndHand,
+  getNextPhase,
+  getNextDealerPosition
+} from "../utils/turnManager";
 
 // Start a new game
 export const startGame = mutation({
@@ -46,9 +54,24 @@ export const startGame = mutation({
       remainingDeck = newDeck;
     }
 
-    // Determine dealer position (random for first game)
-    const dealerPosition = Math.floor(Math.random() * players.length);
-    const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, players.length, table.maxPlayers);
+    // Get current dealer position or set random for first game
+    const currentGameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+    
+    let dealerPosition: number;
+    if (currentGameState && currentGameState.dealerPosition >= 0) {
+      // Advance dealer position for next hand
+      const playerPositions = players.map(p => p.seatPosition).sort((a, b) => a - b);
+      dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
+    } else {
+      // Random dealer for first game
+      dealerPosition = players[Math.floor(Math.random() * players.length)].seatPosition;
+    }
+    
+    const playerPositions = players.map(p => p.seatPosition);
+    const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
 
     // Post blinds
     let pot = 0;
@@ -82,12 +105,8 @@ export const startGame = mutation({
       })
     );
 
-    // Find first player to act (after big blind)
-    const firstPlayerPosition = getNextPlayerPosition(
-      bigBlind,
-      players.map(p => ({ seatPosition: p.seatPosition, isFolded: false, isAllIn: false })),
-      table.maxPlayers
-    );
+    // Find first player to act (after big blind in preflop)
+    const firstPlayerPosition = getFirstPlayerToAct(dealerPosition, playerPositions, 'preflop');
 
     // Update game state
     await ctx.db
@@ -263,32 +282,43 @@ export const playerAction = mutation({
       updatedAt: Date.now(),
     });
 
-    // Check if betting round is complete
+    // Check if hand should end immediately (only one player left)
     const allPlayers = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .collect();
+
+    if (shouldEndHand(allPlayers)) {
+      await endHand(ctx, args.tableId);
+      return { success: true };
+    }
 
     const updatedGameState = await ctx.db.get(gameState._id);
     if (!updatedGameState) {
       throw new Error("Game state not found after update");
     }
 
+    // Check if betting round is complete
     if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet)) {
       // Move to next phase
       await advanceToNextPhase(ctx, args.tableId);
     } else {
-      // Move to next player
-      const nextPlayer = getNextPlayerPosition(
-        player.seatPosition,
-        allPlayers.map(p => ({ seatPosition: p.seatPosition, isFolded: p.isFolded, isAllIn: p.isAllIn })),
-        table.maxPlayers
-      );
+      // Move to next active player
+      const activePlayers = allPlayers
+        .filter(p => !p.isFolded && !p.isAllIn)
+        .map(p => p.seatPosition);
+      
+      const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
 
-      await ctx.db.patch(gameState._id, {
-        currentPlayerPosition: nextPlayer,
-        updatedAt: Date.now(),
-      });
+      if (nextPlayer === -1) {
+        // No more active players, end betting round
+        await advanceToNextPhase(ctx, args.tableId);
+      } else {
+        await ctx.db.patch(gameState._id, {
+          currentPlayerPosition: nextPlayer,
+          updatedAt: Date.now(),
+        });
+      }
     }
 
     return { success: true };
@@ -313,65 +343,65 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   const activePlayers = players.filter(p => !p.isFolded);
 
-  // Check if game is over (only one player left)
-  if (activePlayers.length <= 1) {
-    await endGame(ctx, tableId);
+  // Check if hand is over (only one player left)
+  if (shouldEndHand(players)) {
+    await endHand(ctx, tableId);
     return;
   }
 
-  // Reset player actions for next phase
+  // Reset players for next betting round
+  const playersToReset = resetPlayersForNewRound(players);
   await Promise.all(
-    players.map(player => 
-      ctx.db.patch(player._id, {
-        hasActed: false,
-        currentBet: 0,
-        lastAction: undefined,
-      })
+    playersToReset.map(({ playerId, resetData }) => 
+      ctx.db.patch(playerId, resetData)
     )
   );
 
-  let nextPhase: string;
+  // Get next phase
+  const nextPhase = getNextPhase(gameState.phase);
   let communityCards = [...gameState.communityCards];
   
-  // Create deck for community cards (simplified - in real game, use remaining deck)
-  const deck = shuffleDeck(createDeck());
-  
-  switch (gameState.phase) {
-    case "preflop":
-      nextPhase = "flop";
-      // Deal 3 community cards
-      const flopCards = dealCards(deck, 3);
-      communityCards = flopCards.dealtCards.map(cardToString);
-      break;
-      
-    case "flop":
-      nextPhase = "turn";
-      // Deal 1 community card
-      const turnCard = dealCards(deck, 1);
-      communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
-      break;
-      
-    case "turn":
-      nextPhase = "river";
-      // Deal 1 community card
-      const riverCard = dealCards(deck, 1);
-      communityCards = [...gameState.communityCards, ...riverCard.dealtCards.map(cardToString)];
-      break;
-      
-    case "river":
-      nextPhase = "showdown";
-      await determineWinner(ctx, tableId);
-      return;
-      
-    default:
-      throw new Error("Invalid game phase");
+  // Deal community cards for new phase
+  if (nextPhase !== 'showdown') {
+    // Create deck for community cards (simplified - in real game, use remaining deck)
+    const deck = shuffleDeck(createDeck());
+    
+    switch (nextPhase) {
+      case "flop":
+        // Deal 3 community cards
+        const flopCards = dealCards(deck, 3);
+        communityCards = flopCards.dealtCards.map(cardToString);
+        break;
+        
+      case "turn":
+        // Deal 1 community card
+        const turnCard = dealCards(deck, 1);
+        communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
+        break;
+        
+      case "river":
+        // Deal 1 community card
+        const riverCard = dealCards(deck, 1);
+        communityCards = [...gameState.communityCards, ...riverCard.dealtCards.map(cardToString)];
+        break;
+    }
   }
 
-  // Find first player to act
-  const firstPlayerPosition = getNextPlayerPosition(
-    gameState.dealerPosition,
-    activePlayers.map(p => ({ seatPosition: p.seatPosition, isFolded: p.isFolded, isAllIn: p.isAllIn })),
-    players.length
+  if (nextPhase === "showdown") {
+    await determineWinner(ctx, tableId);
+    return;
+  }
+
+  // Find first player to act (post-flop)
+  const playerPositions = activePlayers
+    .filter(p => !p.isAllIn)
+    .map(p => p.seatPosition)
+    .sort((a, b) => a - b);
+    
+  const firstPlayerPosition = getFirstPlayerToAct(
+    gameState.dealerPosition, 
+    playerPositions, 
+    'postflop'
   );
 
   await ctx.db.patch(gameState._id, {
@@ -465,14 +495,88 @@ async function determineWinner(ctx: any, tableId: string) {
   }, 5000);
 }
 
-// End current game
+// End current hand and prepare for next
+async function endHand(ctx: any, tableId: string) {
+  const table = await ctx.db.get(tableId);
+  if (!table) {
+    throw new Error("Table not found");
+  }
+
+  const gameState = await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .unique();
+
+  if (!gameState) {
+    throw new Error("Game state not found");
+  }
+
+  // Check if we should start a new hand automatically
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .collect();
+
+  const playersWithChips = players.filter(p => p.chips > 0);
+
+  if (playersWithChips.length >= 2) {
+    // Prepare for next hand
+    await prepareNextHand(ctx, tableId);
+  } else {
+    // End game - not enough players with chips
+    await endGame(ctx, tableId);
+  }
+}
+
+// Prepare for next hand
+async function prepareNextHand(ctx: any, tableId: string) {
+  // Reset players for new hand
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .collect();
+
+  await Promise.all(
+    players.map(player => 
+      ctx.db.patch(player._id, {
+        cards: [],
+        currentBet: 0,
+        hasActed: false,
+        isAllIn: false,
+        isFolded: false,
+        lastAction: undefined,
+      })
+    )
+  );
+
+  // Reset game state but keep dealer position for rotation
+  const gameState = await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q) => q.eq("tableId", tableId))
+    .unique();
+
+  if (gameState) {
+    await ctx.db.patch(gameState._id, {
+      phase: "waiting",
+      communityCards: [],
+      pot: 0,
+      currentBet: 0,
+      currentPlayerPosition: -1,
+      sidePots: [],
+      updatedAt: Date.now(),
+      // Keep dealerPosition for next hand rotation
+    });
+  }
+}
+
+// End entire game session
 async function endGame(ctx: any, tableId: string) {
   const table = await ctx.db.get(tableId);
   if (!table) {
     throw new Error("Table not found");
   }
 
-  // Reset game state
+  // Reset game state completely
   await ctx.db
     .query("gameStates")
     .withIndex("by_table", (q) => q.eq("tableId", tableId))
@@ -484,6 +588,7 @@ async function endGame(ctx: any, tableId: string) {
           communityCards: [],
           pot: 0,
           currentBet: 0,
+          dealerPosition: 0, // Reset dealer position
           currentPlayerPosition: -1,
           sidePots: [],
           updatedAt: Date.now(),
@@ -588,5 +693,36 @@ export const forcePlayerFold = mutation({
 });
 
 import { internal } from "../_generated/api";
+
+// Start next hand (called after previous hand ends)
+export const startNextHand = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+
+    if (!gameState || gameState.phase !== "waiting") {
+      throw new Error("Cannot start next hand - game not in waiting state");
+    }
+
+    // Check if we have enough players
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+
+    const playersWithChips = players.filter(p => p.chips > 0);
+    if (playersWithChips.length < 2) {
+      throw new Error("Not enough players with chips to start next hand");
+    }
+
+    // Start the next hand
+    return await ctx.runMutation(internal.core.gameEngine.startGame, {
+      tableId: args.tableId,
+    });
+  },
+});
 
 export { internal };
