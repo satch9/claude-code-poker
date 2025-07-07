@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -24,7 +24,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const playerAction = useMutation(api.core.gameEngine.playerAction);
   const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
 
-  // Queries
+  // Queries - always called to maintain hook order
   const user = useQuery(api.users.getCurrentUser);
   const table = useQuery(
     api.tables.getTable, 
@@ -128,24 +128,8 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     }
   };
 
-  // Track action history - only track actual new actions, not all players with lastAction
-  useEffect(() => {
-    if (!players || !gameState) return;
-
-    // Track phase changes
-    const currentPhase = gameState.phase;
-    if (currentPhase === 'preflop' && actionHistory.length === 0) {
-      setActionHistory([{
-        id: `phase-${currentPhase}-${Date.now()}`,
-        playerName: 'Système',
-        action: 'join' as any,
-        timestamp: Date.now(),
-      }]);
-    }
-  }, [gameState?.phase]);
-
   // Track when actions are performed by updating history only on successful actions
-  const addActionToHistory = (playerName: string, action: string, amount?: number) => {
+  const addActionToHistory = useCallback((playerName: string, action: string, amount?: number) => {
     const newAction = {
       id: `${playerName}-${action}-${Date.now()}-${Math.random()}`,
       playerName,
@@ -158,7 +142,32 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
       const updated = [newAction, ...prev].slice(0, 10); // Keep only last 10
       return updated;
     });
-  };
+  }, []);
+
+  // Track phase changes and initialize action history
+  useEffect(() => {
+    if (!gameState) return;
+    
+    const phaseNames = {
+      'preflop': 'Pré-flop',
+      'flop': 'Flop',
+      'turn': 'Turn', 
+      'river': 'River',
+      'showdown': 'Abattage'
+    };
+    
+    const currentPhase = gameState.phase;
+    if (currentPhase in phaseNames && currentPhase !== 'waiting') {
+      // Only add if we don't already have a system message for this phase
+      const hasPhaseMessage = actionHistory.some(action => 
+        action.playerName === 'Système' && action.id?.includes(`phase-${currentPhase}`)
+      );
+      
+      if (!hasPhaseMessage) {
+        addActionToHistory('Système', 'join', undefined);
+      }
+    }
+  }, [gameState?.phase, actionHistory, addActionToHistory]);
 
   // Auto-fold on timeout (30 seconds)
   useEffect(() => {

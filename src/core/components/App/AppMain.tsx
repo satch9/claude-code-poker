@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { Lobby } from "../Lobby/Lobby";
@@ -116,6 +116,7 @@ const AppContent: React.FC = () => {
       // selectedTableId est garanti d'être non-null ici grâce au check ci-dessus
       return (
         <PokerTable
+          key={selectedTableId}
           tableId={selectedTableId}
           onLeaveTable={handleLeaveTable}
           onJoinSeat={handleJoinSeat}
