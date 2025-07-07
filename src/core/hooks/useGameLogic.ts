@@ -64,6 +64,11 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
         action: action.action,
         amount: action.amount,
       });
+      
+      // Add action to history
+      const playerName = user.name || 'Vous';
+      addActionToHistory(playerName, action.action, action.amount);
+      
       setSelectedAction(null);
       setRaiseAmount(0);
     } catch (error) {
@@ -99,30 +104,37 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     }
   };
 
-  // Track action history
+  // Track action history - only track actual new actions, not all players with lastAction
   useEffect(() => {
-    if (!players) return;
+    if (!players || !gameState) return;
 
-    const newActions = players
-      .filter(p => p.lastAction)
-      .map(p => ({
-        id: `${p._id}-${p.lastAction}-${Date.now()}`,
-        playerName: p.user?.name || 'Joueur',
-        action: p.lastAction as any,
-        amount: p.currentBet,
+    // Track phase changes
+    const currentPhase = gameState.phase;
+    if (currentPhase === 'preflop' && actionHistory.length === 0) {
+      setActionHistory([{
+        id: `phase-${currentPhase}-${Date.now()}`,
+        playerName: 'Système',
+        action: 'join' as any,
         timestamp: Date.now(),
-      }))
-      .slice(-10); // Keep only last 10 actions
+      }]);
+    }
+  }, [gameState?.phase]);
+
+  // Track when actions are performed by updating history only on successful actions
+  const addActionToHistory = (playerName: string, action: string, amount?: number) => {
+    const newAction = {
+      id: `${playerName}-${action}-${Date.now()}-${Math.random()}`,
+      playerName,
+      action: action as any,
+      amount,
+      timestamp: Date.now(),
+    };
 
     setActionHistory(prev => {
-      const combined = [...prev, ...newActions];
-      // Remove duplicates and keep only recent ones
-      const unique = combined.filter((action, index, arr) => 
-        arr.findIndex(a => a.id === action.id) === index
-      ).slice(-10);
-      return unique;
+      const updated = [newAction, ...prev].slice(0, 10); // Keep only last 10
+      return updated;
     });
-  }, [players]);
+  };
 
   // Auto-fold on timeout (30 seconds)
   useEffect(() => {
@@ -265,6 +277,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
     // Game tracking
     actionHistory,
     handNumber,
+    addActionToHistory,
     
     // UI state
     selectedAction,

@@ -40,23 +40,25 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
   };
 
   const getActionText = (item: ActionFeedItem) => {
+    const playerName = item.playerName || 'Joueur inconnu';
+    
     switch (item.action) {
       case 'fold':
-        return `${item.playerName} se couche`;
+        return `${playerName} se couche`;
       case 'check':
-        return `${item.playerName} check`;
+        return `${playerName} check`;
       case 'call':
-        return `${item.playerName} suit${item.amount ? ` (${item.amount.toLocaleString()})` : ''}`;
+        return `${playerName} suit${item.amount ? ` (${item.amount.toLocaleString()})` : ''}`;
       case 'raise':
-        return `${item.playerName} relance à ${item.amount?.toLocaleString()}`;
+        return `${playerName} relance à ${item.amount?.toLocaleString()}`;
       case 'all-in':
-        return `${item.playerName} fait tapis${item.amount ? ` (${item.amount.toLocaleString()})` : ''}`;
+        return `${playerName} fait tapis${item.amount ? ` (${item.amount.toLocaleString()})` : ''}`;
       case 'join':
-        return `${item.playerName} rejoint la table`;
+        return playerName === 'Système' ? 'Nouvelle main commencée' : `${playerName} rejoint la table`;
       case 'leave':
-        return `${item.playerName} quitte la table`;
+        return `${playerName} quitte la table`;
       default:
-        return `${item.playerName} ${item.action}`;
+        return `${playerName} ${item.action}`;
     }
   };
 

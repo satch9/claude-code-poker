@@ -42,6 +42,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     actionHistory,
     handNumber,
     handleTimeOut,
+    addActionToHistory,
   } = useGameLogic(tableId);
 
   // Early return if no data
@@ -61,6 +62,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const potOdds = getPotOdds();
   const handStrength = getHandStrength();
   const gameStats = getGameStats();
+
+  // Track phase changes
+  React.useEffect(() => {
+    if (!gameState) return;
+    
+    const phaseNames = {
+      'preflop': 'Pré-flop',
+      'flop': 'Flop',
+      'turn': 'Turn', 
+      'river': 'River',
+      'showdown': 'Abattage'
+    };
+    
+    if (gameState.phase in phaseNames && gameState.phase !== 'waiting') {
+      addActionToHistory('Système', 'join', undefined);
+    }
+  }, [gameState?.phase, addActionToHistory]);
 
   // Calculate seat positions for oval table
   const getSeatPosition = (position: number, maxPlayers: number) => {

@@ -315,7 +315,9 @@
                 'check': 'text-gray-400',
                 'call': 'text-blue-400',
                 'raise': 'text-green-400',
-                'all-in': 'text-purple-400'
+                'all-in': 'text-purple-400',
+                'join': 'text-cyan-400',
+                'new_hand': 'text-yellow-400'
             };
             
             const actionTexts = {
@@ -323,12 +325,18 @@
                 'check': 'check',
                 'call': `suit${amount ? ` (${amount.toLocaleString()})` : ''}`,
                 'raise': `relance à ${amount?.toLocaleString()}`,
-                'all-in': `fait tapis${amount ? ` (${amount.toLocaleString()})` : ''}`
+                'all-in': `fait tapis${amount ? ` (${amount.toLocaleString()})` : ''}`,
+                'join': playerName === 'Système' ? 'Nouvelle phase commencée' : 'rejoint la table',
+                'new_hand': 'Nouvelle main commencée'
             };
             
+            const displayText = playerName === 'Système' && action === 'join' ? 
+                actionTexts[action] : 
+                `${playerName || 'Joueur'} ${actionTexts[action] || action}`;
+            
             actionDiv.innerHTML = `
-                <div class="font-medium ${actionColors[action]}">
-                    ${playerName} ${actionTexts[action]}
+                <div class="font-medium ${actionColors[action] || 'text-gray-400'}">
+                    ${displayText}
                 </div>
                 <div class="text-xs text-gray-500">
                     ${new Date().toLocaleTimeString('fr-FR')}
