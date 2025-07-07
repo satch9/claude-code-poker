@@ -4,9 +4,10 @@ import { UserProfile } from "../Auth/UserProfile";
 import { useAuth } from "../../hooks/useAuth";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface LobbyProps {
-  onJoinTable: (tableId: string) => void;
+  onJoinTable: (tableId: Id<"tables">) => void;
   onCreateTable: () => void;
 }
 

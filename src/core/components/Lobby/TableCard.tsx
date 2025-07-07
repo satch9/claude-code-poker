@@ -2,10 +2,11 @@ import React from 'react';
 import { Button } from '../UI/Button';
 import { Table } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
+import { Id } from '../../../../convex/_generated/dataModel';
 
 interface TableCardProps {
   table: Table;
-  onJoin: (tableId: string) => void;
+  onJoin: (tableId: Id<"tables">) => void;
   className?: string;
 }
 
@@ -80,7 +81,7 @@ export const TableCard: React.FC<TableCardProps> = ({
           variant={isTableFull ? "secondary" : "primary"}
           size="sm"
           disabled={isTableFull}
-          onClick={() => onJoin(table._id)}
+          onClick={() => onJoin(table._id as Id<"tables">)}
         >
           {isTableFull ? 'Table pleine' : 'Rejoindre'}
         </Button>

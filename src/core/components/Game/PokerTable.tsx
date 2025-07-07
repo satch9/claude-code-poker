@@ -13,7 +13,7 @@ import { useGameLogic } from '../../hooks/useGameLogic';
 import { Id } from '../../../convex/_generated/dataModel';
 
 interface PokerTableProps {
-  tableId: Id<'tables'>;
+  tableId: Id<'tables'> | null;
   onLeaveTable: () => void;
   onJoinSeat: (position: number) => void;
 }
@@ -48,8 +48,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     addActionToHistory,
   } = useGameLogic(tableId);
 
-  // Early return if no data
-  if (!gameState || !players || !table) {
+  // Early return if no tableId or no data
+  if (!tableId || !gameState || !players || !table) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4 flex items-center justify-center">
         <div className="text-white text-center">

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { TableCard } from './TableCard';
 import { Button } from '../UI/Button';
 import { Table } from '../../../shared/types';
+import { Id } from '../../../../convex/_generated/dataModel';
 
 interface TableListProps {
   tables: Table[];
-  onJoinTable: (tableId: string) => void;
+  onJoinTable: (tableId: Id<"tables">) => void;
   onCreateTable: () => void;
   loading?: boolean;
 }

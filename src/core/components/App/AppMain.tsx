@@ -17,8 +17,8 @@ const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>("lobby");
   const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(null);
 
-  const handleJoinTable = (tableId: string) => {
-    setSelectedTableId(tableId as Id<"tables">);
+  const handleJoinTable = (tableId: Id<"tables">) => {
+    setSelectedTableId(tableId);
     setCurrentView("table");
   };
 

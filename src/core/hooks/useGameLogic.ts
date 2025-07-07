@@ -10,7 +10,7 @@ interface GameAction {
   maxAmount?: number;
 }
 
-export const useGameLogic = (tableId: Id<'tables'>) => {
+export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const { isAuthenticated } = useConvexAuth();
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
@@ -51,7 +51,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
   // Action handlers
   const handleStartGame = async () => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user || !tableId) return;
     
     setIsProcessing(true);
     try {
@@ -64,7 +64,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
   };
 
   const handleStartNextHand = async () => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user || !tableId) return;
     
     setIsProcessing(true);
     try {
@@ -78,7 +78,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
   };
 
   const handlePlayerAction = async (action: GameAction) => {
-    if (!isAuthenticated || !user || !isMyTurn) return;
+    if (!isAuthenticated || !user || !isMyTurn || !tableId) return;
     
     setIsProcessing(true);
     try {
@@ -162,7 +162,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
   // Auto-fold on timeout (30 seconds)
   useEffect(() => {
-    if (!isMyTurn || !user) return;
+    if (!isMyTurn || !user || !tableId) return;
 
     const timeoutId = setTimeout(() => {
       forcePlayerFold({ tableId, userId: user._id });
@@ -264,7 +264,7 @@ export const useGameLogic = (tableId: Id<'tables'>) => {
 
   // Handle timeout
   const handleTimeOut = () => {
-    if (user && isMyTurn) {
+    if (user && isMyTurn && tableId) {
       forcePlayerFold({ tableId, userId: user._id });
     }
   };
