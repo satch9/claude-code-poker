@@ -151,26 +151,23 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
       onClick={onClick}
       style={animationStyle}
     >
-      {/* Card content */}
-      <div className="flex flex-col justify-between h-full p-1">
-        {/* Top-left corner */}
-        <div className={cn('flex flex-col items-start leading-none font-bold', getSuitColor(card.suit))}>
-          <div className={fontSizes[size].rank}>{card.rank}</div>
-          <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
-        </div>
+      {/* Top-left corner */}
+      <div className={cn('absolute top-1 left-1 flex flex-col items-start leading-none font-bold', getSuitColor(card.suit))}>
+        <div className={fontSizes[size].rank}>{card.rank}</div>
+        <div className={fontSizes[size].symbol}>{getSuitSymbol(card.suit)}</div>
+      </div>
 
-        {/* Center symbol */}
-        <div className={cn('flex items-center justify-center flex-1', getSuitColor(card.suit))}>
-          <div className={cn(fontSizes[size].center, 'font-normal')}>
-            {getSuitSymbol(card.suit)}
-          </div>
+      {/* Center symbol */}
+      <div className={cn('absolute inset-0 flex items-center justify-center', getSuitColor(card.suit))}>
+        <div className={cn(fontSizes[size].center, 'font-normal')}>
+          {getSuitSymbol(card.suit)}
         </div>
+      </div>
 
-        {/* Bottom-right corner (upside down) */}
-        <div className={cn('flex flex-col items-end leading-none font-bold transform rotate-180 self-end', getSuitColor(card.suit))}>
-          <div className={fontSizes[size].rank}>{card.rank}</div>
-          <div className={cn(fontSizes[size].symbol, '-mt-0.5')}>{getSuitSymbol(card.suit)}</div>
-        </div>
+      {/* Bottom-right corner (upside down) */}
+      <div className={cn('absolute bottom-1 right-1 flex flex-col items-end leading-none font-bold transform rotate-180', getSuitColor(card.suit))}>
+        <div className={fontSizes[size].rank}>{card.rank}</div>
+        <div className={fontSizes[size].symbol}>{getSuitSymbol(card.suit)}</div>
       </div>
 
       {/* Subtle gradient overlay for depth */}
