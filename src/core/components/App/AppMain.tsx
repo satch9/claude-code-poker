@@ -6,6 +6,8 @@ import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
 import { PokerTable } from "../Game/PokerTable";
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 // Table, Player, GameState plus nécessaires ici
 import { Id } from "../../../convex/_generated/dataModel";
 
@@ -14,6 +16,7 @@ type AppView = "lobby" | "table" | "create-table";
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { createTable } = useTableActions();
+  const joinTableMutation = useMutation(api.players.joinTable);
   const [currentView, setCurrentView] = useState<AppView>("lobby");
   const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(null);
 
@@ -55,9 +58,24 @@ const AppContent: React.FC = () => {
 
   // handlePlayerAction supprimé - géré directement par PokerTable
 
-  const handleJoinSeat = (position: number) => {
-    console.log("Joining seat:", position);
-    // TODO: Implement join seat logic
+  const handleJoinSeat = async (position: number) => {
+    if (!user || !selectedTableId) {
+      console.error("User or table not available");
+      return;
+    }
+
+    try {
+      const result = await joinTableMutation({
+        tableId: selectedTableId,
+        userId: user._id,
+        seatPosition: position,
+      });
+      
+      console.log("Successfully joined seat:", result.seatPosition);
+    } catch (error) {
+      console.error("Error joining seat:", error);
+      // TODO: Show error notification to user
+    }
   };
 
   // Les données sont maintenant récupérées directement par PokerTable via Convex

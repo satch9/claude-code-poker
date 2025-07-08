@@ -7,6 +7,7 @@ export const joinTable = mutation({
     tableId: v.id("tables"),
     userId: v.id("users"),
     buyInAmount: v.optional(v.number()),
+    seatPosition: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const table = await ctx.db.get(args.tableId);
@@ -35,13 +36,30 @@ export const joinTable = mutation({
       throw new Error("Table is full");
     }
 
-    // Find next available seat
+    // Get occupied seats
     const occupiedSeats = currentPlayers.map(p => p.seatPosition);
-    let seatPosition = 0;
-    for (let i = 0; i < table.maxPlayers; i++) {
-      if (!occupiedSeats.includes(i)) {
-        seatPosition = i;
-        break;
+    
+    let seatPosition: number;
+    
+    if (args.seatPosition !== undefined) {
+      // User wants a specific seat
+      if (args.seatPosition < 0 || args.seatPosition >= table.maxPlayers) {
+        throw new Error("Invalid seat position");
+      }
+      
+      if (occupiedSeats.includes(args.seatPosition)) {
+        throw new Error("Seat is already occupied");
+      }
+      
+      seatPosition = args.seatPosition;
+    } else {
+      // Find next available seat
+      seatPosition = 0;
+      for (let i = 0; i < table.maxPlayers; i++) {
+        if (!occupiedSeats.includes(i)) {
+          seatPosition = i;
+          break;
+        }
       }
     }
 
