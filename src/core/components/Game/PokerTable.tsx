@@ -61,11 +61,27 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const gameStats = getGameStats();
   const currentBet = gameState?.currentBet || 0;
 
-  // Calculate seat positions for oval table
+  // Calculate seat positions for oval table (optimized for 9 players)
   const getSeatPosition = (position: number, maxPlayers: number) => {
     const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
-    const radiusX = 45; // Horizontal radius percentage
-    const radiusY = 35; // Vertical radius percentage
+    const radiusX = 48; // Horizontal radius percentage (more wide)
+    const radiusY = 38; // Vertical radius percentage (more oval)
+
+    const x = 50 + radiusX * Math.cos(angle);
+    const y = 50 + radiusY * Math.sin(angle);
+
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      transform: "translate(-50%, -50%)",
+    };
+  };
+
+  // Calculate dealer button position (in front of player seat)
+  const getDealerButtonPosition = (position: number, maxPlayers: number) => {
+    const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+    const radiusX = 38; // Closer to center than player seat
+    const radiusY = 28; // Closer to center than player seat
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);
@@ -111,9 +127,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900">
+    <div className="fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-poker-green-700">
+      <div className="flex justify-between items-center p-4 border-b border-poker-green-700 flex-shrink-0">
         <div className="text-white">
           <h1 className="text-2xl font-bold">{table.name}</h1>
           <p className="text-poker-green-200">
@@ -142,11 +158,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       </div>
 
       {/* Main content - 3 columns layout */}
-      <div className="flex h-[calc(100vh-120px)]">
+      <div
+        className="flex flex-1 overflow-x-auto"
+        style={{ minWidth: "1200px" }}
+      >
         {/* Left sidebar - Actions */}
-        <div className="w-80 p-4 border-r border-poker-green-700 space-y-4">
+        <div className="w-80 flex-shrink-0 p-4 border-r border-poker-green-700 space-y-4 overflow-y-auto">
           <ActionFeed actions={actionHistory} />
-          
+
           <TurnIndicator
             currentPhase={gameState.phase}
             currentPlayerPosition={gameState.currentPlayerPosition}
@@ -158,7 +177,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )?.user?.name || ""
             }
           />
-          
+
           {gameStats && (
             <HandStats
               handNumber={handNumber}
@@ -172,129 +191,295 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         </div>
 
         {/* Center - Table */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <div
+          className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden"
+          style={{ maxWidth: "calc(100% - 640px)" }}
+        >
           {/* Main table area */}
           <div className="relative w-full max-w-4xl h-[600px]">
-          {/* Table shadow */}
-          <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
+            {/* Table shadow */}
+            <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
 
-          {/* Table felt */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-700 rounded-full border-8 border-amber-400 shadow-2xl overflow-hidden">
-            {/* Table texture overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-full"></div>
+            {/* Table felt */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl overflow-hidden" 
+                 style={{ 
+                   border: '12px solid transparent',
+                   backgroundImage: 'linear-gradient(to bottom right, #10b981, #059669, #047857), linear-gradient(45deg, #f59e0b, #d97706, #92400e, #d97706, #f59e0b)',
+                   backgroundOrigin: 'padding-box, border-box',
+                   backgroundClip: 'padding-box, border-box'
+                 }}>
+              {/* Table texture overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/30 rounded-full"></div>
+              
+              {/* Enhanced felt texture */}
+              <div className="absolute inset-0 rounded-full" 
+                   style={{
+                     backgroundImage: `
+                       radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                       radial-gradient(circle at 75% 75%, rgba(0,0,0,0.1) 0%, transparent 50%),
+                       linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.02) 50%, transparent 60%)
+                     `
+                   }}>
+              </div>
 
-            {/* Inner border design */}
-            <div className="absolute inset-4 border-2 border-amber-300/30 rounded-full"></div>
-            <div className="absolute inset-6 border border-amber-200/20 rounded-full"></div>
+              {/* Inner decorative rings */}
+              <div className="absolute inset-6 border-2 rounded-full" 
+                   style={{ borderColor: 'rgba(245, 158, 11, 0.3)' }}></div>
+              <div className="absolute inset-8 border rounded-full" 
+                   style={{ borderColor: 'rgba(245, 158, 11, 0.2)' }}></div>
 
-            {/* Community cards in center */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-              <div className="bg-black/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                <CommunityCards
-                  cards={gameState.communityCards}
-                  phase={gameState.phase}
-                  pot={gameState.pot}
-                />
+              {/* Center area with pot and community cards */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center space-y-4">
+                {/* Pot total display */}
+                <div className="bg-white rounded-xl px-6 py-3 shadow-lg border-2 border-gray-200 min-w-48">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                      <span className="text-gray-700 font-bold text-sm uppercase tracking-wide">Pot Total</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {gameState.pot.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Community cards */}
+                {gameState.communityCards.length > 0 && (
+                  <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
+                    <CommunityCards
+                      cards={gameState.communityCards}
+                      phase={gameState.phase}
+                      pot={gameState.pot}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Dealer button */}
+              {gameState.dealerPosition >= 0 && (
+                <div
+                  className="absolute z-20 w-10 h-10 bg-gradient-to-br from-white to-gray-100 border-3 border-gray-700 rounded-full flex items-center justify-center text-sm font-black text-gray-800 shadow-xl transition-all duration-500"
+                  style={{
+                    ...getDealerButtonPosition(gameState.dealerPosition, table.maxPlayers),
+                    boxShadow: '0 8px 25px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
+                  }}
+                >
+                  <span className="drop-shadow-sm">D</span>
+                </div>
+              )}
+
+              {/* Action indicator */}
+              {gameState.currentPlayerPosition >= 0 && (
+                <div
+                  className="absolute z-10 px-3 py-1 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 border-2 border-yellow-600 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 shadow-xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                  style={{
+                    ...getSeatPosition(
+                      gameState.currentPlayerPosition,
+                      table.maxPlayers
+                    ),
+                    top: `${parseFloat(getSeatPosition(gameState.currentPlayerPosition, table.maxPlayers).top) - 10}%`,
+                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)'
+                  }}
+                >
+                  <span className="drop-shadow-sm whitespace-nowrap">À JOUER</span>
+                </div>
+              )}
+
+              {/* Player seats around the table */}
+              {seats.map((seat) => (
+                <div
+                  key={seat.position}
+                  className="absolute"
+                  style={getSeatPosition(seat.position, table.maxPlayers)}
+                >
+                  <PlayerSeat
+                    player={seat.player as any}
+                    position={seat.position}
+                    isDealer={seat.isDealer}
+                    isCurrentPlayer={seat.isCurrentPlayer}
+                    isSmallBlind={seat.isSmallBlind}
+                    isBigBlind={seat.isBigBlind}
+                    showCards={
+                      seat.isCurrentPlayer || gameState.phase === "showdown"
+                    }
+                    isEmpty={seat.isEmpty}
+                    onSeatClick={() =>
+                      seat.isEmpty && onJoinSeat(seat.position)
+                    }
+                    className={cn(
+                      seat.isActivePlayer &&
+                        "ring-2 ring-yellow-400 ring-opacity-75",
+                      "transition-all duration-300"
+                    )}
+                  />
+                </div>
+              ))}
+
+              {/* Side pots indicator */}
+              {gameState.sidePots.length > 0 && (
+                <div className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50">
+                  <div className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                    Side Pots
+                  </div>
+                  {gameState.sidePots.map((pot, index) => (
+                    <div
+                      key={index}
+                      className="text-sm text-gray-700 py-1 flex justify-between"
+                    >
+                      <span>Pot {index + 1}:</span>
+                      <span className="font-semibold">
+                        {pot.amount.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Action Timer (for current player) */}
+              {isMyTurn && gameState.phase !== "waiting" && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+                  <ActionTimer
+                    isActive={true}
+                    timeLimit={30}
+                    onTimeOut={handleTimeOut}
+                  />
+                </div>
+              )}
+
+              {/* Game info button */}
+              <div className="absolute top-4 right-4 z-50">
+                <button
+                  onClick={() => setShowGameInfo(!showGameInfo)}
+                  className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                >
+                  <svg
+                    className="w-6 h-6 text-gray-700"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
 
-            {/* Dealer button */}
-            {gameState.dealerPosition >= 0 && (
-              <div
-                className="absolute z-30 w-8 h-8 bg-white border-2 border-gray-800 rounded-full flex items-center justify-center text-xs font-bold text-gray-800 shadow-lg transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
-                style={getSeatPosition(
-                  gameState.dealerPosition,
-                  table.maxPlayers
-                )}
-              >
-                D
-              </div>
-            )}
-
-            {/* Action indicator */}
-            {gameState.currentPlayerPosition >= 0 && (
-              <div
-                className="absolute z-25 w-16 h-8 bg-yellow-400 border-2 border-yellow-600 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 shadow-lg transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
-                style={{
-                  ...getSeatPosition(
-                    gameState.currentPlayerPosition,
-                    table.maxPlayers
-                  ),
-                  top: `${parseFloat(getSeatPosition(gameState.currentPlayerPosition, table.maxPlayers).top) - 8}%`,
-                }}
-              >
-                À JOUER
-              </div>
-            )}
-
-            {/* Player seats around the table */}
-            {seats.map((seat) => (
-              <div
-                key={seat.position}
-                className="absolute"
-                style={getSeatPosition(seat.position, table.maxPlayers)}
-              >
-                <PlayerSeat
-                  player={seat.player as any}
-                  position={seat.position}
-                  isDealer={seat.isDealer}
-                  isCurrentPlayer={seat.isCurrentPlayer}
-                  isSmallBlind={seat.isSmallBlind}
-                  isBigBlind={seat.isBigBlind}
-                  showCards={
-                    seat.isCurrentPlayer || gameState.phase === "showdown"
-                  }
-                  isEmpty={seat.isEmpty}
-                  onSeatClick={() => seat.isEmpty && onJoinSeat(seat.position)}
-                  className={cn(
-                    seat.isActivePlayer &&
-                      "ring-2 ring-yellow-400 ring-opacity-75",
-                    "transition-all duration-300"
-                  )}
-                />
-              </div>
-            ))}
-
-            {/* Side pots indicator */}
-            {gameState.sidePots.length > 0 && (
-              <div className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50">
-                <div className="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                  Side Pots
+            {/* Betting controls under table */}
+            {currentPlayer &&
+              isMyTurn &&
+              gameState.phase !== "waiting" &&
+              availableActions.length > 0 && (
+                <div className="mt-6 w-full max-w-4xl">
+                  <BettingControls
+                    availableActions={availableActions as any}
+                    playerChips={currentPlayer.chips}
+                    currentBet={gameState.currentBet}
+                    potSize={gameState.pot}
+                    onAction={handlePlayerAction}
+                    disabled={isProcessing}
+                    potOdds={potOdds?.ratio || undefined}
+                    handStrength={handStrength || undefined}
+                  />
                 </div>
-                {gameState.sidePots.map((pot, index) => (
-                  <div
-                    key={index}
-                    className="text-sm text-gray-700 py-1 flex justify-between"
-                  >
-                    <span>Pot {index + 1}:</span>
-                    <span className="font-semibold">
-                      {pot.amount.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+              )}
+          </div>
+        </div>
 
-            {/* Action Timer (for current player) */}
-            {isMyTurn && gameState.phase !== "waiting" && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
-                <ActionTimer
-                  isActive={true}
-                  timeLimit={30}
-                  onTimeOut={handleTimeOut}
+        {/* Right sidebar - Chat and features */}
+        <div className="w-80 flex-shrink-0 p-4 border-l border-poker-green-700 space-y-4 overflow-y-auto">
+          {/* Chat placeholder */}
+          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12a8 8 0 018-8c4.418 0 8 3.582 8 8z"
                 />
+              </svg>
+              Chat
+            </h3>
+            <div className="text-poker-green-200 text-sm">
+              <div className="bg-poker-green-900/50 rounded p-2 mb-2">
+                Chat sera disponible prochainement
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Game info button */}
-            <div className="absolute top-4 right-4 z-50">
+          {/* Table settings placeholder */}
+          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Paramètres
+            </h3>
+            <div className="space-y-2">
+              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                Sons et notifications
+              </button>
+              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                Animations
+              </button>
+              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                Affichage
+              </button>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Actions rapides
+            </h3>
+            <div className="space-y-2">
               <button
-                onClick={() => setShowGameInfo(!showGameInfo)}
-                className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                onClick={() => setShowGameInfo(true)}
+                className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2"
               >
                 <svg
-                  className="w-6 h-6 text-gray-700"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -306,37 +491,29 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
+                Infos de la partie
+              </button>
+              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                  />
+                </svg>
+                Inviter des joueurs
               </button>
             </div>
           </div>
-
-          {/* Betting controls under table */}
-          {currentPlayer &&
-            isMyTurn &&
-            gameState.phase !== "waiting" &&
-            availableActions.length > 0 && (
-              <div className="mt-6 w-full max-w-4xl">
-                <BettingControls
-                  availableActions={availableActions as any}
-                  playerChips={currentPlayer.chips}
-                  currentBet={gameState.currentBet}
-                  potSize={gameState.pot}
-                  onAction={handlePlayerAction}
-                  disabled={isProcessing}
-                  potOdds={potOdds?.ratio || undefined}
-                  handStrength={handStrength || undefined}
-                />
-              </div>
-            )}
         </div>
 
-        {/* Right sidebar - Future content */}
-        <div className="w-80 p-4 border-l border-poker-green-700 space-y-4">
-          {/* Future content can go here */}
-        </div>
-      </div>
-
-      {/* Game info modal */}
+        {/* Game info modal */}
         {showGameInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}

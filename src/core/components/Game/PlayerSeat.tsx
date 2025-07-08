@@ -69,12 +69,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         className
       )}
     >
-      {/* Dealer button */}
-      {isDealer && (
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-sm font-bold shadow-lg border-2 border-yellow-600">
-          D
-        </div>
-      )}
+      {/* Dealer button removed - now handled separately on the table */}
 
       {/* Blind indicators */}
       {(isSmallBlind || isBigBlind) && (
