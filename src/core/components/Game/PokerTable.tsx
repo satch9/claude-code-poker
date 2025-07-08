@@ -7,7 +7,6 @@ import { ActionTimer } from "./ActionTimer";
 import { HandStats } from "./HandStats";
 import { TurnIndicator } from "./TurnIndicator";
 import { Button } from "../UI/Button";
-import { Player, GameState, Table, User } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
 import { useGameLogic } from "../../hooks/useGameLogic";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -31,21 +30,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     gameState,
     players,
     currentPlayer,
-    isGameActive,
     isMyTurn,
     isProcessing,
     availableActions,
     handleStartGame,
     handlePlayerAction,
-    getBettingInfo,
     getPotOdds,
     getHandStrength,
     getGameStats,
     actionHistory,
     handNumber,
     handleTimeOut,
-    handleStartNextHand,
-    addActionToHistory,
   } = useGameLogic(tableId);
 
   // Early return if no tableId or no data
@@ -61,10 +56,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   }
 
   // Get game info
-  const bettingInfo = getBettingInfo();
   const potOdds = getPotOdds();
   const handStrength = getHandStrength();
   const gameStats = getGameStats();
+  const currentBet = gameState?.currentBet || 0;
 
   // Calculate seat positions for oval table
   const getSeatPosition = (position: number, maxPlayers: number) => {
@@ -84,7 +79,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Create array of all seat positions
   const seats = Array.from({ length: table.maxPlayers }, (_, position) => {
-    const player = players.find((p) => p.seatPosition === position);
+    const player = players.find((p) => p.seatPosition === position && p.user);
     const isEmpty = !player;
 
     return {
@@ -100,6 +95,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   });
 
   function getSmallBlindPosition() {
+    if (!players || !gameState || !table) return 0;
     if (players.length === 2) {
       return gameState.dealerPosition; // In heads-up, dealer is small blind
     }
@@ -107,6 +103,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   }
 
   function getBigBlindPosition() {
+    if (!players || !gameState || !table) return 0;
     if (players.length === 2) {
       return (gameState.dealerPosition + 1) % table.maxPlayers;
     }
@@ -114,24 +111,47 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-white">
-            <h1 className="text-2xl font-bold">{table.name}</h1>
-            <p className="text-poker-green-200">
-              {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
-              Blinds: {table.smallBlind}/{table.bigBlind}
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 border-b border-poker-green-700">
+        <div className="text-white">
+          <h1 className="text-2xl font-bold">{table.name}</h1>
+          <p className="text-poker-green-200">
+            {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
+            Blinds: {table.smallBlind}/{table.bigBlind}
+          </p>
+        </div>
+        <div className="flex gap-3">
+          {/* Start game button in header */}
+          {gameState.phase === "waiting" &&
+            players.length >= 2 &&
+            currentPlayer && (
+              <Button
+                onClick={handleStartGame}
+                disabled={isProcessing}
+                size="lg"
+                variant="primary"
+              >
+                {isProcessing ? "Démarrage..." : "Démarrer la partie"}
+              </Button>
+            )}
           <Button variant="secondary" onClick={onLeaveTable}>
             Quitter la table
           </Button>
         </div>
+      </div>
 
-        {/* Main table area */}
-        <div className="relative w-full h-[700px] mx-auto">
+      {/* Main content - 3 columns layout */}
+      <div className="flex h-[calc(100vh-120px)]">
+        {/* Left sidebar - Actions */}
+        <div className="w-80 p-4 border-r border-poker-green-700">
+          <ActionFeed actions={actionHistory} />
+        </div>
+
+        {/* Center - Table */}
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          {/* Main table area */}
+          <div className="relative w-full max-w-4xl h-[600px]">
           {/* Table shadow */}
           <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
 
@@ -192,7 +212,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 style={getSeatPosition(seat.position, table.maxPlayers)}
               >
                 <PlayerSeat
-                  player={seat.player}
+                  player={seat.player as any}
                   position={seat.position}
                   isDealer={seat.isDealer}
                   isCurrentPlayer={seat.isCurrentPlayer}
@@ -266,9 +286,55 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Betting controls under table */}
+          {currentPlayer &&
+            isMyTurn &&
+            gameState.phase !== "waiting" &&
+            availableActions.length > 0 && (
+              <div className="mt-6 w-full max-w-4xl">
+                <BettingControls
+                  availableActions={availableActions as any}
+                  playerChips={currentPlayer.chips}
+                  currentBet={gameState.currentBet}
+                  potSize={gameState.pot}
+                  onAction={handlePlayerAction}
+                  disabled={isProcessing}
+                  potOdds={potOdds?.ratio || undefined}
+                  handStrength={handStrength || undefined}
+                />
+              </div>
+            )}
         </div>
 
-        {/* Game info modal */}
+        {/* Right sidebar - Turn indicator and Hand stats */}
+        <div className="w-80 p-4 border-l border-poker-green-700 space-y-4">
+          <TurnIndicator
+            currentPhase={gameState.phase}
+            currentPlayerPosition={gameState.currentPlayerPosition}
+            dealerPosition={gameState.dealerPosition}
+            isMyTurn={isMyTurn || false}
+            playerName={
+              players.find(
+                (p) => p.seatPosition === gameState.currentPlayerPosition
+              )?.user?.name || ""
+            }
+          />
+          
+          {gameStats && (
+            <HandStats
+              handNumber={handNumber}
+              potSize={gameState.pot}
+              totalPlayers={players.length}
+              activePlayers={players.filter((p) => !p.isFolded).length}
+              bigBlind={table.bigBlind}
+              averageStack={gameStats.averageChips}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Game info modal */}
         {showGameInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
@@ -385,184 +451,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Start game button */}
-        {gameState.phase === "waiting" &&
-          players.length >= 2 &&
-          currentPlayer && (
-            <div className="mt-6 text-center space-y-3">
-              <Button
-                onClick={handleStartGame}
-                disabled={isProcessing}
-                size="lg"
-                variant="primary"
-              >
-                {isProcessing ? "Démarrage..." : "Démarrer la partie"}
-              </Button>
-
-              {/* Start next hand button (if a game was already played) */}
-              {handNumber > 1 && (
-                <div className="flex items-center justify-center gap-3">
-                  <div className="text-sm text-gray-400">ou</div>
-                  <Button
-                    onClick={handleStartNextHand}
-                    disabled={isProcessing}
-                    size="md"
-                    variant="secondary"
-                  >
-                    {isProcessing ? "Démarrage..." : "Main suivante"}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-        {/* Betting controls */}
-        {currentPlayer &&
-          isMyTurn &&
-          gameState.phase !== "waiting" &&
-          availableActions.length > 0 && (
-            <div className="mt-6">
-              <BettingControls
-                availableActions={availableActions}
-                playerChips={currentPlayer.chips}
-                currentBet={gameState.currentBet}
-                potSize={gameState.pot}
-                onAction={handlePlayerAction}
-                disabled={isProcessing}
-                potOdds={potOdds?.ratio}
-                handStrength={handStrength}
-              />
-            </div>
-          )}
-
-        {/* Side panels */}
-        <div className="grid grid-cols-3 gap-6 mt-6">
-          {/* Left panel - Action Feed */}
-          <div>
-            <ActionFeed actions={actionHistory} />
-          </div>
-
-          {/* Center panel - Turn Indicator */}
-          <div>
-            <TurnIndicator
-              currentPhase={gameState.phase}
-              currentPlayerPosition={gameState.currentPlayerPosition}
-              dealerPosition={gameState.dealerPosition}
-              isMyTurn={isMyTurn}
-              playerName={
-                players.find(
-                  (p) => p.seatPosition === gameState.currentPlayerPosition
-                )?.user?.name
-              }
-            />
-          </div>
-
-          {/* Right panel - Hand Stats */}
-          <div>
-            {gameStats && (
-              <HandStats
-                handNumber={handNumber}
-                potSize={gameState.pot}
-                totalPlayers={players.length}
-                activePlayers={players.filter((p) => !p.isFolded).length}
-                bigBlind={table.bigBlind}
-                averageStack={gameStats.averageChips}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Waiting for other players */}
-        {gameState.phase === "waiting" && (
-          <div className="mt-8 text-center">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-blue-200 rounded-2xl p-8 inline-block shadow-xl max-w-md">
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-blue-900 mb-3">
-                En attente de joueurs
-              </h3>
-              <p className="text-blue-700 mb-4 leading-relaxed">
-                {players.length < 2
-                  ? "Au moins 2 joueurs sont nécessaires pour commencer la partie"
-                  : "La partie peut commencer dès maintenant !"}
-              </p>
-              {players.length >= 2 && !currentPlayer && (
-                <div className="bg-orange-100 border border-orange-300 rounded-lg p-3">
-                  <p className="text-orange-800 font-medium text-sm">
-                    💺 Rejoignez un siège pour participer à la partie
-                  </p>
-                </div>
-              )}
-              {players.length < 2 && (
-                <div className="flex justify-center space-x-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Not in game message */}
-        {!currentPlayer && gameState.phase !== "waiting" && (
-          <div className="mt-8 text-center">
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-8 inline-block shadow-xl max-w-md">
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Mode Spectateur
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Vous regardez la partie en cours. Attendez la fin de la main
-                pour rejoindre un siège libre.
-              </p>
             </div>
           </div>
         )}

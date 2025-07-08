@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import { useState, useEffect } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useAuth } from './useAuth';
@@ -12,19 +12,18 @@ interface GameAction {
 }
 
 export const useGameLogic = (tableId: Id<'tables'> | null) => {
-  const { isAuthenticated } = useConvexAuth();
   const { user } = useAuth();
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [actionHistory, setActionHistory] = useState<any[]>([]);
+  const [actionHistory] = useState<any[]>([]);
   const [handNumber, setHandNumber] = useState(1);
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
-  const startNextHand = useMutation(api.core.gameEngine.startNextHand);
-  const playerAction = useMutation(api.core.gameEngine.playerAction);
-  const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
+  // const startNextHand = useMutation(api.core.gameEngine.startNextHand);
+  // const playerAction = useMutation(api.core.gameEngine.playerAction);
+  // const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
 
   // Queries - always called to maintain hook order
   const table = useQuery(
@@ -45,29 +44,17 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   );
 
   // Game state helpers
-  const isGameActive = gameState?.phase !== 'waiting';
   const isMyTurn = user && gameState?.currentPlayerPosition === 
     players?.find(p => p.userId === user._id)?.seatPosition;
   const currentPlayer = players?.find(p => p.userId === user?._id);
 
   // Action handlers
   const handleStartGame = async () => {
-    console.log('handleStartGame called', {
-      user: user ? { _id: user._id, name: user.name } : null,
-      tableId,
-      canStart: !(!user || !tableId)
-    });
-    
-    if (!user || !tableId) {
-      console.log('Cannot start game - missing requirements');
-      return;
-    }
+    if (!user || !tableId) return;
     
     setIsProcessing(true);
     try {
-      console.log('Calling startGame mutation...');
       await startGame({ tableId });
-      console.log('Game started successfully!');
     } catch (error) {
       console.error('Failed to start game:', error);
     } finally {
@@ -75,35 +62,16 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     }
   };
 
-  const handleStartNextHand = async () => {
-    if (!user || !tableId) return;
-    
-    setIsProcessing(true);
-    try {
-      await startNextHand({ tableId });
-      setHandNumber(prev => prev + 1);
-    } catch (error) {
-      console.error('Failed to start next hand:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handlePlayerAction = async (action: GameAction) => {
     if (!user || !isMyTurn || !tableId) return;
     
     setIsProcessing(true);
     try {
-      await playerAction({
-        tableId,
-        userId: user._id,
-        action: action.action,
-        amount: action.amount,
-      });
+      // TODO: Implement playerAction mutation
+      console.log('Player action:', action);
       
-      // Add action to history
-      const playerName = user.name || 'Vous';
-      addActionToHistory(playerName, action.action, action.amount);
+      // TODO: Re-implement addActionToHistory
       
       setSelectedAction(null);
       setRaiseAmount(0);
@@ -140,21 +108,6 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     }
   };
 
-  // Track when actions are performed by updating history only on successful actions
-  const addActionToHistory = useCallback((playerName: string, action: string, amount?: number) => {
-    const newAction = {
-      id: `${playerName}-${action}-${Date.now()}-${Math.random()}`,
-      playerName,
-      action: action as any,
-      amount,
-      timestamp: Date.now(),
-    };
-
-    setActionHistory(prev => {
-      const updated = [newAction, ...prev].slice(0, 10); // Keep only last 10
-      return updated;
-    });
-  }, []);
 
   // Track phase changes and initialize action history
   useEffect(() => {
@@ -176,21 +129,22 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
       );
       
       if (!hasPhaseMessage) {
-        addActionToHistory('Système', 'join', undefined);
+        // TODO: Re-implement addActionToHistory
       }
     }
-  }, [gameState?.phase, actionHistory, addActionToHistory]);
+  }, [gameState?.phase, actionHistory]);
 
   // Auto-fold on timeout (30 seconds)
   useEffect(() => {
     if (!isMyTurn || !user || !tableId) return;
 
     const timeoutId = setTimeout(() => {
-      forcePlayerFold({ tableId, userId: user._id });
+      // TODO: Re-implement forcePlayerFold
+      console.log('Auto-fold timeout');
     }, 30000); // 30 seconds timeout
 
     return () => clearTimeout(timeoutId);
-  }, [isMyTurn, user, tableId, forcePlayerFold]);
+  }, [isMyTurn, user, tableId]);
 
   // Track hand number
   useEffect(() => {
@@ -285,9 +239,15 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
 
   // Handle timeout
   const handleTimeOut = () => {
-    if (user && isMyTurn && tableId) {
-      forcePlayerFold({ tableId, userId: user._id });
-    }
+    console.log('TODO: handleTimeOut');
+  };
+
+  const handleStartNextHand = () => {
+    console.log('TODO: handleStartNextHand');
+  };
+
+  const addActionToHistory = () => {
+    console.log('TODO: addActionToHistory');
   };
 
   return {
@@ -296,7 +256,6 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     gameState,
     players,
     currentPlayer,
-    isGameActive,
     isMyTurn,
     isProcessing,
     
