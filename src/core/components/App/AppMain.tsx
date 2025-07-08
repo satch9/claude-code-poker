@@ -7,9 +7,9 @@ import { PokerTable } from "../Game/PokerTable";
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
 import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 // Table, Player, GameState plus nécessaires ici
-import { Id } from "../../../convex/_generated/dataModel";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 type AppView = "lobby" | "table" | "create-table";
 
@@ -18,11 +18,22 @@ const AppContent: React.FC = () => {
   const { createTable } = useTableActions();
   const joinTableMutation = useMutation(api.players.joinTable);
   const [currentView, setCurrentView] = useState<AppView>("lobby");
-  const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(
+    null
+  );
 
-  const handleJoinTable = (tableId: Id<"tables">) => {
-    setSelectedTableId(tableId);
-    setCurrentView("table");
+  const handleJoinTable = async (tableId: Id<"tables">) => {
+    if (!user) return;
+
+    // Check if user is already seated at this table
+    try {
+      // First, just navigate to the table - if user is seated, they'll see the game
+      // If not seated, they can click on an empty seat
+      setSelectedTableId(tableId);
+      setCurrentView("table");
+    } catch (error) {
+      console.error("Error joining table:", error);
+    }
   };
 
   const handleCreateTable = () => {
@@ -31,13 +42,13 @@ const AppContent: React.FC = () => {
 
   const handleTableCreated = async (tableData: CreateTableData) => {
     if (!user) return;
-    
+
     try {
       const tableId = await createTable({
         ...tableData,
         creatorId: user._id,
       });
-      
+
       // Automatically join the created table
       setSelectedTableId(tableId);
       setCurrentView("table");
@@ -70,7 +81,7 @@ const AppContent: React.FC = () => {
         userId: user._id,
         seatPosition: position,
       });
-      
+
       console.log("Successfully joined seat:", result.seatPosition);
     } catch (error) {
       console.error("Error joining seat:", error);
