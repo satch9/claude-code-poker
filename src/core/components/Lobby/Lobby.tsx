@@ -13,8 +13,10 @@ interface LobbyProps {
 
 export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
   const { user } = useAuth();
-  // Appel Convex pour récupérer les tables publiques
-  const tables = useQuery(api.tables.getPublicTables);
+  // Appel Convex pour récupérer les tables avec info utilisateur
+  const tables = useQuery(api.tables.getTablesWithUserInfo, 
+    user ? { userId: user._id } : "skip"
+  );
   const loading = tables === undefined;
 
   if (!user) return null;

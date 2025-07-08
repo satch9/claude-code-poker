@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "../UI/Button";
-import { Table, User } from "../../../shared/types";
+import { Table } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
 import { Id } from "../../../../convex/_generated/dataModel";
 
@@ -18,6 +18,15 @@ export const TableCard: React.FC<TableCardProps> = ({
   const isTableFull = (table.playerCount || 0) >= table.maxPlayers;
   const gameTypeDisplay =
     table.gameType === "tournament" ? "Tournoi" : "Cash Game";
+  
+  // Determine button state based on table status and user seating
+  const canJoin = !isTableFull || table.isUserSeated;
+  const buttonText = table.isUserSeated 
+    ? "Continuer" 
+    : isTableFull 
+    ? "Table pleine" 
+    : "Rejoindre";
+  const buttonVariant = canJoin ? "primary" : "secondary";
 
   return (
     <div
@@ -81,11 +90,12 @@ export const TableCard: React.FC<TableCardProps> = ({
         </div>
 
         <Button
-          variant="primary"
+          variant={buttonVariant}
           size="sm"
+          disabled={!canJoin}
           onClick={() => onJoin(table._id as Id<"tables">)}
         >
-          {"Rejoindre"}
+          {buttonText}
         </Button>
       </div>
     </div>

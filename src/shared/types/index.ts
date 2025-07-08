@@ -57,6 +57,7 @@ export interface Table {
   createdAt: number;
   modules?: TableModuleData;
   playerCount?: number;
+  isUserSeated?: boolean;
 }
 
 // Game state types

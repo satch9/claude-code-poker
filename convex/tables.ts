@@ -81,6 +81,39 @@ export const getPublicTables = query({
   },
 });
 
+// Get all tables with current user seating info
+export const getTablesWithUserInfo = query({
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    // Get all tables that are not finished
+    const tables = await ctx.db
+      .query("tables")
+      .filter((q) => q.neq(q.field("status"), "finished"))
+      .collect();
+
+    // Get player count and user seating info for each table
+    const tablesWithInfo = await Promise.all(
+      tables.map(async (table) => {
+        const players = await ctx.db
+          .query("players")
+          .withIndex("by_table", (q) => q.eq("tableId", table._id))
+          .collect();
+
+        const playerCount = players.length;
+        const isUserSeated = args.userId ? players.some(p => p.userId === args.userId) : false;
+
+        return {
+          ...table,
+          playerCount,
+          isUserSeated,
+        };
+      })
+    );
+
+    return tablesWithInfo;
+  },
+});
+
 // Get table by ID
 export const getTable = query({
   args: { tableId: v.id("tables") },
