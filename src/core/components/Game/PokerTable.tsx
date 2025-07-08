@@ -144,8 +144,31 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       {/* Main content - 3 columns layout */}
       <div className="flex h-[calc(100vh-120px)]">
         {/* Left sidebar - Actions */}
-        <div className="w-80 p-4 border-r border-poker-green-700">
+        <div className="w-80 p-4 border-r border-poker-green-700 space-y-4">
           <ActionFeed actions={actionHistory} />
+          
+          <TurnIndicator
+            currentPhase={gameState.phase}
+            currentPlayerPosition={gameState.currentPlayerPosition}
+            dealerPosition={gameState.dealerPosition}
+            isMyTurn={isMyTurn || false}
+            playerName={
+              players.find(
+                (p) => p.seatPosition === gameState.currentPlayerPosition
+              )?.user?.name || ""
+            }
+          />
+          
+          {gameStats && (
+            <HandStats
+              handNumber={handNumber}
+              potSize={gameState.pot}
+              totalPlayers={players.length}
+              activePlayers={players.filter((p) => !p.isFolded).length}
+              bigBlind={table.bigBlind}
+              averageStack={gameStats.averageChips}
+            />
+          )}
         </div>
 
         {/* Center - Table */}
@@ -307,30 +330,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Right sidebar - Turn indicator and Hand stats */}
+        {/* Right sidebar - Future content */}
         <div className="w-80 p-4 border-l border-poker-green-700 space-y-4">
-          <TurnIndicator
-            currentPhase={gameState.phase}
-            currentPlayerPosition={gameState.currentPlayerPosition}
-            dealerPosition={gameState.dealerPosition}
-            isMyTurn={isMyTurn || false}
-            playerName={
-              players.find(
-                (p) => p.seatPosition === gameState.currentPlayerPosition
-              )?.user?.name || ""
-            }
-          />
-          
-          {gameStats && (
-            <HandStats
-              handNumber={handNumber}
-              potSize={gameState.pot}
-              totalPlayers={players.length}
-              activePlayers={players.filter((p) => !p.isFolded).length}
-              bigBlind={table.bigBlind}
-              averageStack={gameStats.averageChips}
-            />
-          )}
+          {/* Future content can go here */}
         </div>
       </div>
 
