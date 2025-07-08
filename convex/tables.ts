@@ -52,13 +52,13 @@ export const createTable = mutation({
   },
 });
 
-// Get all public tables
+// Get all tables (public and private for lobby filtering)
 export const getPublicTables = query({
   handler: async (ctx) => {
+    // Get all tables that are not finished
     const tables = await ctx.db
       .query("tables")
-      .withIndex("by_status", (q) => q.eq("status", "waiting"))
-      .filter((q) => q.eq(q.field("isPrivate"), false))
+      .filter((q) => q.neq(q.field("status"), "finished"))
       .collect();
 
     // Get player count for each table
