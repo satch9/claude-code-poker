@@ -52,11 +52,22 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
 
   // Action handlers
   const handleStartGame = async () => {
-    if (!isAuthenticated || !user || !tableId) return;
+    console.log('handleStartGame called', {
+      user: user ? { _id: user._id, name: user.name } : null,
+      tableId,
+      canStart: !(!user || !tableId)
+    });
+    
+    if (!user || !tableId) {
+      console.log('Cannot start game - missing requirements');
+      return;
+    }
     
     setIsProcessing(true);
     try {
+      console.log('Calling startGame mutation...');
       await startGame({ tableId });
+      console.log('Game started successfully!');
     } catch (error) {
       console.error('Failed to start game:', error);
     } finally {
@@ -65,7 +76,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   };
 
   const handleStartNextHand = async () => {
-    if (!isAuthenticated || !user || !tableId) return;
+    if (!user || !tableId) return;
     
     setIsProcessing(true);
     try {
@@ -79,7 +90,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   };
 
   const handlePlayerAction = async (action: GameAction) => {
-    if (!isAuthenticated || !user || !isMyTurn || !tableId) return;
+    if (!user || !isMyTurn || !tableId) return;
     
     setIsProcessing(true);
     try {
