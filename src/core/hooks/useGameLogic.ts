@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
+import { useAuth } from './useAuth';
 
 interface GameAction {
   action: 'fold' | 'check' | 'call' | 'raise' | 'all-in';
@@ -12,6 +13,7 @@ interface GameAction {
 
 export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -25,7 +27,6 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
 
   // Queries - always called to maintain hook order
-  const user = useQuery(api.users.getCurrentUser);
   const table = useQuery(
     api.tables.getTable, 
     tableId ? { tableId } : "skip"
