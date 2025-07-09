@@ -238,33 +238,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 style={{ borderColor: "rgba(245, 158, 11, 0.2)" }}
               ></div>
 
-              {/* Center area with pot and community cards */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center space-y-4">
-                {/* Pot total display */}
-                <div className="bg-white rounded-xl px-6 py-3 shadow-lg border-2 border-gray-200 min-w-48">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700 font-bold text-sm uppercase tracking-wide">
-                        Pot Total
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {gameState.pot.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
+              {/* Center area with community cards */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
                 {/* Community cards */}
-                {gameState.communityCards.length > 0 && (
-                  <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
-                    <CommunityCards
-                      cards={gameState.communityCards}
-                      phase={gameState.phase}
-                      pot={gameState.pot}
-                    />
-                  </div>
-                )}
+                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
+                  <CommunityCards
+                    cards={gameState.communityCards}
+                    phase={gameState.phase}
+                    pot={gameState.pot}
+                  />
+                </div>
               </div>
 
               {/* Dealer button */}
@@ -284,25 +267,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </div>
               )}
 
-              {/* Action indicator */}
-              {gameState.currentPlayerPosition >= 0 && (
-                <div
-                  className="absolute z-10 px-3 py-1 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 border-2 border-yellow-600 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 shadow-xl transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
-                  style={{
-                    ...getSeatPosition(
-                      gameState.currentPlayerPosition,
-                      table.maxPlayers
-                    ),
-                    top: `${parseFloat(getSeatPosition(gameState.currentPlayerPosition, table.maxPlayers).top) - 10}%`,
-                    boxShadow:
-                      "0 4px 15px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)",
-                  }}
-                >
-                  <span className="drop-shadow-sm whitespace-nowrap">
-                    À JOUER
-                  </span>
-                </div>
-              )}
 
               {/* Player seats around the table */}
               {seats.map((seat) => (
@@ -316,6 +280,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     position={seat.position}
                     isDealer={seat.isDealer}
                     isCurrentPlayer={seat.isCurrentPlayer}
+                    isActivePlayer={seat.isActivePlayer}
                     isSmallBlind={seat.isSmallBlind}
                     isBigBlind={seat.isBigBlind}
                     showCards={
@@ -325,11 +290,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     onSeatClick={() =>
                       seat.isEmpty && onJoinSeat(seat.position)
                     }
-                    className={cn(
-                      seat.isActivePlayer &&
-                        "ring-2 ring-yellow-400 ring-opacity-75",
-                      "transition-all duration-300"
-                    )}
+                    onTimeOut={seat.isActivePlayer ? handleTimeOut : undefined}
+                    timeLimit={30}
                   />
                 </div>
               ))}
@@ -355,16 +317,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </div>
               )}
 
-              {/* Action Timer (for current player) */}
-              {isMyTurn && gameState.phase !== "waiting" && (
-                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
-                  <ActionTimer
-                    isActive={true}
-                    timeLimit={30}
-                    onTimeOut={handleTimeOut}
-                  />
-                </div>
-              )}
 
               {/* Game info button */}
               <div className="absolute top-4 right-4 z-50">

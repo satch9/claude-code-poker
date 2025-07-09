@@ -4,8 +4,9 @@ import { cn } from '../../../shared/utils/cn';
 interface ActionFeedItem {
   id: string;
   playerName: string;
-  action: 'fold' | 'check' | 'call' | 'raise' | 'all-in' | 'join' | 'leave';
+  action: 'fold' | 'check' | 'call' | 'raise' | 'all-in' | 'join' | 'leave' | 'system';
   amount?: number;
+  message?: string;
   timestamp: number;
 }
 
@@ -57,6 +58,8 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
         return playerName === 'Système' ? 'Nouvelle main commencée' : `${playerName} rejoint la table`;
       case 'leave':
         return `${playerName} quitte la table`;
+      case 'system':
+        return item.message || 'Message système';
       default:
         return `${playerName} ${item.action}`;
     }

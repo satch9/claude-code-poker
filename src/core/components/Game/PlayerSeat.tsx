@@ -3,17 +3,21 @@ import { Card } from '../UI/Card';
 import { ChipStack } from '../UI/Chip';
 import { Player } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
+import { PlayerTimer } from './PlayerTimer';
 
 interface PlayerSeatProps {
   player?: Player;
   position: number;
   isDealer?: boolean;
   isCurrentPlayer?: boolean;
+  isActivePlayer?: boolean; // C'est au tour de ce joueur de jouer
   isSmallBlind?: boolean;
   isBigBlind?: boolean;
   showCards?: boolean;
   isEmpty?: boolean;
   onSeatClick?: () => void;
+  onTimeOut?: () => void;
+  timeLimit?: number;
   className?: string;
 }
 
@@ -22,11 +26,14 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   position,
   isDealer = false,
   isCurrentPlayer = false,
+  isActivePlayer = false,
   isSmallBlind = false,
   isBigBlind = false,
   showCards = false,
   isEmpty = false,
   onSeatClick,
+  onTimeOut,
+  timeLimit = 30,
   className,
 }) => {
   if (isEmpty) {
@@ -65,6 +72,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       className={cn(
         'relative bg-gray-800/90 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 shadow-xl w-52 h-16',
         isCurrentPlayer && 'ring-2 ring-yellow-400 shadow-2xl',
+        isActivePlayer && 'ring-4 ring-green-400 animate-pulse shadow-green-400/50',
         player.isFolded && 'opacity-50',
         className
       )}
@@ -142,6 +150,17 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
             ALL-IN
           </span>
+        </div>
+      )}
+
+      {/* Player timer */}
+      {isActivePlayer && onTimeOut && (
+        <div className="absolute -right-4 top-1/2 transform -translate-y-1/2">
+          <PlayerTimer
+            isActive={isActivePlayer}
+            timeLimit={timeLimit}
+            onTimeOut={onTimeOut}
+          />
         </div>
       )}
     </div>
