@@ -60,64 +60,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
               <UserProfile showLogout />
             </div>
 
-            {/* Quick actions */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Actions rapides
-              </h3>
-              <div className="space-y-3">
-                <button
-                  onClick={onCreateTable}
-                  className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="font-medium text-gray-900">
-                    Créer une table
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Commencer une nouvelle partie
-                  </div>
-                </button>
-
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="font-medium text-gray-900">
-                    Rejoindre par code
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Table privée avec code d'invitation
-                  </div>
-                </button>
-
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="font-medium text-gray-900">
-                    Parties rapides
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Rejoindre automatiquement
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Recent activity */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Activité récente
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Dernière partie:</span>
-                  <span className="font-medium">Il y a 2h</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tables créées:</span>
-                  <span className="font-medium">3</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Parties jouées:</span>
-                  <span className="font-medium">12</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
