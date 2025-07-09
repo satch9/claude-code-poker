@@ -284,6 +284,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     isActivePlayer={seat.isActivePlayer}
                     isSmallBlind={seat.isSmallBlind}
                     isBigBlind={seat.isBigBlind}
+                    smallBlindAmount={table.smallBlind}
+                    bigBlindAmount={table.bigBlind}
                     showCards={
                       seat.isCurrentPlayer || gameState.phase === "showdown"
                     }

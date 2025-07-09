@@ -13,6 +13,8 @@ interface PlayerSeatProps {
   isActivePlayer?: boolean; // C'est au tour de ce joueur de jouer
   isSmallBlind?: boolean;
   isBigBlind?: boolean;
+  smallBlindAmount?: number;
+  bigBlindAmount?: number;
   showCards?: boolean;
   isEmpty?: boolean;
   onSeatClick?: () => void;
@@ -29,6 +31,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   isActivePlayer = false,
   isSmallBlind = false,
   isBigBlind = false,
+  smallBlindAmount = 0,
+  bigBlindAmount = 0,
   showCards = false,
   isEmpty = false,
   onSeatClick,
@@ -81,8 +85,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Blind indicators */}
       {(isSmallBlind || isBigBlind) && (
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
-          {isSmallBlind ? 'SB' : 'BB'}
+        <div className="absolute -top-2 -left-2 min-w-[24px] h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg px-1">
+          {isSmallBlind ? `SB ${smallBlindAmount}` : `BB ${bigBlindAmount}`}
         </div>
       )}
 

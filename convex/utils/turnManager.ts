@@ -139,8 +139,8 @@ export function getFirstPlayerToAct(
   
   if (phase === 'preflop') {
     if (numPlayers === 2) {
-      // Heads-up preflop: big blind acts first (non-dealer)
-      return playerPositions.find(pos => pos !== dealerPosition) || dealerPosition;
+      // Heads-up preflop: small blind (dealer) acts first
+      return dealerPosition;
     } else {
       // Multi-way preflop: player after big blind acts first
       const dealerIndex = playerPositions.indexOf(dealerPosition);
