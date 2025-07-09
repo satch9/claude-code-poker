@@ -35,6 +35,16 @@ async function addActionToFeed(ctx: any, tableId: string, data: {
   handNumber?: number;
   isSystem?: boolean;
 }) {
+  // Get current hand number if not provided
+  let handNumber = data.handNumber;
+  if (!handNumber) {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+      .unique();
+    handNumber = gameState?.handNumber || 1;
+  }
+
   await ctx.db.insert("gameActions", {
     tableId,
     playerId: data.playerId,
@@ -43,7 +53,7 @@ async function addActionToFeed(ctx: any, tableId: string, data: {
     amount: data.amount,
     message: data.message,
     phase: data.phase,
-    handNumber: data.handNumber,
+    handNumber: handNumber,
     isSystem: data.isSystem || false,
     timestamp: Date.now(),
   });
@@ -165,6 +175,7 @@ async function startGameInternal(ctx: any, tableId: string) {
     .unique()
     .then(async (gameState: any) => {
       if (gameState) {
+        const currentHandNumber = (gameState.handNumber || 0) + 1;
         await ctx.db.patch(gameState._id, {
           phase: "preflop",
           communityCards: [],
@@ -173,6 +184,7 @@ async function startGameInternal(ctx: any, tableId: string) {
           dealerPosition,
           currentPlayerPosition: firstPlayerPosition,
           sidePots: [],
+          handNumber: currentHandNumber,
           updatedAt: Date.now(),
         });
       }
@@ -878,9 +890,6 @@ export const getAvailableActions = query({
     const callAmount = gameState.currentBet - player.currentBet;
     const actions = [];
 
-    // Debug log
-    console.log(`Player ${player.seatPosition}: currentBet=${player.currentBet}, gameState.currentBet=${gameState.currentBet}, callAmount=${callAmount}`);
-
     // Always can fold
     actions.push({ action: "fold", amount: 0 });
 
@@ -888,9 +897,6 @@ export const getAvailableActions = query({
     // This means either no bet, or player already matches the current bet
     if (callAmount === 0) {
       actions.push({ action: "check", amount: 0 });
-      console.log(`Player ${player.seatPosition}: can check`);
-    } else {
-      console.log(`Player ${player.seatPosition}: cannot check, callAmount=${callAmount}`);
     }
 
     // Check if can call
