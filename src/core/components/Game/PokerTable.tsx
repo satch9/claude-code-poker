@@ -241,13 +241,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {/* Center area with community cards */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
                 {/* Community cards */}
-                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/30">
-                  <CommunityCards
-                    cards={gameState.communityCards}
-                    phase={gameState.phase}
-                    pot={gameState.pot}
-                  />
-                </div>
+                <CommunityCards
+                  cards={gameState.communityCards}
+                  phase={gameState.phase}
+                  pot={gameState.pot}
+                />
               </div>
 
               {/* Dealer button */}

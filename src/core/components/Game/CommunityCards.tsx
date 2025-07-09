@@ -85,7 +85,7 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       </div>
 
       {/* Community cards */}
-      <div className="flex gap-3 justify-center mb-6">
+      <div className="flex gap-3 justify-center mb-4">
         {/* Show revealed cards with animations */}
         {cardsToShow.map((cardStr, index) => (
           <Card
@@ -111,18 +111,18 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       {/* Pot with enhanced styling */}
       <div className="relative">
         <div className={cn(
-          "bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-2xl px-8 py-4 shadow-xl border-2 border-amber-200",
+          "bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl px-6 py-3 shadow-lg border-2 border-amber-200",
           pot > 0 && "border-amber-400"
         )}>
           {/* Pot label */}
-          <div className="flex items-center justify-center mb-2">
-            <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
-            <span className="text-sm font-medium text-gray-700 uppercase tracking-wide">POT TOTAL</span>
+          <div className="flex items-center justify-center mb-1">
+            <div className="w-2 h-2 bg-amber-500 rounded-full mr-2"></div>
+            <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">POT TOTAL</span>
           </div>
           
           {/* Pot amount */}
           <div className={cn(
-            "text-3xl font-bold text-center",
+            "text-xl font-bold text-center",
             pot > 0 ? "text-green-600" : "text-gray-500"
           )}>
             {pot > 0 ? pot.toLocaleString() : '0'}
@@ -130,7 +130,7 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
           
           {/* Pot glow effect when there's money */}
           {pot > 0 && (
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-100/50 to-yellow-100/50 rounded-2xl -z-10 blur-sm"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-100/50 to-yellow-100/50 rounded-xl -z-10 blur-sm"></div>
           )}
         </div>
       </div>

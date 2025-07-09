@@ -100,6 +100,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
             <div className="text-xs text-green-400 font-bold">
               {player.chips.toLocaleString()}
             </div>
+            {player.lastAction && (
+              <div className="text-xs text-gray-300 font-medium">
+                {getActionLabel(player.lastAction)}
+              </div>
+            )}
           </div>
         </div>
 
@@ -132,17 +137,6 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         </div>
       )}
 
-      {/* Last action */}
-      {player.lastAction && (
-        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-          <span className={cn(
-            'px-2 py-1 rounded-full text-xs font-bold shadow-lg',
-            getActionColor(player.lastAction)
-          )}>
-            {getActionLabel(player.lastAction)}
-          </span>
-        </div>
-      )}
 
       {/* All-in indicator */}
       {player.isAllIn && (
