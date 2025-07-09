@@ -40,10 +40,12 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     api.core.gameEngine.getAvailableActions,
     user && tableId ? { tableId, userId: user._id } : 'skip'
   );
-  const showdownResults = useQuery(
-    api.core.gameEngine.getShowdownResults,
-    tableId ? { tableId } : 'skip'
-  );
+  // Temporarily disable showdown results until Convex redeploys
+  const showdownResults = null;
+  // const showdownResults = useQuery(
+  //   api.core.gameEngine.getShowdownResults,
+  //   tableId && gameState?.phase === 'showdown' ? { tableId } : 'skip'
+  // );
 
   // Game state helpers
   const isMyTurn = user && gameState?.currentPlayerPosition === 

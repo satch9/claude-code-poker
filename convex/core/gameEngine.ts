@@ -508,10 +508,9 @@ async function determineWinner(ctx: any, tableId: string) {
     updatedAt: Date.now(),
   });
 
-  // End game after a delay (handled by client)
-  setTimeout(() => {
-    endGame(ctx, tableId);
-  }, 5000);
+  // End game after a delay (will be handled by client-side timer)
+  // Note: setTimeout is not allowed in Convex mutations
+  await endHand(ctx, tableId);
 }
 
 // End current hand and prepare for next
