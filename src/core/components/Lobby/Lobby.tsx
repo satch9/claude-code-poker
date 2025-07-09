@@ -36,7 +36,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
             </p>
           </div>
 
-          <div className="w-full lg:w-auto">
+          <div className="w-full lg:w-auto lg:hidden">
             <UserProfile compact />
           </div>
         </div>
@@ -56,7 +56,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* User profile */}
-            <UserProfile showLogout />
+            <div className="hidden lg:block">
+              <UserProfile showLogout />
+            </div>
 
             {/* Quick actions */}
             <div className="bg-white rounded-lg shadow-md p-6">
