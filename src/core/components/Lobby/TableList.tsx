@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { TableCard } from './TableCard';
-import { Button } from '../UI/Button';
-import { Table } from '../../../shared/types';
-import { Id } from '../../../../convex/_generated/dataModel';
+import React, { useState } from "react";
+import { TableCard } from "./TableCard";
+import { Button } from "../UI/Button";
+import { Table } from "../../../shared/types";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface TableListProps {
   tables: Table[];
@@ -17,11 +17,11 @@ export const TableList: React.FC<TableListProps> = ({
   onCreateTable,
   loading = false,
 }) => {
-  const [filter, setFilter] = useState<'all' | 'cash' | 'tournament'>('all');
+  const [filter, setFilter] = useState<"all" | "cash" | "tournament">("all");
   const [showPrivate, setShowPrivate] = useState(false);
 
-  const filteredTables = tables.filter(table => {
-    const typeMatch = filter === 'all' || table.gameType === filter;
+  const filteredTables = tables.filter((table) => {
+    const typeMatch = filter === "all" || table.gameType === filter;
     const privateMatch = showPrivate || !table.isPrivate;
     return typeMatch && privateMatch;
   });
@@ -30,10 +30,7 @@ export const TableList: React.FC<TableListProps> = ({
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div 
-            key={i}
-            className="bg-white rounded-lg p-6 animate-pulse"
-          >
+          <div key={i} className="bg-white rounded-lg p-6 animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
             <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
             <div className="flex justify-between">
@@ -51,33 +48,33 @@ export const TableList: React.FC<TableListProps> = ({
       {/* Header with filters and create button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Tables disponibles</h2>
-        
+
         <div className="flex items-center gap-4">
           {/* Filters */}
           <div className="flex gap-2">
             <Button
-              variant={filter === 'all' ? 'primary' : 'ghost'}
+              variant={filter === "all" ? "primary" : "ghost"}
               size="sm"
-              onClick={() => setFilter('all')}
+              onClick={() => setFilter("all")}
             >
               Toutes
             </Button>
             <Button
-              variant={filter === 'cash' ? 'primary' : 'ghost'}
+              variant={filter === "cash" ? "primary" : "ghost"}
               size="sm"
-              onClick={() => setFilter('cash')}
+              onClick={() => setFilter("cash")}
             >
               Cash
             </Button>
             <Button
-              variant={filter === 'tournament' ? 'primary' : 'ghost'}
+              variant={filter === "tournament" ? "primary" : "ghost"}
               size="sm"
-              onClick={() => setFilter('tournament')}
+              onClick={() => setFilter("tournament")}
             >
               Tournois
             </Button>
           </div>
-          
+
           {/* Show private toggle */}
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input
@@ -88,12 +85,9 @@ export const TableList: React.FC<TableListProps> = ({
             />
             Tables privées
           </label>
-          
+
           {/* Create table button */}
-          <Button
-            variant="success"
-            onClick={onCreateTable}
-          >
+          <Button variant="success" onClick={onCreateTable}>
             + Créer une table
           </Button>
         </div>
@@ -103,11 +97,7 @@ export const TableList: React.FC<TableListProps> = ({
       {filteredTables.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTables.map((table) => (
-            <TableCard
-              key={table._id}
-              table={table}
-              onJoin={onJoinTable}
-            />
+            <TableCard key={table._id} table={table} onJoin={onJoinTable} />
           ))}
         </div>
       ) : (
@@ -116,14 +106,10 @@ export const TableList: React.FC<TableListProps> = ({
             Aucune table disponible
           </div>
           <p className="text-gray-500 mb-6">
-            {filter !== 'all' 
+            {filter !== "all"
               ? `Aucune table ${filter} trouvée. Essayez de changer les filtres.`
-              : 'Soyez le premier à créer une table !'
-            }
+              : "Soyez le premier à créer une table !"}
           </p>
-          <Button variant="primary" onClick={onCreateTable}>
-            Créer la première table
-          </Button>
         </div>
       )}
 
@@ -138,13 +124,13 @@ export const TableList: React.FC<TableListProps> = ({
           </div>
           <div>
             <div className="text-2xl font-bold text-poker-green-600">
-              {tables.filter(t => t.gameType === 'cash').length}
+              {tables.filter((t) => t.gameType === "cash").length}
             </div>
             <div className="text-sm text-gray-500">Cash games</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-purple-600">
-              {tables.filter(t => t.gameType === 'tournament').length}
+              {tables.filter((t) => t.gameType === "tournament").length}
             </div>
             <div className="text-sm text-gray-500">Tournois</div>
           </div>

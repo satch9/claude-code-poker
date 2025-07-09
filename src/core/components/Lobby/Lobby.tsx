@@ -7,14 +7,16 @@ import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 interface LobbyProps {
+  title: string;
   onJoinTable: (tableId: Id<"tables">) => void;
   onCreateTable: () => void;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
+export const Lobby: React.FC<LobbyProps> = ({ title, onJoinTable, onCreateTable }) => {
   const { user } = useAuth();
   // Appel Convex pour récupérer les tables avec info utilisateur
-  const tables = useQuery(api.tables.getTablesWithUserInfo, 
+  const tables = useQuery(
+    api.tables.getTablesWithUserInfo,
     user ? { userId: user._id } : "skip"
   );
   const loading = tables === undefined;
@@ -23,46 +25,46 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoinTable, onCreateTable }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-poker-green-50 to-poker-green-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Votre tableau de jeu
-            </h1>
-            <p className="text-gray-600">
-              Choisissez une table et commencez à jouer au poker avec d'autres
-              joueurs
-            </p>
-          </div>
+      {/* Header fixe en haut */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-poker-green-200 sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                🃏 {title}
+              </h1>
+              <p className="text-sm text-gray-600">Lobby des tables de jeu</p>
+            </div>
 
-          <div className="w-full lg:w-auto lg:hidden">
+            {/* Profil utilisateur compact avec dialog */}
             <UserProfile compact />
           </div>
         </div>
+      </header>
 
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Tables list - main content */}
-          <div className="lg:col-span-3">
-            <TableList
-              tables={tables || []}
-              onJoinTable={onJoinTable}
-              onCreateTable={onCreateTable}
-              loading={loading}
-            />
+      {/* Contenu principal avec plus d'espace */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Message d'accueil */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Bienvenue {user.name} !
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Choisissez une table existante ou créez votre propre partie. Prêt
+              à tenter votre chance ?
+            </p>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* User profile */}
-            <div className="hidden lg:block">
-              <UserProfile showLogout />
-            </div>
-
-          </div>
+          {/* Liste des tables */}
+          <TableList
+            tables={tables || []}
+            onJoinTable={onJoinTable}
+            onCreateTable={onCreateTable}
+            loading={loading}
+          />
         </div>
-      </div>
+      </main>
     </div>
   );
 };

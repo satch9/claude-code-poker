@@ -22,6 +22,8 @@ const AppContent: React.FC = () => {
     null
   );
 
+  const title = "Poker Famille !";
+
   const handleJoinTable = async (tableId: Id<"tables">) => {
     if (!user) return;
 
@@ -117,6 +119,7 @@ const AppContent: React.FC = () => {
     case "lobby":
       return (
         <Lobby
+          title={title}
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
         />
@@ -147,6 +150,7 @@ const AppContent: React.FC = () => {
         <PokerTable
           key={selectedTableId}
           tableId={selectedTableId}
+          appTitle={title}
           onLeaveTable={handleLeaveTable}
           onJoinSeat={handleJoinSeat}
         />
@@ -163,6 +167,7 @@ const AppContent: React.FC = () => {
     default:
       return (
         <Lobby
+          title={title}
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
         />

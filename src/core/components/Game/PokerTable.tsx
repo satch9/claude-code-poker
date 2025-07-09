@@ -13,12 +13,14 @@ import { Id } from "../../../../convex/_generated/dataModel";
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
+  appTitle: string;
   onLeaveTable: () => void;
   onJoinSeat: (position: number) => void;
 }
 
 export const PokerTable: React.FC<PokerTableProps> = ({
   tableId,
+  appTitle,
   onLeaveTable,
   onJoinSeat,
 }) => {
@@ -131,7 +133,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b border-poker-green-700 flex-shrink-0">
         <div className="text-white">
-          <h1 className="text-2xl font-bold">{table.name}</h1>
+          <h1 className="text-2xl font-bold">{appTitle} - {table.name}</h1>
           <p className="text-poker-green-200">
             {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
             Blinds: {table.smallBlind}/{table.bigBlind}
