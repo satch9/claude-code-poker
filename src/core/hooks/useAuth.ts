@@ -53,12 +53,21 @@ export function useAuthState() {
 
   // Sync user data with database when userQuery updates
   useEffect(() => {
-    if (userQuery && user) {
-      const updatedUser = { ...userQuery } as User;
-      setUser(updatedUser);
-      localStorage.setItem('poker-user', JSON.stringify(updatedUser));
+    if (userQuery && user && userQuery._id === user._id) {
+      // Only update if there are actual changes to avoid infinite loop
+      const hasChanges = 
+        userQuery.name !== user.name ||
+        userQuery.avatarColor !== user.avatarColor ||
+        userQuery.avatarImageId !== user.avatarImageId ||
+        userQuery.email !== user.email;
+      
+      if (hasChanges) {
+        const updatedUser = { ...userQuery } as User;
+        setUser(updatedUser);
+        localStorage.setItem('poker-user', JSON.stringify(updatedUser));
+      }
     }
-  }, [userQuery, user]);
+  }, [userQuery, user?._id, user?.name, user?.avatarColor, user?.avatarImageId, user?.email]);
 
   const isAuthenticated = user !== null;
 
