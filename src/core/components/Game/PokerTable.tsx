@@ -145,7 +145,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               <Button
                 onClick={handleStartGame}
                 disabled={isProcessing}
-                size="lg"
+                size="md"
                 variant="primary"
               >
                 {isProcessing ? "Démarrage..." : "Démarrer la partie"}
@@ -201,32 +201,40 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
 
             {/* Table felt */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl overflow-hidden" 
-                 style={{ 
-                   border: '12px solid transparent',
-                   backgroundImage: 'linear-gradient(to bottom right, #10b981, #059669, #047857), linear-gradient(45deg, #f59e0b, #d97706, #92400e, #d97706, #f59e0b)',
-                   backgroundOrigin: 'padding-box, border-box',
-                   backgroundClip: 'padding-box, border-box'
-                 }}>
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl overflow-hidden"
+              style={{
+                border: "12px solid transparent",
+                backgroundImage:
+                  "linear-gradient(to bottom right, #10b981, #059669, #047857), linear-gradient(45deg, #f59e0b, #d97706, #92400e, #d97706, #f59e0b)",
+                backgroundOrigin: "padding-box, border-box",
+                backgroundClip: "padding-box, border-box",
+              }}
+            >
               {/* Table texture overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/30 rounded-full"></div>
-              
+
               {/* Enhanced felt texture */}
-              <div className="absolute inset-0 rounded-full" 
-                   style={{
-                     backgroundImage: `
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  backgroundImage: `
                        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%),
                        radial-gradient(circle at 75% 75%, rgba(0,0,0,0.1) 0%, transparent 50%),
                        linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.02) 50%, transparent 60%)
-                     `
-                   }}>
-              </div>
+                     `,
+                }}
+              ></div>
 
               {/* Inner decorative rings */}
-              <div className="absolute inset-6 border-2 rounded-full" 
-                   style={{ borderColor: 'rgba(245, 158, 11, 0.3)' }}></div>
-              <div className="absolute inset-8 border rounded-full" 
-                   style={{ borderColor: 'rgba(245, 158, 11, 0.2)' }}></div>
+              <div
+                className="absolute inset-6 border-2 rounded-full"
+                style={{ borderColor: "rgba(245, 158, 11, 0.3)" }}
+              ></div>
+              <div
+                className="absolute inset-8 border rounded-full"
+                style={{ borderColor: "rgba(245, 158, 11, 0.2)" }}
+              ></div>
 
               {/* Center area with pot and community cards */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center space-y-4">
@@ -235,7 +243,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                      <span className="text-gray-700 font-bold text-sm uppercase tracking-wide">Pot Total</span>
+                      <span className="text-gray-700 font-bold text-sm uppercase tracking-wide">
+                        Pot Total
+                      </span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                       {gameState.pot.toLocaleString()}
@@ -260,8 +270,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 <div
                   className="absolute z-20 w-10 h-10 bg-gradient-to-br from-white to-gray-100 border-3 border-gray-700 rounded-full flex items-center justify-center text-sm font-black text-gray-800 shadow-xl transition-all duration-500"
                   style={{
-                    ...getDealerButtonPosition(gameState.dealerPosition, table.maxPlayers),
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
+                    ...getDealerButtonPosition(
+                      gameState.dealerPosition,
+                      table.maxPlayers
+                    ),
+                    boxShadow:
+                      "0 8px 25px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)",
                   }}
                 >
                   <span className="drop-shadow-sm">D</span>
@@ -278,10 +292,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       table.maxPlayers
                     ),
                     top: `${parseFloat(getSeatPosition(gameState.currentPlayerPosition, table.maxPlayers).top) - 10}%`,
-                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)'
+                    boxShadow:
+                      "0 4px 15px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)",
                   }}
                 >
-                  <span className="drop-shadow-sm whitespace-nowrap">À JOUER</span>
+                  <span className="drop-shadow-sm whitespace-nowrap">
+                    À JOUER
+                  </span>
                 </div>
               )}
 
