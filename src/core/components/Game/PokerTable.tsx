@@ -291,7 +291,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     onSeatClick={() =>
                       seat.isEmpty && onJoinSeat(seat.position)
                     }
-                    onTimeOut={seat.isActivePlayer ? handleTimeOut : undefined}
+                    onTimeOut={seat.isActivePlayer && gameState.phase !== "waiting" ? handleTimeOut : undefined}
                     timeLimit={30}
                   />
                 </div>
