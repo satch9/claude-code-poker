@@ -6,6 +6,7 @@ import { ActionFeed } from "./ActionFeed";
 import { ActionTimer } from "./ActionTimer";
 import { HandStats } from "./HandStats";
 import { TurnIndicator } from "./TurnIndicator";
+import { ShowdownResults } from "./ShowdownResults";
 import { Button } from "../UI/Button";
 import { cn } from "../../../shared/utils/cn";
 import { useGameLogic } from "../../hooks/useGameLogic";
@@ -43,6 +44,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     actionHistory,
     handNumber,
     handleTimeOut,
+    showdownResults,
   } = useGameLogic(tableId);
 
   // Early return if no tableId or no data
@@ -481,6 +483,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Showdown Results Modal */}
+        {showdownResults && (
+          <ShowdownResults
+            results={showdownResults.results}
+            pot={showdownResults.pot}
+            communityCards={showdownResults.communityCards}
+            onContinue={() => {
+              // This will be handled by the prepareNextHand mutation
+              window.location.reload(); // Temporary solution
+            }}
+          />
+        )}
 
         {/* Game info modal */}
         {showGameInfo && (

@@ -443,9 +443,14 @@ async function determineWinner(ctx: any, tableId: string) {
   // If only one player, they win
   if (activePlayers.length === 1) {
     const winner = activePlayers[0];
+    const winnerUser = await ctx.db.get(winner.userId);
+    
     await ctx.db.patch(winner._id, {
       chips: winner.chips + gameState.pot,
     });
+
+    // Log the win in actions (this will need to be handled by the frontend)
+    console.log(`${winnerUser?.name} wins ${gameState.pot} chips (no showdown)`);
   } else {
     // Evaluate hands and determine winner(s)
     const communityCards = gameState.communityCards.map(stringToCard);
@@ -463,6 +468,16 @@ async function determineWinner(ctx: any, tableId: string) {
 
     // Sort by hand rank (highest first)
     playerHands.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
+
+    // Log showdown results for each player
+    for (const hand of playerHands) {
+      const user = await ctx.db.get(hand.player.userId);
+      console.log(`${user?.name}: ${hand.handRank.name} (${hand.handRank.rank})`);
+    }
+
+    // Determine winners (players with the same highest rank)
+    const highestRank = playerHands[0].handRank.rank;
+    const winners = playerHands.filter((h: any) => h.handRank.rank === highestRank);
 
     // Handle side pots
     const sidePots = calculateSidePots(
@@ -525,8 +540,17 @@ async function endHand(ctx: any, tableId: string) {
   const playersWithChips = players.filter((p: any) => p.chips > 0);
 
   if (playersWithChips.length >= 2) {
-    // Prepare for next hand
-    await prepareNextHand(ctx, tableId);
+    // Don't automatically prepare next hand - wait for manual trigger
+    // Player will need to click "Démarrer la partie" again
+    await ctx.db.patch(gameState._id, {
+      phase: "waiting",
+      communityCards: [],
+      pot: 0,
+      currentBet: 0,
+      currentPlayerPosition: -1,
+      sidePots: [],
+      updatedAt: Date.now(),
+    });
   } else {
     // End game - not enough players with chips
     await endGame(ctx, tableId);
@@ -561,6 +585,13 @@ async function prepareNextHand(ctx: any, tableId: string) {
     .unique();
 
   if (gameState) {
+    // Move dealer position to next player
+    const playersWithChips = players.filter((p: any) => p.chips > 0);
+    const nextDealerPosition = getNextDealerPosition(
+      gameState.dealerPosition,
+      playersWithChips.map((p: any) => p.seatPosition)
+    );
+
     await ctx.db.patch(gameState._id, {
       phase: "waiting",
       communityCards: [],
@@ -568,11 +599,65 @@ async function prepareNextHand(ctx: any, tableId: string) {
       currentBet: 0,
       currentPlayerPosition: -1,
       sidePots: [],
+      dealerPosition: nextDealerPosition,
       updatedAt: Date.now(),
-      // Keep dealerPosition for next hand rotation
     });
   }
 }
+
+// Get showdown results for display
+export const getShowdownResults = query({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+
+    if (!gameState || gameState.phase !== "showdown") {
+      return null;
+    }
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+
+    const activePlayers = players.filter((p) => !p.isFolded);
+    
+    if (activePlayers.length <= 1) {
+      return null; // No showdown needed
+    }
+
+    const communityCards = gameState.communityCards.map(stringToCard);
+    const results = [];
+
+    for (const player of activePlayers) {
+      const user = await ctx.db.get(player.userId);
+      const holeCards = player.cards.map(stringToCard);
+      const allCards = [...holeCards, ...communityCards];
+      const handRank = evaluateHand(allCards);
+
+      results.push({
+        player: {
+          ...player,
+          user,
+        },
+        handRank,
+        cards: player.cards,
+      });
+    }
+
+    // Sort by hand rank (highest first)
+    results.sort((a, b) => b.handRank.rank - a.handRank.rank);
+
+    return {
+      results,
+      pot: gameState.pot,
+      communityCards: gameState.communityCards,
+    };
+  },
+});
 
 // End entire game session
 async function endGame(ctx: any, tableId: string) {
