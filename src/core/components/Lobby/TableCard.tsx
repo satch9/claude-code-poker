@@ -56,6 +56,11 @@ export const TableCard: React.FC<TableCardProps> = ({
                 Privée
               </span>
             )}
+            {table.gameType === 'tournament' && table.buyIn === 0 && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Freeroll
+              </span>
+            )}
           </div>
         </div>
 
@@ -80,11 +85,11 @@ export const TableCard: React.FC<TableCardProps> = ({
             {table.startingStack?.toLocaleString() || 'N/A'}
           </div>
         </div>
-        {table.buyIn && (
+        {table.gameType === 'tournament' && (
           <div className="flex justify-between">
             <span className="text-gray-500">Buy-in:</span>
             <div className="font-medium text-purple-600">
-              {table.buyIn.toLocaleString()}€
+              {table.buyIn === 0 ? 'Freeroll' : `${table.buyIn?.toLocaleString()}€`}
             </div>
           </div>
         )}

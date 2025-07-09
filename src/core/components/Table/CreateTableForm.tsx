@@ -57,8 +57,8 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
       newErrors.bigBlind = 'La grosse blind doit être supérieure à la petite blind';
     }
 
-    if (formData.gameType === 'tournament' && (!formData.buyIn || formData.buyIn <= 0)) {
-      newErrors.buyIn = 'Le buy-in est requis pour les tournois';
+    if (formData.gameType === 'tournament' && (formData.buyIn === undefined || formData.buyIn < 0)) {
+      newErrors.buyIn = 'Le buy-in doit être 0 ou plus (0 = freeroll)';
     }
 
     if (formData.startingStack <= 0) {
@@ -80,8 +80,8 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
     setFormData(prev => ({
       ...prev,
       gameType,
-      // Set default buy-in for tournaments
-      buyIn: gameType === 'tournament' ? 100 : undefined,
+      // Set default buy-in for tournaments (0 = freeroll)
+      buyIn: gameType === 'tournament' ? 0 : undefined,
       // Adjust starting stack based on game type
       startingStack: gameType === 'tournament' ? 1500 : 1000,
     }));
@@ -196,14 +196,14 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
                       'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-poker-green-500 focus:border-poker-green-500',
                       errors.buyIn ? 'border-red-500' : 'border-gray-300'
                     )}
-                    placeholder="100"
-                    min="1"
+                    placeholder="0"
+                    min="0"
                   />
                   {errors.buyIn && (
                     <p className="mt-1 text-sm text-red-600">{errors.buyIn}</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Montant payé pour participer au tournoi
+                    Montant payé pour participer (0 = freeroll gratuit)
                   </p>
                 </div>
               )}
@@ -326,7 +326,9 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
             </div>
             <div>
               Blinds: {formData.smallBlind}/{formData.bigBlind} • Stack: {formData.startingStack}
-              {formData.buyIn && ` • Buy-in: ${formData.buyIn}€`}
+              {formData.gameType === 'tournament' && (
+                formData.buyIn === 0 ? ' • Freeroll' : ` • Buy-in: ${formData.buyIn}€`
+              )}
             </div>
           </div>
         </div>
