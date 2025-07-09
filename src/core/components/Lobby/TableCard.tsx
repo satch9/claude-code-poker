@@ -67,18 +67,24 @@ export const TableCard: React.FC<TableCardProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div>
+      <div className="space-y-2 mb-4 text-sm">
+        <div className="flex justify-between">
           <span className="text-gray-500">Blinds:</span>
           <div className="font-medium text-poker-green-400">
             {table.smallBlind}/{table.bigBlind}
           </div>
         </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">Stack:</span>
+          <div className="font-medium text-blue-600">
+            {table.startingStack?.toLocaleString() || 'N/A'}
+          </div>
+        </div>
         {table.buyIn && (
-          <div>
+          <div className="flex justify-between">
             <span className="text-gray-500">Buy-in:</span>
-            <div className="font-medium text-poker-green-400">
-              {table.buyIn.toLocaleString()}
+            <div className="font-medium text-purple-600">
+              {table.buyIn.toLocaleString()}€
             </div>
           </div>
         )}

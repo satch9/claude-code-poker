@@ -19,7 +19,8 @@ export default defineSchema({
     name: v.string(),
     maxPlayers: v.number(),
     gameType: v.union(v.literal("cash"), v.literal("tournament")),
-    buyIn: v.optional(v.number()),
+    buyIn: v.optional(v.number()), // Montant payé pour participer
+    startingStack: v.number(), // Jetons de départ reçus
     smallBlind: v.number(),
     bigBlind: v.number(),
     isPrivate: v.boolean(),

@@ -63,15 +63,15 @@ export const joinTable = mutation({
       }
     }
 
-    // Determine buy-in amount
-    const buyIn = args.buyInAmount || table.buyIn || 1000;
+    // Determine starting chips amount
+    const startingChips = args.buyInAmount || table.startingStack;
 
-    // Add player to table with buy-in chips
+    // Add player to table with starting chips
     const playerId = await ctx.db.insert("players", {
       userId: args.userId,
       tableId: args.tableId,
       seatPosition,
-      chips: buyIn,
+      chips: startingChips,
       cards: [],
       currentBet: 0,
       hasActed: false,

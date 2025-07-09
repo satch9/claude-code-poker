@@ -13,7 +13,8 @@ export interface CreateTableData {
   name: string;
   maxPlayers: number;
   gameType: GameType;
-  buyIn?: number;
+  buyIn?: number; // Montant payé pour participer (tournois uniquement)
+  startingStack: number; // Jetons de départ reçus
   smallBlind: number;
   bigBlind: number;
   isPrivate: boolean;
@@ -28,6 +29,7 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
     name: `Table de ${user?.name || 'Joueur'}`,
     maxPlayers: 6,
     gameType: 'cash',
+    startingStack: 1000, // Jetons de départ par défaut
     smallBlind: 10,
     bigBlind: 20,
     isPrivate: false,
@@ -59,6 +61,10 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
       newErrors.buyIn = 'Le buy-in est requis pour les tournois';
     }
 
+    if (formData.startingStack <= 0) {
+      newErrors.startingStack = 'Le stack de départ doit être positif';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -75,7 +81,9 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
       ...prev,
       gameType,
       // Set default buy-in for tournaments
-      buyIn: gameType === 'tournament' ? 1000 : undefined,
+      buyIn: gameType === 'tournament' ? 100 : undefined,
+      // Adjust starting stack based on game type
+      startingStack: gameType === 'tournament' ? 1500 : 1000,
     }));
   };
 
@@ -151,8 +159,8 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
             </div>
           </div>
 
-          {/* Players and Buy-in row */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Configuration des jetons et buy-in */}
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre de joueurs max
@@ -174,27 +182,55 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
               )}
             </div>
 
-            {formData.gameType === 'tournament' && (
-              <div>
+            <div className="grid grid-cols-2 gap-4">
+              {formData.gameType === 'tournament' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Buy-in (prix d'entrée)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.buyIn || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, buyIn: parseInt(e.target.value) || undefined }))}
+                    className={cn(
+                      'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-poker-green-500 focus:border-poker-green-500',
+                      errors.buyIn ? 'border-red-500' : 'border-gray-300'
+                    )}
+                    placeholder="100"
+                    min="1"
+                  />
+                  {errors.buyIn && (
+                    <p className="mt-1 text-sm text-red-600">{errors.buyIn}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Montant payé pour participer au tournoi
+                  </p>
+                </div>
+              )}
+
+              <div className={formData.gameType === 'cash' ? 'col-span-2' : ''}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Buy-in
+                  Stack de départ (jetons)
                 </label>
                 <input
                   type="number"
-                  value={formData.buyIn || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, buyIn: parseInt(e.target.value) || undefined }))}
+                  value={formData.startingStack}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startingStack: parseInt(e.target.value) || 0 }))}
                   className={cn(
                     'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-poker-green-500 focus:border-poker-green-500',
-                    errors.buyIn ? 'border-red-500' : 'border-gray-300'
+                    errors.startingStack ? 'border-red-500' : 'border-gray-300'
                   )}
                   placeholder="1000"
                   min="1"
                 />
-                {errors.buyIn && (
-                  <p className="mt-1 text-sm text-red-600">{errors.buyIn}</p>
+                {errors.startingStack && (
+                  <p className="mt-1 text-sm text-red-600">{errors.startingStack}</p>
                 )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Nombre de jetons reçus au début de la partie
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Blinds */}
@@ -289,8 +325,8 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
               {formData.maxPlayers} joueurs max
             </div>
             <div>
-              Blinds: {formData.smallBlind}/{formData.bigBlind}
-              {formData.buyIn && ` • Buy-in: ${formData.buyIn}`}
+              Blinds: {formData.smallBlind}/{formData.bigBlind} • Stack: {formData.startingStack}
+              {formData.buyIn && ` • Buy-in: ${formData.buyIn}€`}
             </div>
           </div>
         </div>

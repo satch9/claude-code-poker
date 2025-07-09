@@ -49,7 +49,8 @@ export interface Table {
   name: string;
   maxPlayers: number;
   gameType: GameType;
-  buyIn?: number;
+  buyIn?: number; // Montant payé pour participer (tournois uniquement)
+  startingStack: number; // Jetons de départ reçus
   smallBlind: number;
   bigBlind: number;
   isPrivate: boolean;
