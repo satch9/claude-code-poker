@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "../UI/Button";
 import { useAuth } from "../../hooks/useAuth";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface UserProfileProps {
   showLogout?: boolean;
@@ -16,6 +18,25 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
   const [selectedAvatar, setSelectedAvatar] = useState(user?.name?.charAt(0).toUpperCase() || '');
+  const [uploadedImageId, setUploadedImageId] = useState(user?.avatarImageId || null);
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mutations
+  const updateProfile = useMutation(api.users.updateUserProfile);
+  const generateUploadUrl = useMutation(api.users.generateAvatarUploadUrl);
+  
+  // Query for avatar image URL
+  const avatarImageUrl = useQuery(
+    api.users.getAvatarImageUrl,
+    uploadedImageId ? { imageId: uploadedImageId } : "skip"
+  );
+  
+  // Query for user's current avatar URL
+  const userAvatarUrl = useQuery(
+    api.users.getAvatarImageUrl,
+    user?.avatarImageId ? { imageId: user.avatarImageId } : "skip"
+  );
 
   // Avatars disponibles (couleurs et initiales)
   const avatarColors = [
@@ -30,19 +51,82 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     'bg-teal-500',
   ];
 
-  const [selectedAvatarColor, setSelectedAvatarColor] = useState(avatarColors[0]);
+  const [selectedAvatarColor, setSelectedAvatarColor] = useState(user?.avatarColor || avatarColors[0]);
 
-  const handleSave = () => {
-    // TODO: Implémenter la sauvegarde via Convex
-    console.log('Sauvegarder:', { name: editedName, avatar: selectedAvatar, color: selectedAvatarColor });
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!editedName.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        name: editedName,
+        avatarColor: selectedAvatarColor,
+        avatarImageId: uploadedImageId || undefined,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setEditedName(user?.name || '');
     setSelectedAvatar(user?.name?.charAt(0).toUpperCase() || '');
-    setSelectedAvatarColor(avatarColors[0]);
+    setSelectedAvatarColor(user?.avatarColor || avatarColors[0]);
+    setUploadedImageId(user?.avatarImageId || null);
     setIsEditing(false);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('L\'image doit faire moins de 5MB');
+      return;
+    }
+
+    try {
+      // Generate upload URL
+      const uploadUrl = await generateUploadUrl();
+      
+      // Upload file
+      const result = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!result.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const { storageId } = await result.json();
+      setUploadedImageId(storageId);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Erreur lors du téléchargement de l\'image');
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (uploadedImageId) {
+      try {
+        await updateProfile({ removeAvatarImage: true });
+        setUploadedImageId(null);
+      } catch (error) {
+        console.error('Error removing image:', error);
+      }
+    }
   };
 
   if (!user) return null;
@@ -56,8 +140,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           onClick={() => setShowDialog(true)}
           className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-gray-50"
         >
-          <div className="w-8 h-8 bg-poker-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {user.name.charAt(0).toUpperCase()}
+          <div className={`w-8 h-8 ${user.avatarColor || 'bg-poker-green-500'} rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden`}>
+            {userAvatarUrl ? (
+              <img 
+                src={userAvatarUrl} 
+                alt="Avatar" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              user.name.charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <div className="font-medium text-sm text-gray-900">{user.name}</div>
@@ -109,21 +201,50 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               {/* User info */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="relative">
-                  <div className={`w-16 h-16 ${selectedAvatarColor} rounded-full flex items-center justify-center text-white font-bold text-2xl`}>
-                    {selectedAvatar}
+                  <div className={`w-16 h-16 ${selectedAvatarColor} rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden`}>
+                    {avatarImageUrl ? (
+                      <img 
+                        src={avatarImageUrl} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      selectedAvatar
+                    )}
                   </div>
                   {isEditing && (
-                    <button
-                      onClick={() => {/* TODO: Ouvrir sélecteur d'avatar */}}
-                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
-                      title="Changer l'avatar"
-                    >
-                      <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
+                    <div className="absolute -bottom-1 -right-1 flex gap-1">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+                        title="Télécharger une image"
+                      >
+                        <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+                      {avatarImageUrl && (
+                        <button
+                          onClick={handleRemoveImage}
+                          className="w-6 h-6 bg-red-500 border-2 border-red-600 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                          title="Supprimer l'image"
+                        >
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   )}
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
                 </div>
                 <div className="flex-1">
                   {isEditing ? (
@@ -214,9 +335,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       size="sm"
                       onClick={handleSave}
                       className="flex-1"
-                      disabled={!editedName.trim()}
+                      disabled={!editedName.trim() || isSaving}
                     >
-                      Sauvegarder
+                      {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
                     </Button>
                   </>
                 ) : (

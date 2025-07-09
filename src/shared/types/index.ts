@@ -20,6 +20,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  avatarColor?: string;
+  avatarImageId?: Id<"_storage">;
   createdAt: number;
   lastSeen?: number;
 }

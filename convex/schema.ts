@@ -7,6 +7,8 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     avatar: v.optional(v.string()),
+    avatarColor: v.optional(v.string()), // Avatar background color
+    avatarImageId: v.optional(v.id("_storage")), // File ID for uploaded avatar
     password: v.optional(v.string()), // For email/password auth
     createdAt: v.number(),
     lastSeen: v.optional(v.number()),

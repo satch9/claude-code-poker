@@ -113,3 +113,87 @@ export const updateLastSeen = mutation({
     });
   },
 });
+
+// Generate upload URL for avatar image
+export const generateAvatarUploadUrl = mutation({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Update user profile
+export const updateUserProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    avatarColor: v.optional(v.string()),
+    avatarImageId: v.optional(v.id("_storage")),
+    removeAvatarImage: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (args.name !== undefined) {
+      if (args.name.trim().length === 0) {
+        throw new Error("Name cannot be empty");
+      }
+      updateData.name = args.name.trim();
+      // Update avatar letter if name changed
+      updateData.avatar = args.name.trim().charAt(0).toUpperCase();
+    }
+
+    if (args.avatarColor !== undefined) {
+      updateData.avatarColor = args.avatarColor;
+    }
+
+    if (args.avatarImageId !== undefined) {
+      // Delete old avatar image if it exists
+      if (user.avatarImageId) {
+        await ctx.storage.delete(user.avatarImageId);
+      }
+      updateData.avatarImageId = args.avatarImageId;
+    }
+
+    if (args.removeAvatarImage) {
+      // Delete current avatar image
+      if (user.avatarImageId) {
+        await ctx.storage.delete(user.avatarImageId);
+      }
+      updateData.avatarImageId = undefined;
+    }
+
+    // Update user
+    await ctx.db.patch(user._id, updateData);
+
+    // Return updated user
+    return await ctx.db.get(user._id);
+  },
+});
+
+// Get avatar image URL
+export const getAvatarImageUrl = query({
+  args: { imageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.imageId);
+  },
+});
