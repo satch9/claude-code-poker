@@ -13,7 +13,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   showLogout = true,
   compact = false,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
@@ -54,18 +54,36 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [selectedAvatarColor, setSelectedAvatarColor] = useState(user?.avatarColor || avatarColors[0]);
 
   const handleSave = async () => {
-    if (!editedName.trim()) return;
+    if (!editedName.trim() || !user) return;
     
     setIsSaving(true);
     try {
-      await updateProfile({
+      const updatedUser = await updateProfile({
+        userId: user._id,
         name: editedName,
         avatarColor: selectedAvatarColor,
         avatarImageId: uploadedImageId || undefined,
       });
+      
+      // Update local user state
+      if (updatedUser) {
+        updateUser({
+          name: updatedUser.name,
+          avatarColor: updatedUser.avatarColor,
+          avatarImageId: updatedUser.avatarImageId,
+        });
+      }
+      
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
+      
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        alert(`Erreur lors de la sauvegarde: ${error.message}`);
+      } else {
+        alert('Erreur lors de la sauvegarde du profil');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -81,7 +99,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -97,7 +115,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
     try {
       // Generate upload URL
-      const uploadUrl = await generateUploadUrl();
+      const uploadUrl = await generateUploadUrl({ userId: user._id });
       
       // Upload file
       const result = await fetch(uploadUrl, {
@@ -119,9 +137,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   const handleRemoveImage = async () => {
-    if (uploadedImageId) {
+    if (uploadedImageId && user) {
       try {
-        await updateProfile({ removeAvatarImage: true });
+        await updateProfile({ userId: user._id, removeAvatarImage: true });
         setUploadedImageId(null);
       } catch (error) {
         console.error('Error removing image:', error);
@@ -176,9 +194,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   {isEditing ? 'Modifier le profil' : 'Mon Profil'}
                 </h3>
                 <div className="flex items-center gap-2">
-                  {!isEditing && (
+                  {!isEditing && user && (
                     <button
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => {
+                        console.log('Opening edit mode for user:', user._id);
+                        setIsEditing(true);
+                      }}
                       className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
                       title="Modifier le profil"
                     >

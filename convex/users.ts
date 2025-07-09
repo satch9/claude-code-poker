@@ -116,10 +116,14 @@ export const updateLastSeen = mutation({
 
 // Generate upload URL for avatar image
 export const generateAvatarUploadUrl = mutation({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
     }
     
     return await ctx.storage.generateUploadUrl();
@@ -129,25 +133,18 @@ export const generateAvatarUploadUrl = mutation({
 // Update user profile
 export const updateUserProfile = mutation({
   args: {
+    userId: v.id("users"),
     name: v.optional(v.string()),
     avatarColor: v.optional(v.string()),
     avatarImageId: v.optional(v.id("_storage")),
     removeAvatarImage: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    // Get current user
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
+    // Get current user by ID
+    const user = await ctx.db.get(args.userId);
+    
     if (!user) {
-      throw new Error("User not found");
+      throw new Error(`User not found with ID: ${args.userId}`);
     }
 
     // Prepare update data
@@ -183,10 +180,10 @@ export const updateUserProfile = mutation({
     }
 
     // Update user
-    await ctx.db.patch(user._id, updateData);
+    await ctx.db.patch(args.userId, updateData);
 
     // Return updated user
-    return await ctx.db.get(user._id);
+    return await ctx.db.get(args.userId);
   },
 });
 
