@@ -2,9 +2,10 @@ import React from 'react';
 import { cn } from '../../../shared/utils/cn';
 
 interface ActionFeedItem {
-  id: string;
+  id?: string;
+  _id?: string;
   playerName: string;
-  action: 'fold' | 'check' | 'call' | 'raise' | 'all-in' | 'join' | 'leave' | 'system';
+  action: 'fold' | 'check' | 'call' | 'raise' | 'all-in' | 'join' | 'leave' | 'system' | 'blind' | 'win' | 'showdown';
   amount?: number;
   message?: string;
   timestamp: number;
@@ -35,6 +36,14 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
         return 'text-cyan-400';
       case 'leave':
         return 'text-orange-400';
+      case 'system':
+        return 'text-purple-400';
+      case 'blind':
+        return 'text-blue-300';
+      case 'win':
+        return 'text-green-500';
+      case 'showdown':
+        return 'text-amber-400';
       default:
         return 'text-gray-400';
     }
@@ -89,9 +98,9 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
             Aucune action encore
           </div>
         ) : (
-          actions.map((item) => (
+          actions.map((item, index) => (
             <div
-              key={item.id}
+              key={item.id || item._id || `${item.timestamp}-${index}`}
               className="flex items-center justify-between text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
             >
               <div className="flex items-center gap-2">
