@@ -878,6 +878,9 @@ export const getAvailableActions = query({
     const callAmount = gameState.currentBet - player.currentBet;
     const actions = [];
 
+    // Debug log
+    console.log(`Player ${player.seatPosition}: currentBet=${player.currentBet}, gameState.currentBet=${gameState.currentBet}, callAmount=${callAmount}`);
+
     // Always can fold
     actions.push({ action: "fold", amount: 0 });
 
@@ -885,6 +888,9 @@ export const getAvailableActions = query({
     // This means either no bet, or player already matches the current bet
     if (callAmount === 0) {
       actions.push({ action: "check", amount: 0 });
+      console.log(`Player ${player.seatPosition}: can check`);
+    } else {
+      console.log(`Player ${player.seatPosition}: cannot check, callAmount=${callAmount}`);
     }
 
     // Check if can call
