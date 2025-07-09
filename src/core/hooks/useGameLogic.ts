@@ -16,14 +16,12 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [actionHistory] = useState<any[]>([]);
+  const [actionHistory, setActionHistory] = useState<any[]>([]);
   const [handNumber, setHandNumber] = useState(1);
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
-  // const startNextHand = useMutation(api.core.gameEngine.startNextHand);
-  // const playerAction = useMutation(api.core.gameEngine.playerAction);
-  // const forcePlayerFold = useMutation(api.core.gameEngine.forcePlayerFold);
+  const playerAction = useMutation(api.core.gameEngine.playerAction);
 
   // Queries - always called to maintain hook order
   const table = useQuery(
@@ -68,15 +66,28 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     
     setIsProcessing(true);
     try {
-      // TODO: Implement playerAction mutation
-      console.log('Player action:', action);
+      // Call the backend mutation
+      await playerAction({
+        tableId,
+        userId: user._id,
+        action: action.action,
+        amount: action.amount,
+      });
       
-      // TODO: Re-implement addActionToHistory
+      // Add action to history
+      addActionToHistory({
+        id: `${Date.now()}-${user._id}-${action.action}`,
+        playerName: user.name || 'Joueur',
+        action: action.action,
+        amount: action.amount,
+        timestamp: Date.now(),
+      });
       
       setSelectedAction(null);
       setRaiseAmount(0);
     } catch (error) {
       console.error('Failed to perform action:', error);
+      // TODO: Add user-friendly error handling
     } finally {
       setIsProcessing(false);
     }
@@ -129,7 +140,13 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
       );
       
       if (!hasPhaseMessage) {
-        // TODO: Re-implement addActionToHistory
+        addActionToHistory({
+          id: `${Date.now()}-system-phase-${currentPhase}`,
+          playerName: 'Système',
+          action: 'system',
+          message: `Phase: ${phaseNames[currentPhase as keyof typeof phaseNames]}`,
+          timestamp: Date.now(),
+        });
       }
     }
   }, [gameState?.phase, actionHistory]);
@@ -139,8 +156,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     if (!isMyTurn || !user || !tableId) return;
 
     const timeoutId = setTimeout(() => {
-      // TODO: Re-implement forcePlayerFold
-      console.log('Auto-fold timeout');
+      handleTimeOut();
     }, 30000); // 30 seconds timeout
 
     return () => clearTimeout(timeoutId);
@@ -238,16 +254,67 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   };
 
   // Handle timeout
-  const handleTimeOut = () => {
-    console.log('TODO: handleTimeOut');
+  const handleTimeOut = async () => {
+    if (!user || !tableId) return;
+    
+    try {
+      // Force fold by calling playerAction directly
+      await playerAction({
+        tableId,
+        userId: user._id,
+        action: 'fold',
+      });
+      
+      // Add timeout action to history
+      addActionToHistory({
+        id: `${Date.now()}-${user._id}-timeout`,
+        playerName: user.name || 'Joueur',
+        action: 'fold',
+        timestamp: Date.now(),
+        isTimeout: true,
+      });
+    } catch (error) {
+      console.error('Failed to force fold on timeout:', error);
+    }
   };
 
-  const handleStartNextHand = () => {
-    console.log('TODO: handleStartNextHand');
+  const handleStartNextHand = async () => {
+    if (!tableId) return;
+    
+    setIsProcessing(true);
+    try {
+      // For now, we'll use startGame to start next hand
+      // This will be improved when we have proper next hand logic
+      await startGame({ tableId });
+      
+      // Clear action history for new hand
+      setActionHistory([]);
+      
+      // Add new hand message
+      addActionToHistory({
+        id: `${Date.now()}-system-newhand`,
+        playerName: 'Système',
+        action: 'system',
+        message: `Nouvelle main #${handNumber + 1}`,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error('Failed to start next hand:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const addActionToHistory = () => {
-    console.log('TODO: addActionToHistory');
+  const addActionToHistory = (actionData: {
+    id: string;
+    playerName: string;
+    action: string;
+    amount?: number;
+    message?: string;
+    timestamp: number;
+    isTimeout?: boolean;
+  }) => {
+    setActionHistory(prev => [...prev, actionData]);
   };
 
   return {
