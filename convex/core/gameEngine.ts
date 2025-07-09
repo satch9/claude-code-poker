@@ -490,7 +490,6 @@ async function determineWinner(ctx: any, tableId: string) {
     );
 
     // Distribute main pot to winner(s)
-    const winners = playerHands.filter((ph: any) => ph.handRank.rank === playerHands[0].handRank.rank);
     const winAmount = Math.floor(gameState.pot / winners.length);
 
     await Promise.all(
