@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { User } from '../../shared/types';
 
@@ -29,6 +29,12 @@ export function useAuthState() {
   const [isLoading, setIsLoading] = useState(true);
   const signUpMutation = useMutation(api.auth.signUpWithPassword);
   const signInMutation = useMutation(api.auth.signInWithPassword);
+  
+  // Query to get full user data from database
+  const userQuery = useQuery(
+    api.users.getUser,
+    user ? { userId: user._id } : "skip"
+  );
 
   // Charger l'utilisateur depuis localStorage au démarrage
   useEffect(() => {
@@ -44,6 +50,15 @@ export function useAuthState() {
     }
     setIsLoading(false);
   }, []);
+
+  // Sync user data with database when userQuery updates
+  useEffect(() => {
+    if (userQuery && user) {
+      const updatedUser = { ...userQuery } as User;
+      setUser(updatedUser);
+      localStorage.setItem('poker-user', JSON.stringify(updatedUser));
+    }
+  }, [userQuery, user]);
 
   const isAuthenticated = user !== null;
 
@@ -70,16 +85,12 @@ export function useAuthState() {
     setIsLoading(true);
     try {
       const result = await signInMutation({ email, password });
-      // TODO: Récupérer les données complètes de l'utilisateur
-      const userData: User = {
-        _id: result.userId,
-        email,
-        name: email.split('@')[0], // Temporaire
-        createdAt: Date.now(),
-        lastSeen: Date.now(),
-      };
-      setUser(userData);
-      localStorage.setItem('poker-user', JSON.stringify(userData));
+      // Use the full user data returned from the backend
+      if (result.user) {
+        const userData = result.user as User;
+        setUser(userData);
+        localStorage.setItem('poker-user', JSON.stringify(userData));
+      }
       return result;
     } finally {
       setIsLoading(false);

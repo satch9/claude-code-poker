@@ -63,7 +63,12 @@ export const signInWithPassword = mutation({
       lastSeen: Date.now(),
     });
 
-    return { userId: user._id };
+    // Return user data without password
+    const { password, ...userWithoutPassword } = user;
+    return { 
+      userId: user._id,
+      user: userWithoutPassword
+    };
   },
 });
 
