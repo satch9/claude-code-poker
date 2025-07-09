@@ -192,7 +192,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
         {/* Center - Table */}
         <div
-          className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden"
+          className="flex-1 flex flex-col items-center p-4"
           style={{ maxWidth: "calc(100% - 640px)" }}
         >
           {/* Main table area */}
@@ -386,26 +386,26 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </button>
               </div>
             </div>
-
-            {/* Betting controls under table */}
-            {currentPlayer &&
-              isMyTurn &&
-              gameState.phase !== "waiting" &&
-              availableActions.length > 0 && (
-                <div className="mt-6 w-full max-w-4xl">
-                  <BettingControls
-                    availableActions={availableActions as any}
-                    playerChips={currentPlayer.chips}
-                    currentBet={gameState.currentBet}
-                    potSize={gameState.pot}
-                    onAction={handlePlayerAction}
-                    disabled={isProcessing}
-                    potOdds={potOdds?.ratio || undefined}
-                    handStrength={handStrength || undefined}
-                  />
-                </div>
-              )}
           </div>
+
+          {/* Betting controls below table (outside of table container) */}
+          {currentPlayer &&
+            isMyTurn &&
+            gameState.phase !== "waiting" &&
+            availableActions.length > 0 && (
+              <div className="mt-6 w-full max-w-4xl">
+                <BettingControls
+                  availableActions={availableActions as any}
+                  playerChips={currentPlayer.chips}
+                  currentBet={gameState.currentBet}
+                  potSize={gameState.pot}
+                  onAction={handlePlayerAction}
+                  disabled={isProcessing}
+                  potOdds={potOdds?.ratio || undefined}
+                  handStrength={handStrength || undefined}
+                />
+              </div>
+            )}
         </div>
 
         {/* Right sidebar - Chat and features */}
