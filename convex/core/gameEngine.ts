@@ -24,116 +24,171 @@ import {
 } from "../utils/turnManager";
 import { internal } from "../_generated/api";
 
+// Helper function to add action to server-side feed
+async function addActionToFeed(ctx: any, tableId: string, data: {
+  playerId?: string;
+  playerName: string;
+  action: string;
+  amount?: number;
+  message?: string;
+  phase?: string;
+  handNumber?: number;
+  isSystem?: boolean;
+}) {
+  await ctx.db.insert("gameActions", {
+    tableId,
+    playerId: data.playerId,
+    playerName: data.playerName,
+    action: data.action,
+    amount: data.amount,
+    message: data.message,
+    phase: data.phase,
+    handNumber: data.handNumber,
+    isSystem: data.isSystem || false,
+    timestamp: Date.now(),
+  });
+}
+
+
+// Internal function to start a new game
+async function startGameInternal(ctx: any, tableId: string) {
+  const table = await ctx.db.get(tableId);
+  if (!table) {
+    throw new Error("Table not found");
+  }
+
+  // Get all players
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .collect();
+
+  if (players.length < 2) {
+    throw new Error("Need at least 2 players to start");
+  }
+
+  // Create and shuffle deck
+  const deck = shuffleDeck(createDeck());
+  let remainingDeck = deck;
+
+  // Deal 2 cards to each player
+  const playerCards: { [playerId: string]: Card[] } = {};
+  for (const player of players) {
+    const { dealtCards, remainingDeck: newDeck } = dealCards(remainingDeck, 2);
+    playerCards[player._id] = dealtCards;
+    remainingDeck = newDeck;
+  }
+
+  // Get current dealer position or set random for first game
+  const currentGameState = await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .unique();
+
+  let dealerPosition: number;
+  if (currentGameState && currentGameState.dealerPosition >= 0) {
+    // Advance dealer position for next hand
+    const playerPositions = players.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
+    dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
+  } else {
+    // Random dealer for first game
+    dealerPosition = players[Math.floor(Math.random() * players.length)].seatPosition;
+  }
+
+  const playerPositions = players.map((p: any) => p.seatPosition);
+  const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
+
+  // Post blinds
+  let pot = 0;
+  let currentBet = table.bigBlind;
+
+  // Reset all players and post blinds
+  await Promise.all(
+    players.map(async (player: any) => {
+      let betAmount = 0;
+      let chips = player.chips;
+
+      // Post blinds
+      if (player.seatPosition === smallBlind) {
+        betAmount = Math.min(table.smallBlind, chips);
+      } else if (player.seatPosition === bigBlind) {
+        betAmount = Math.min(table.bigBlind, chips);
+      }
+
+      chips -= betAmount;
+      pot += betAmount;
+
+      return ctx.db.patch(player._id, {
+        cards: playerCards[player._id].map(cardToString),
+        currentBet: betAmount,
+        hasActed: false,
+        isAllIn: betAmount > 0 && chips === 0,
+        isFolded: false,
+        lastAction: undefined,
+        chips,
+      });
+    })
+  );
+
+  // Add blind actions to feed
+  for (const player of players) {
+    if (player.seatPosition === smallBlind) {
+      const user = await ctx.db.get(player.userId);
+      await addActionToFeed(ctx, tableId, {
+        playerId: player._id,
+        playerName: user?.name || "Joueur",
+        action: "blind",
+        amount: Math.min(table.smallBlind, player.chips),
+        message: `paie la petite blind (${Math.min(table.smallBlind, player.chips)} jetons)`,
+        isSystem: false,
+      });
+    } else if (player.seatPosition === bigBlind) {
+      const user = await ctx.db.get(player.userId);
+      await addActionToFeed(ctx, tableId, {
+        playerId: player._id,
+        playerName: user?.name || "Joueur",
+        action: "blind",
+        amount: Math.min(table.bigBlind, player.chips),
+        message: `paie la grosse blind (${Math.min(table.bigBlind, player.chips)} jetons)`,
+        isSystem: false,
+      });
+    }
+  }
+
+  // Find first player to act (after big blind in preflop)
+  const firstPlayerPosition = getFirstPlayerToAct(dealerPosition, playerPositions, 'preflop');
+
+  // Update game state
+  await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .unique()
+    .then(async (gameState: any) => {
+      if (gameState) {
+        await ctx.db.patch(gameState._id, {
+          phase: "preflop",
+          communityCards: [],
+          pot,
+          currentBet,
+          dealerPosition,
+          currentPlayerPosition: firstPlayerPosition,
+          sidePots: [],
+          updatedAt: Date.now(),
+        });
+      }
+    });
+
+  // Update table status
+  await ctx.db.patch(tableId, { status: "playing" });
+
+  return { success: true, dealerPosition, pot, currentBet };
+}
 
 // Start a new game
 export const startGame = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
-    const table = await ctx.db.get(args.tableId);
-    if (!table) {
-      throw new Error("Table not found");
-    }
-
-    // Get all players
-    const players = await ctx.db
-      .query("players")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .collect();
-
-    if (players.length < 2) {
-      throw new Error("Need at least 2 players to start");
-    }
-
-    // Create and shuffle deck
-    const deck = shuffleDeck(createDeck());
-    let remainingDeck = deck;
-
-    // Deal 2 cards to each player
-    const playerCards: { [playerId: string]: Card[] } = {};
-    for (const player of players) {
-      const { dealtCards, remainingDeck: newDeck } = dealCards(remainingDeck, 2);
-      playerCards[player._id] = dealtCards;
-      remainingDeck = newDeck;
-    }
-
-    // Get current dealer position or set random for first game
-    const currentGameState = await ctx.db
-      .query("gameStates")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .unique();
-
-    let dealerPosition: number;
-    if (currentGameState && currentGameState.dealerPosition >= 0) {
-      // Advance dealer position for next hand
-      const playerPositions = players.map(p => p.seatPosition).sort((a, b) => a - b);
-      dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
-    } else {
-      // Random dealer for first game
-      dealerPosition = players[Math.floor(Math.random() * players.length)].seatPosition;
-    }
-
-    const playerPositions = players.map(p => p.seatPosition);
-    const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
-
-    // Post blinds
-    let pot = 0;
-    let currentBet = table.bigBlind;
-
-    // Reset all players
-    await Promise.all(
-      players.map(async (player) => {
-        let betAmount = 0;
-        let chips = player.chips;
-
-        // Post blinds
-        if (player.seatPosition === smallBlind) {
-          betAmount = Math.min(table.smallBlind, chips);
-        } else if (player.seatPosition === bigBlind) {
-          betAmount = Math.min(table.bigBlind, chips);
-        }
-
-        chips -= betAmount;
-        pot += betAmount;
-
-        return ctx.db.patch(player._id, {
-          cards: playerCards[player._id].map(cardToString),
-          currentBet: betAmount,
-          hasActed: false,
-          isAllIn: betAmount > 0 && chips === 0,
-          isFolded: false,
-          lastAction: undefined,
-          chips,
-        });
-      })
-    );
-
-    // Find first player to act (after big blind in preflop)
-    const firstPlayerPosition = getFirstPlayerToAct(dealerPosition, playerPositions, 'preflop');
-
-    // Update game state
-    await ctx.db
-      .query("gameStates")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .unique()
-      .then(async (gameState) => {
-        if (gameState) {
-          await ctx.db.patch(gameState._id, {
-            phase: "preflop",
-            communityCards: [],
-            pot,
-            currentBet,
-            dealerPosition,
-            currentPlayerPosition: firstPlayerPosition,
-            sidePots: [],
-            updatedAt: Date.now(),
-          });
-        }
-      });
-
-    // Update table status
-    await ctx.db.patch(args.tableId, { status: "playing" });
-
-    return { success: true, dealerPosition, pot, currentBet };
+    return await startGameInternal(ctx, args.tableId);
   },
 });
 
@@ -195,6 +250,15 @@ export const playerAction = mutation({
           hasActed: true,
           lastAction: "fold",
         });
+        
+        // Add to action feed
+        const foldUser = await ctx.db.get(player.userId);
+        await addActionToFeed(ctx, args.tableId, {
+          playerId: player._id,
+          playerName: foldUser?.name || "Joueur",
+          action: "fold",
+          message: "se couche",
+        });
         break;
 
       case "check":
@@ -204,6 +268,15 @@ export const playerAction = mutation({
         await ctx.db.patch(player._id, {
           hasActed: true,
           lastAction: "check",
+        });
+        
+        // Add to action feed
+        const checkUser = await ctx.db.get(player.userId);
+        await addActionToFeed(ctx, args.tableId, {
+          playerId: player._id,
+          playerName: checkUser?.name || "Joueur",
+          action: "check",
+          message: "check",
         });
         break;
 
@@ -222,6 +295,16 @@ export const playerAction = mutation({
           hasActed: true,
           isAllIn,
           lastAction: "call",
+        });
+        
+        // Add to action feed
+        const callUser = await ctx.db.get(player.userId);
+        await addActionToFeed(ctx, args.tableId, {
+          playerId: player._id,
+          playerName: callUser?.name || "Joueur",
+          action: "call",
+          amount: betAmount,
+          message: `suit pour ${betAmount} jetons`,
         });
         break;
 
@@ -253,6 +336,16 @@ export const playerAction = mutation({
           currentBet: newCurrentBet,
           lastRaiserPosition: player.seatPosition,
         });
+        
+        // Add to action feed
+        const raiseUser = await ctx.db.get(player.userId);
+        await addActionToFeed(ctx, args.tableId, {
+          playerId: player._id,
+          playerName: raiseUser?.name || "Joueur",
+          action: "raise",
+          amount: betAmount,
+          message: `relance à ${newCurrentBet} jetons`,
+        });
         break;
 
       case "all-in":
@@ -276,6 +369,16 @@ export const playerAction = mutation({
             lastRaiserPosition: player.seatPosition,
           });
         }
+        
+        // Add to action feed
+        const allInUser = await ctx.db.get(player.userId);
+        await addActionToFeed(ctx, args.tableId, {
+          playerId: player._id,
+          playerName: allInUser?.name || "Joueur",
+          action: "all-in",
+          amount: betAmount,
+          message: `fait tapis pour ${betAmount} jetons`,
+        });
         break;
     }
 
@@ -449,8 +552,15 @@ async function determineWinner(ctx: any, tableId: string) {
       chips: winner.chips + gameState.pot,
     });
 
-    // Log the win in actions (this will need to be handled by the frontend)
-    console.log(`${winnerUser?.name} wins ${gameState.pot} chips (no showdown)`);
+    // Add win to action feed
+    await addActionToFeed(ctx, tableId, {
+      playerId: winner._id,
+      playerName: winnerUser?.name || "Joueur",
+      action: "win",
+      amount: gameState.pot,
+      message: `remporte ${gameState.pot} jetons (pas d'abattage)`,
+      isSystem: false,
+    });
   } else {
     // Evaluate hands and determine winner(s)
     const communityCards = gameState.communityCards.map(stringToCard);
@@ -469,10 +579,24 @@ async function determineWinner(ctx: any, tableId: string) {
     // Sort by hand rank (highest first)
     playerHands.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
 
+    // Add showdown results to action feed
+    await addActionToFeed(ctx, tableId, {
+      playerName: "Système",
+      action: "showdown",
+      message: "Abattage des cartes",
+      isSystem: true,
+    });
+
     // Log showdown results for each player
     for (const hand of playerHands) {
       const user = await ctx.db.get(hand.player.userId);
-      console.log(`${user?.name}: ${hand.handRank.name} (${hand.handRank.rank})`);
+      await addActionToFeed(ctx, tableId, {
+        playerId: hand.player._id,
+        playerName: user?.name || "Joueur",
+        action: "showdown",
+        message: `montre ${hand.handRank.name}`,
+        isSystem: false,
+      });
     }
 
     // Determine winners (players with the same highest rank)
@@ -499,6 +623,32 @@ async function determineWinner(ctx: any, tableId: string) {
         })
       )
     );
+
+    // Add winner announcement to action feed
+    if (winners.length === 1) {
+      const winnerUser = await ctx.db.get(winners[0].player.userId);
+      await addActionToFeed(ctx, tableId, {
+        playerId: winners[0].player._id,
+        playerName: winnerUser?.name || "Joueur",
+        action: "win",
+        amount: winAmount,
+        message: `remporte ${winAmount} jetons avec ${winners[0].handRank.name}`,
+        isSystem: false,
+      });
+    } else {
+      // Multiple winners
+      for (const winner of winners) {
+        const winnerUser = await ctx.db.get(winner.player.userId);
+        await addActionToFeed(ctx, tableId, {
+          playerId: winner.player._id,
+          playerName: winnerUser?.name || "Joueur",
+          action: "win",
+          amount: winAmount,
+          message: `partage le pot (${winAmount} jetons) avec ${winner.handRank.name}`,
+          isSystem: false,
+        });
+      }
+    }
   }
 
   // Update game state to showdown
@@ -508,8 +658,7 @@ async function determineWinner(ctx: any, tableId: string) {
     updatedAt: Date.now(),
   });
 
-  // End game after a delay (will be handled by client-side timer)
-  // Note: setTimeout is not allowed in Convex mutations
+  // According to poker rules, automatically start next hand after showdown
   await endHand(ctx, tableId);
 }
 
@@ -538,17 +687,9 @@ async function endHand(ctx: any, tableId: string) {
   const playersWithChips = players.filter((p: any) => p.chips > 0);
 
   if (playersWithChips.length >= 2) {
-    // Don't automatically prepare next hand - wait for manual trigger
-    // Player will need to click "Démarrer la partie" again
-    await ctx.db.patch(gameState._id, {
-      phase: "waiting",
-      communityCards: [],
-      pot: 0,
-      currentBet: 0,
-      currentPlayerPosition: -1,
-      sidePots: [],
-      updatedAt: Date.now(),
-    });
+    // According to poker rules, automatically start next hand
+    await prepareNextHand(ctx, tableId);
+    await startNextHandInternal(ctx, tableId);
   } else {
     // End game - not enough players with chips
     await endGame(ctx, tableId);
@@ -810,6 +951,54 @@ export const startNextHand: any = mutation({
     return await ctx.runMutation((internal as any)["core/gameEngine"].startGame, {
       tableId: args.tableId,
     });
+  },
+});
+
+// Internal function to start next hand automatically
+async function startNextHandInternal(ctx: any, tableId: string) {
+  const gameState = await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .unique();
+
+  if (!gameState || gameState.phase !== "waiting") {
+    return; // Not in waiting state
+  }
+
+  // Check if we have enough players
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .collect();
+
+  const playersWithChips = players.filter((p: any) => p.chips > 0);
+  if (playersWithChips.length < 2) {
+    return; // Not enough players
+  }
+
+  // Add system message about new hand
+  await addActionToFeed(ctx, tableId, {
+    playerName: "Système",
+    action: "system",
+    message: "Nouvelle main commence",
+    isSystem: true,
+  });
+
+  // Start the next hand by calling the startGame logic directly
+  return await startGameInternal(ctx, tableId);
+}
+
+// Get game actions feed
+export const getGameActions = query({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const actions = await ctx.db
+      .query("gameActions")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .order("desc")
+      .take(50); // Get last 50 actions
+
+    return actions.reverse(); // Return in chronological order
   },
 });
 

@@ -142,4 +142,18 @@ export default defineSchema({
     isRead: v.boolean(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Game actions feed
+  gameActions: defineTable({
+    tableId: v.id("tables"),
+    playerId: v.optional(v.id("players")),
+    playerName: v.string(),
+    action: v.string(),
+    amount: v.optional(v.number()),
+    message: v.optional(v.string()),
+    phase: v.optional(v.string()),
+    handNumber: v.optional(v.number()),
+    isSystem: v.boolean(),
+    timestamp: v.number(),
+  }).index("by_table", ["tableId"]),
 });

@@ -142,8 +142,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </p>
         </div>
         <div className="flex gap-3">
-          {/* Start game button in header */}
+          {/* Start game button in header - only for first game */}
           {gameState.phase === "waiting" &&
+            table.status === "waiting" &&
             players.length >= 2 &&
             currentPlayer && (
               <Button

@@ -40,12 +40,17 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     api.core.gameEngine.getAvailableActions,
     user && tableId ? { tableId, userId: user._id } : 'skip'
   );
-  // Temporarily disable showdown results until Convex redeploys
-  const showdownResults = null;
-  // const showdownResults = useQuery(
-  //   api.core.gameEngine.getShowdownResults,
-  //   tableId && gameState?.phase === 'showdown' ? { tableId } : 'skip'
-  // );
+  // Re-enable showdown results
+  const showdownResults = useQuery(
+    api.core.gameEngine.getShowdownResults,
+    tableId && gameState?.phase === 'showdown' ? { tableId } : 'skip'
+  );
+
+  // Get server-side action feed
+  const serverActions = useQuery(
+    api.core.gameEngine.getGameActions,
+    tableId ? { tableId } : 'skip'
+  );
 
   // Game state helpers
   const isMyTurn = user && gameState?.currentPlayerPosition === 
@@ -159,14 +164,14 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
 
   // Auto-fold on timeout (30 seconds)
   useEffect(() => {
-    if (!isMyTurn || !user || !tableId) return;
+    if (!isMyTurn || !user || !tableId || gameState?.phase === 'waiting' || gameState?.phase === 'showdown') return;
 
     const timeoutId = setTimeout(() => {
       handleTimeOut();
     }, 30000); // 30 seconds timeout
 
     return () => clearTimeout(timeoutId);
-  }, [isMyTurn, user, tableId]);
+  }, [isMyTurn, user, tableId, gameState?.phase]);
 
   // Track hand number
   useEffect(() => {
@@ -263,6 +268,12 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   const handleTimeOut = async () => {
     if (!user || !tableId) return;
     
+    // Double check it's still my turn before forcing fold
+    if (!isMyTurn) {
+      console.log('Timeout triggered but no longer my turn, ignoring');
+      return;
+    }
+    
     try {
       // Force fold by calling playerAction directly
       await playerAction({
@@ -354,7 +365,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
     getGameStats,
     
     // Game tracking
-    actionHistory,
+    actionHistory: serverActions || [],
     handNumber,
     addActionToHistory,
     

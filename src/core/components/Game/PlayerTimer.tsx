@@ -67,7 +67,7 @@ export const PlayerTimer: React.FC<PlayerTimerProps> = ({
       </div>
 
       {/* Timer text */}
-      <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+      <div className="absolute -left-10 top-1/2 transform -translate-y-1/2">
         <span className={cn(
           'text-xs font-bold tabular-nums px-1 py-0.5 rounded',
           isCritical 

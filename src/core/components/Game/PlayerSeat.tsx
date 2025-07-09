@@ -149,7 +149,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Player timer */}
       {isActivePlayer && onTimeOut && (
-        <div className="absolute -right-4 top-1/2 transform -translate-y-1/2">
+        <div className="absolute -left-8 top-1/2 transform -translate-y-1/2">
           <PlayerTimer
             isActive={isActivePlayer}
             timeLimit={timeLimit}
