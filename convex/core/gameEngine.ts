@@ -939,12 +939,12 @@ async function endGame(ctx: any, tableId: string) {
             userId: player.userId,
             type: "game_end",
             title: "Tournoi terminé",
-            message: player._id === winner._id 
+            message: player.userId === winner.userId 
               ? `Félicitations! Vous avez remporté le tournoi avec ${winner.chips} jetons!`
               : `Le tournoi est terminé. ${winnerUser?.name || "Un joueur"} a remporté avec ${winner.chips} jetons.`,
             data: {
               tableId,
-              isWinner: player._id === winner._id,
+              isWinner: player.userId === winner.userId,
               winnerName: winnerUser?.name,
               finalChips: player.chips,
             },

@@ -98,6 +98,7 @@ export const getUserByEmail = query({
 export const getUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    console.log("getUser called with userId:", args.userId);
     return await ctx.db.get(args.userId);
   },
 });

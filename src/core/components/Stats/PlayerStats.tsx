@@ -15,8 +15,14 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   
-  const userStats = useQuery(api.users.getUserStats, { userId });
-  const userRanking = useQuery(api.users.getUserRanking, { userId });
+  const userStats = useQuery(
+    api.users.getUserStats, 
+    userId && userId.length > 20 ? { userId } : "skip"
+  );
+  const userRanking = useQuery(
+    api.users.getUserRanking, 
+    userId && userId.length > 20 ? { userId } : "skip"
+  );
 
   if (!userStats) {
     return (

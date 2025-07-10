@@ -33,7 +33,7 @@ export function useAuthState() {
   // Query to get full user data from database
   const userQuery = useQuery(
     api.users.getUser,
-    user ? { userId: user._id } : "skip"
+    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
   );
 
   // Charger l'utilisateur depuis localStorage au démarrage
@@ -42,7 +42,13 @@ export function useAuthState() {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        // Validate that the user ID looks correct (not a notification ID)
+        if (parsedUser._id && parsedUser._id.length > 20 && !parsedUser._id.includes('notification')) {
+          setUser(parsedUser);
+        } else {
+          console.error('Invalid user ID found in localStorage:', parsedUser._id);
+          localStorage.removeItem('poker-user');
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('poker-user');

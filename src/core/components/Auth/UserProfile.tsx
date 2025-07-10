@@ -41,13 +41,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   // Query for user statistics
   const userStats = useQuery(
     api.users.getUserStats,
-    user ? { userId: user._id } : "skip"
+    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
   );
 
   // Query for user ranking
   const userRanking = useQuery(
     api.users.getUserRanking,
-    user ? { userId: user._id } : "skip"
+    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
   );
 
   // Avatars disponibles (couleurs et initiales)
