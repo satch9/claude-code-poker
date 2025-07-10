@@ -22,6 +22,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
   const playerAction = useMutation(api.core.gameEngine.playerAction);
+  const advancePhase = useMutation(api.core.gameEngine.advancePhase);
 
   // Queries - always called to maintain hook order
   const table = useQuery(
@@ -172,6 +173,24 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
 
     return () => clearTimeout(timeoutId);
   }, [isMyTurn, user, tableId, gameState?.phase]);
+
+  // Auto-advance phases when all players are all-in
+  useEffect(() => {
+    if (!gameState?.autoAdvanceAt || !tableId) return;
+    
+    const timeUntilAdvance = gameState.autoAdvanceAt - Date.now();
+    if (timeUntilAdvance <= 0) {
+      // Should advance immediately
+      advancePhase({ tableId }).catch(console.error);
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      advancePhase({ tableId }).catch(console.error);
+    }, timeUntilAdvance);
+
+    return () => clearTimeout(timeoutId);
+  }, [gameState?.autoAdvanceAt, tableId]);
 
   // Track hand number
   useEffect(() => {

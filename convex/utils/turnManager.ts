@@ -48,9 +48,36 @@ export function isBettingRoundComplete(
   // Only one player left
   if (activePlayers.length <= 1) return true;
   
-  // All players are all-in except one
+  // Check if all non-all-in players have acted properly
   const playersNotAllIn = activePlayers.filter(p => !p.isAllIn);
-  if (playersNotAllIn.length <= 1) return true;
+  console.log("Debug isBettingRoundComplete:", {
+    totalActivePlayers: activePlayers.length,
+    playersNotAllIn: playersNotAllIn.length,
+    playersNotAllInDetails: playersNotAllIn.map(p => ({
+      seat: p.seatPosition,
+      hasActed: p.hasActed,
+      currentBet: p.currentBet,
+      lastAction: p.lastAction
+    }))
+  });
+  
+  // If all players are all-in, the betting round is complete
+  if (playersNotAllIn.length === 0) {
+    console.log("All players are all-in - ending betting round");
+    return true;
+  }
+  
+  // If only one player is not all-in, they must have had a chance to act
+  if (playersNotAllIn.length === 1) {
+    const remainingPlayer = playersNotAllIn[0];
+    const hasActedAfterAllIn = remainingPlayer.hasActed;
+    console.log("Only one player not all-in:", {
+      seat: remainingPlayer.seatPosition,
+      hasActed: hasActedAfterAllIn,
+      shouldEnd: hasActedAfterAllIn
+    });
+    return hasActedAfterAllIn;
+  }
   
   // If there's a current bet, all players must either:
   // 1. Match the bet (call/raise) or be all-in
@@ -58,10 +85,25 @@ export function isBettingRoundComplete(
   if (currentBet > 0) {
     const playersWhoNeedToAct = activePlayers.filter(p => !p.isAllIn);
     
+    console.log("Debug currentBet > 0:", {
+      currentBet,
+      playersWhoNeedToAct: playersWhoNeedToAct.map(p => ({
+        seat: p.seatPosition,
+        currentBet: p.currentBet,
+        hasActed: p.hasActed,
+        lastAction: p.lastAction
+      }))
+    });
+    
     // Check if all non-all-in players have matched the current bet
     const allMatched = playersWhoNeedToAct.every(p => p.currentBet === currentBet);
     
-    if (!allMatched) return false;
+    console.log("Debug allMatched:", { allMatched });
+    
+    if (!allMatched) {
+      console.log("Returning false because not all matched");
+      return false;
+    }
     
     // If there was a raise, everyone after the raiser must have acted
     if (lastRaiserPosition !== undefined) {

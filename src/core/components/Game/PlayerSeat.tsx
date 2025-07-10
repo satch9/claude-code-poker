@@ -115,14 +115,25 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         {/* Cards */}
         <div className="flex gap-1">
           {player.cards.length > 0 ? (
-            player.cards.map((cardStr, index) => (
-              <Card
-                key={index}
-                card={showCards ? parseCard(cardStr) : undefined}
-                isHidden={!showCards}
-                size="sm"
-              />
-            ))
+            player.cards.map((cardStr, index) => {
+              const parsedCard = showCards ? parseCard(cardStr) : undefined;
+              console.log(`Card ${index} for player at position ${position}:`, {
+                cardStr,
+                showCards,
+                parsedCard,
+                isHidden: !showCards,
+                cardRank: parsedCard?.rank,
+                cardSuit: parsedCard?.suit
+              });
+              return (
+                <Card
+                  key={index}
+                  card={parsedCard}
+                  isHidden={!showCards}
+                  size="sm"
+                />
+              );
+            })
           ) : (
             <>
               <Card size="sm" />
@@ -144,7 +155,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* All-in indicator */}
       {player.isAllIn && (
-        <div className="absolute inset-0 bg-red-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 bg-red-500/20 rounded-xl flex items-center justify-center">
           <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
             ALL-IN
           </span>

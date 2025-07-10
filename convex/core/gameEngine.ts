@@ -418,16 +418,46 @@ export const playerAction = mutation({
     }
 
     // Check if betting round is complete
-    if (isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition)) {
+    const isBettingComplete = isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
+    
+    console.log("Debug betting round:", {
+      isBettingComplete,
+      currentBet: updatedGameState.currentBet,
+      lastRaiserPosition: updatedGameState.lastRaiserPosition,
+      players: allPlayers.map(p => ({
+        seatPosition: p.seatPosition,
+        currentBet: p.currentBet,
+        hasActed: p.hasActed,
+        isFolded: p.isFolded,
+        isAllIn: p.isAllIn,
+        lastAction: p.lastAction
+      }))
+    });
+    
+    if (isBettingComplete) {
       // Move to next phase
       await advanceToNextPhase(ctx, args.tableId);
     } else {
       // Move to next active player
+      // Don't filter all-in players when looking for next player, 
+      // as other players still need to act against all-in
       const activePlayers = allPlayers
-        .filter(p => !p.isFolded && !p.isAllIn)
+        .filter(p => !p.isFolded)
         .map(p => p.seatPosition);
       
       const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
+
+      console.log("Debug next player:", {
+        currentPlayerPosition: player.seatPosition,
+        activePlayers,
+        nextPlayer,
+        allPlayers: allPlayers.map(p => ({
+          seat: p.seatPosition,
+          isFolded: p.isFolded,
+          isAllIn: p.isAllIn,
+          hasActed: p.hasActed
+        }))
+      });
 
       if (nextPlayer === -1) {
         // No more active players, end betting round
@@ -440,6 +470,35 @@ export const playerAction = mutation({
       }
     }
 
+    return { success: true };
+  },
+});
+
+// Auto-advance to next phase (called by client timer)
+export const advancePhase = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+
+    if (!gameState) {
+      throw new Error("Game state not found");
+    }
+
+    // Only advance if autoAdvanceAt is set and time has passed
+    if (!gameState.autoAdvanceAt || Date.now() < gameState.autoAdvanceAt) {
+      return { success: false };
+    }
+
+    // Clear the autoAdvanceAt flag
+    await ctx.db.patch(gameState._id, {
+      autoAdvanceAt: undefined,
+    });
+
+    // Advance to next phase
+    await advanceToNextPhase(ctx, args.tableId);
     return { success: true };
   },
 });
@@ -516,6 +575,29 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     .filter((p: any) => !p.isAllIn)
     .map((p: any) => p.seatPosition)
     .sort((a: any, b: any) => a - b);
+
+  // If all players are all-in, we need to continue automatically
+  const allPlayersAllIn = playerPositions.length === 0;
+  
+  console.log("Debug advanceToNextPhase:", {
+    nextPhase,
+    allPlayersAllIn,
+    playerPositions
+  });
+
+  if (allPlayersAllIn) {
+    // All players are all-in, set a special flag to trigger auto-advance
+    await ctx.db.patch(gameState._id, {
+      phase: nextPhase,
+      communityCards,
+      currentBet: 0,
+      currentPlayerPosition: -1, // No player to act
+      lastRaiserPosition: undefined,
+      autoAdvanceAt: Date.now() + 2000, // Auto-advance in 2 seconds
+      updatedAt: Date.now(),
+    });
+    return;
+  }
 
   const firstPlayerPosition = getFirstPlayerToAct(
     gameState.dealerPosition,

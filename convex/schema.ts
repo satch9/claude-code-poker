@@ -104,6 +104,7 @@ export default defineSchema({
       eligiblePlayers: v.array(v.id("users")),
     })),
     handNumber: v.optional(v.number()),
+    autoAdvanceAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_table", ["tableId"]),
 

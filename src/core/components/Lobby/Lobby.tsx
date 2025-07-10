@@ -12,7 +12,11 @@ interface LobbyProps {
   onCreateTable: () => void;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ title, onJoinTable, onCreateTable }) => {
+export const Lobby: React.FC<LobbyProps> = ({
+  title,
+  onJoinTable,
+  onCreateTable,
+}) => {
   const { user } = useAuth();
   // Appel Convex pour récupérer les tables avec info utilisateur
   const tables = useQuery(
@@ -26,14 +30,11 @@ export const Lobby: React.FC<LobbyProps> = ({ title, onJoinTable, onCreateTable 
   return (
     <div className="min-h-screen bg-gradient-to-br from-poker-green-50 to-poker-green-100">
       {/* Header fixe en haut */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-poker-green-200 sticky top-0 z-10">
+      <header className="bg-poker-green-100 backdrop-blur-sm border-b border-poker-green-300 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                🃏 {title}
-              </h1>
-              <p className="text-sm text-gray-600">Lobby des tables de jeu</p>
+              <h1 className="text-2xl font-bold text-gray-900">🃏 {title}</h1>
             </div>
 
             {/* Profil utilisateur compact avec dialog */}
@@ -45,17 +46,6 @@ export const Lobby: React.FC<LobbyProps> = ({ title, onJoinTable, onCreateTable 
       {/* Contenu principal avec plus d'espace */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
-          {/* Message d'accueil */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Bienvenue {user.name} !
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Choisissez une table existante ou créez votre propre partie. Prêt
-              à tenter votre chance ?
-            </p>
-          </div>
-
           {/* Liste des tables */}
           <TableList
             tables={tables || []}
