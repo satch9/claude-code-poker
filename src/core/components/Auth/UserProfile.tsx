@@ -178,11 +178,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
-              user.name.charAt(0).toUpperCase()
+              user.name?.charAt(0).toUpperCase() || '?'
             )}
           </div>
           <div>
-            <div className="font-medium text-sm text-gray-900">{user.name}</div>
+            <div className="font-medium text-sm text-gray-900">{user.name || 'Utilisateur'}</div>
             <div className="text-xs text-gray-500">Joueur en ligne</div>
           </div>
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +289,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       placeholder="Votre nom"
                     />
                   ) : (
-                    <h4 className="text-lg font-semibold text-gray-900">{user.name}</h4>
+                    <h4 className="text-lg font-semibold text-gray-900">{user.name || 'Utilisateur'}</h4>
                   )}
                   <p className="text-sm text-gray-500">{user.email}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -477,10 +477,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-poker-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-            {user.name.charAt(0).toUpperCase()}
+            {user.name?.charAt(0).toUpperCase() || '?'}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{user.name || 'Utilisateur'}</h3>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
         </div>
