@@ -74,8 +74,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Calculate seat positions for oval table (optimized for 9 players)
   const getSeatPosition = (position: number, maxPlayers: number) => {
     const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
-    const radiusX = 48; // Horizontal radius percentage (more wide)
-    const radiusY = 38; // Vertical radius percentage (more oval)
+    
+    // Mobile: bigger radius to make seats extend outside table edge
+    // Desktop: normal radius to keep seats on table edge
+    const radiusX = isMobile ? 52 : 48; // Horizontal radius percentage
+    const radiusY = isMobile ? 42 : 38; // Vertical radius percentage
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);
@@ -140,63 +143,38 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     <div className="fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden">
       {/* Landscape Warning for mobile portrait */}
       <LandscapeWarning />
-      {/* Header - responsive */}
-      <div className={cn(
-        "flex justify-between items-center border-b border-poker-green-700 flex-shrink-0",
-        isMobile ? "p-2" : "p-4"
-      )}>
-        <div className="text-white">
-          <h1 className={cn(
-            "font-bold",
-            isMobile ? "text-lg" : "text-2xl"
-          )}>
-            {isMobile ? table.name : `${appTitle} - ${table.name}`}
-          </h1>
-          <p className={cn(
-            "text-poker-green-200",
-            isMobile ? "text-xs" : "text-sm"
-          )}>
-            {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
-            Blinds: {table.smallBlind}/{table.bigBlind}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {/* Mobile menu button */}
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="text-white"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </Button>
-          )}
-          
-          {/* Start game button in header - only for first game */}
-          {gameState.phase === "waiting" &&
-            table.status === "waiting" &&
-            players.length >= 2 &&
-            currentPlayer && (
-              <Button
-                onClick={handleStartGame}
-                disabled={isProcessing}
-                size={isMobile ? "sm" : "md"}
-                variant="primary"
-              >
-                {isProcessing ? "Démarrage..." : (isMobile ? "Démarrer" : "Démarrer la partie")}
-              </Button>
-            )}
-          
-          {!isMobile && (
+      {/* Header - hidden on mobile */}
+      {!isMobile && (
+        <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 p-4">
+          <div className="text-white">
+            <h1 className="text-2xl font-bold">{appTitle} - {table.name}</h1>
+            <p className="text-sm text-poker-green-200">
+              {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
+              Blinds: {table.smallBlind}/{table.bigBlind}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {/* Start game button in header - only for first game */}
+            {gameState.phase === "waiting" &&
+              table.status === "waiting" &&
+              players.length >= 2 &&
+              currentPlayer && (
+                <Button
+                  onClick={handleStartGame}
+                  disabled={isProcessing}
+                  size="md"
+                  variant="primary"
+                >
+                  {isProcessing ? "Démarrage..." : "Démarrer la partie"}
+                </Button>
+              )}
+            
             <Button variant="secondary" onClick={onLeaveTable}>
               Quitter la table
             </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main content - responsive layout */}
       <div className={cn(
@@ -240,31 +218,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         {/* Center - Table */}
         <div className={cn(
           "flex-1 flex flex-col items-center",
-          isMobile ? "p-2" : "p-4"
+          isMobile ? "p-2 pb-20" : "p-4"
         )} style={!isMobile ? { maxWidth: isTablet ? "calc(100% - 480px)" : "calc(100% - 640px)" } : {}}>
           
-          {/* Turn indicator for mobile */}
-          {isMobile && (
-            <div className="w-full mb-2 bg-poker-green-800/50 rounded-lg p-2 border border-poker-green-600">
-              <TurnIndicator
-                currentPhase={gameState.phase}
-                currentPlayerPosition={gameState.currentPlayerPosition}
-                dealerPosition={gameState.dealerPosition}
-                isMyTurn={isMyTurn || false}
-                playerName={
-                  players.find(
-                    (p) => p.seatPosition === gameState.currentPlayerPosition
-                  )?.user?.name || ""
-                }
-                compact={true}
-              />
-            </div>
-          )}
-          
-          {/* Main table area */}
+          {/* Main table area - fullscreen on mobile */}
           <div className={cn(
             "relative w-full",
-            isMobile ? "h-[400px] max-w-none" : "max-w-4xl h-[600px]"
+            isMobile ? "h-full max-w-none" : "max-w-4xl h-[600px]"
           )}>
             {/* Table shadow */}
             <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
@@ -306,7 +266,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               ></div>
 
               {/* Center area with community cards */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+              <div className={cn(
+                "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center",
+                isMobile && "scale-75"
+              )}>
                 {/* Community cards */}
                 <CommunityCards
                   cards={gameState.communityCards}
@@ -318,7 +281,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {/* Dealer button */}
               {gameState.dealerPosition >= 0 && (
                 <div
-                  className="absolute z-20 w-10 h-10 bg-gradient-to-br from-white to-gray-100 border-3 border-gray-700 rounded-full flex items-center justify-center text-sm font-black text-gray-800 shadow-xl transition-all duration-500"
+                  className={cn(
+                    "absolute z-20 bg-gradient-to-br from-white to-gray-100 border-3 border-gray-700 rounded-full flex items-center justify-center font-black text-gray-800 shadow-xl transition-all duration-500",
+                    isMobile ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"
+                  )}
                   style={{
                     ...getDealerButtonPosition(
                       gameState.dealerPosition,
@@ -337,7 +303,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {seats.map((seat) => (
                 <div
                   key={seat.position}
-                  className="absolute"
+                  className={cn(
+                    "absolute",
+                    isMobile ? "z-30" : "z-10"
+                  )}
                   style={getSeatPosition(seat.position, table.maxPlayers)}
                 >
                   <PlayerSeat
@@ -414,7 +383,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             isMyTurn &&
             gameState.phase !== "waiting" &&
             availableActions.length > 0 && (
-              <div className="mt-6 w-full max-w-4xl">
+              <div className={cn(
+                "w-full",
+                isMobile ? "mt-2 max-w-none" : "mt-6 max-w-4xl"
+              )}>
                 <BettingControls
                   availableActions={availableActions as any}
                   playerChips={currentPlayer.chips}
@@ -553,6 +525,73 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </button>
             </div>
           </div>
+          </div>
+        )}
+
+        {/* Mobile bottom menu - fixed navigation */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-poker-green-800/95 backdrop-blur-sm border-t border-poker-green-600">
+            <div className="flex items-center justify-around py-2 px-4">
+              {/* Menu button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="flex flex-col items-center gap-1 p-2 text-white hover:text-poker-green-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span className="text-xs">Menu</span>
+              </button>
+
+              {/* Game info button */}
+              <button
+                onClick={() => setShowGameInfo(!showGameInfo)}
+                className="flex flex-col items-center gap-1 p-2 text-white hover:text-poker-green-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs">Info</span>
+              </button>
+
+              {/* Phase indicator */}
+              <div className="flex flex-col items-center gap-1 p-2">
+                <div className={cn(
+                  "w-3 h-3 rounded-full",
+                  gameState.phase === "waiting" && "bg-gray-400",
+                  gameState.phase === "preflop" && "bg-blue-400",
+                  gameState.phase === "flop" && "bg-green-400",
+                  gameState.phase === "turn" && "bg-yellow-400",
+                  gameState.phase === "river" && "bg-orange-400",
+                  gameState.phase === "showdown" && "bg-purple-400"
+                )}></div>
+                <span className="text-xs text-white capitalize">{gameState.phase}</span>
+              </div>
+
+              {/* Start game or leave button */}
+              {gameState.phase === "waiting" && table.status === "waiting" && players.length >= 2 && currentPlayer ? (
+                <button
+                  onClick={handleStartGame}
+                  disabled={isProcessing}
+                  className="flex flex-col items-center gap-1 p-2 text-poker-green-200 hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M10 19a9 9 0 100-18 9 9 0 000 18z" />
+                  </svg>
+                  <span className="text-xs">{isProcessing ? "..." : "Start"}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onLeaveTable}
+                  className="flex flex-col items-center gap-1 p-2 text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-xs">Quit</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
 
