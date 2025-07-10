@@ -177,20 +177,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           onClick={() => setShowDialog(true)}
           className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-gray-50"
         >
-          <div className={`w-8 h-8 ${user.avatarColor || 'bg-poker-green-500'} rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden`}>
-            {userAvatarUrl ? (
-              <img 
-                src={userAvatarUrl} 
-                alt="Avatar" 
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : (
-              user.name?.charAt(0).toUpperCase() || '?'
-            )}
+          <div className="relative">
+            <div className={`w-8 h-8 ${user.avatarColor || 'bg-poker-green-500'} rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden`}>
+              {userAvatarUrl ? (
+                <img 
+                  src={userAvatarUrl} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                user.name?.charAt(0).toUpperCase() || '?'
+              )}
+            </div>
+            {/* Online status indicator */}
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
           </div>
           <div>
-            <div className="font-medium text-sm text-gray-900">{user.name || 'Utilisateur'}</div>
-            <div className="text-xs text-gray-500">Joueur en ligne</div>
+            <div className="font-medium text-sm text-gray-900 truncate max-w-[120px]">{user.name || 'Utilisateur'}</div>
           </div>
           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -392,7 +395,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   )}>
                     {userStats?.gamesWon || 0}
                   </div>
-                  <div className="text-xs text-gray-500">Parties gagnées</div>
+                  <div className="text-xs text-gray-500 truncate">Parties gagnées</div>
                 </div>
                 <div className={cn(
                   "text-center bg-gray-50 rounded-lg",
@@ -404,7 +407,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   )}>
                     {userStats?.gamesPlayed || 0}
                   </div>
-                  <div className="text-xs text-gray-500">Parties jouées</div>
+                  <div className="text-xs text-gray-500 truncate">Parties jouées</div>
                 </div>
               </div>
 
@@ -427,19 +430,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         isMobile ? "p-1.5" : "p-2"
                       )}>
                         <div className="font-bold text-blue-600">{userStats.winRate}%</div>
-                        <div className="text-blue-500">Taux victoire</div>
+                        <div className="text-blue-500 truncate">Taux victoire</div>
                       </div>
                       <div className={cn(
                         "text-center bg-green-50 rounded",
                         isMobile ? "p-1.5" : "p-2"
                       )}>
                         <div className="font-bold text-green-600">{userStats.totalWinnings}</div>
-                        <div className="text-green-500">Jetons gagnés</div>
+                        <div className="text-green-500 truncate">Jetons gagnés</div>
                       </div>
                       {!isMobile && (
                         <div className="text-center p-2 bg-purple-50 rounded">
                           <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
-                          <div className="text-purple-500">Mains jouées</div>
+                          <div className="text-purple-500 truncate">Mains jouées</div>
                         </div>
                       )}
                     </div>
@@ -450,14 +453,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         isMobile ? "p-1.5" : "p-2"
                       )}>
                         <div className="font-bold text-orange-600">{userStats.biggestWin}</div>
-                        <div className="text-orange-500">Plus gros gain</div>
+                        <div className="text-orange-500 truncate">Plus gros gain</div>
                       </div>
                       <div className={cn(
                         "text-center bg-red-50 rounded",
                         isMobile ? "p-1.5" : "p-2"
                       )}>
                         <div className="font-bold text-red-600">{userStats.tournamentWins}</div>
-                        <div className="text-red-500">Tournois gagnés</div>
+                        <div className="text-red-500 truncate">Tournois gagnés</div>
                       </div>
                     </div>
                     
@@ -466,7 +469,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       <div className="grid grid-cols-1 gap-2 text-xs">
                         <div className="text-center p-1.5 bg-purple-50 rounded">
                           <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
-                          <div className="text-purple-500">Mains jouées</div>
+                          <div className="text-purple-500 truncate">Mains jouées</div>
                         </div>
                       </div>
                     )}

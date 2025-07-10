@@ -80,7 +80,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
             "flex",
             isMobile ? "gap-2 flex-col" : "gap-4"
           )}>
-            <span>
+            <span className="truncate">
               {isMobile ? 'Pot:' : 'Pot:'} <span className="text-green-400 font-bold">
                 {isMobile && potSize >= 1000 
                   ? `${Math.floor(potSize/1000)}K`
@@ -88,7 +88,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
                 }
               </span>
             </span>
-            <span>
+            <span className="truncate">
               {isMobile ? 'Chips:' : 'Your chips:'} <span className="text-blue-400 font-bold">
                 {isMobile && playerChips >= 1000
                   ? `${Math.floor(playerChips/1000)}K`
@@ -97,16 +97,16 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
               </span>
             </span>
             {potOdds && (
-              <span>
+              <span className="truncate">
                 {isMobile ? 'Odds:' : 'Odds:'} <span className="text-yellow-400 font-bold">{potOdds}</span>
               </span>
             )}
           </div>
           {handStrength && (
-            <div className="flex items-center gap-1">
-              <span className="text-gray-400">Hand:</span>
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="text-gray-400 text-sm">Hand:</span>
               <span className={cn(
-                'font-bold',
+                'font-bold text-sm truncate',
                 handStrength === 'Strong' && 'text-green-400',
                 handStrength === 'Good' && 'text-blue-400',
                 handStrength === 'Medium' && 'text-yellow-400',
@@ -149,7 +149,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
               disabled={disabled}
               className="flex-1"
             >
-              Call {callAction.amount?.toLocaleString()}
+{isMobile ? `Call ${callAction.amount && callAction.amount >= 1000 ? `${Math.floor(callAction.amount/1000)}K` : callAction.amount?.toLocaleString()}` : `Call ${callAction.amount?.toLocaleString()}`}
             </Button>
           )}
           
@@ -171,7 +171,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
               disabled={disabled}
               className="flex-1"
             >
-              All-In ({allInAction.amount?.toLocaleString()})
+{isMobile ? `All-In (${allInAction.amount && allInAction.amount >= 1000 ? `${Math.floor(allInAction.amount/1000)}K` : allInAction.amount?.toLocaleString()})` : `All-In (${allInAction.amount?.toLocaleString()})`}
             </Button>
           )}
         </div>

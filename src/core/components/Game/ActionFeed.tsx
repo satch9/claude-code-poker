@@ -109,7 +109,7 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
               className="flex items-center justify-between text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <div className={cn('font-medium', getActionColor(item.action))}>
+                <div className={cn('font-medium truncate max-w-[200px]', getActionColor(item.action))}>
                   {getActionText(item)}
                 </div>
               </div>

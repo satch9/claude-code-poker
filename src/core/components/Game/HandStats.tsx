@@ -81,7 +81,7 @@ export const HandStats: React.FC<HandStatsProps> = ({
               <span className="text-xs">{stat.icon}</span>
               <span className="text-xs text-gray-400 font-medium truncate">{stat.label}</span>
             </div>
-            <div className={cn('text-xs font-bold', stat.color)}>
+            <div className={cn('text-xs font-bold truncate', stat.color)}>
               {stat.value}
             </div>
           </div>

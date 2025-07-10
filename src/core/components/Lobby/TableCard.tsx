@@ -37,7 +37,7 @@ export const TableCard: React.FC<TableCardProps> = ({
     >
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[200px]">
             {table.name}
           </h3>
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -75,20 +75,20 @@ export const TableCard: React.FC<TableCardProps> = ({
       <div className="space-y-2 mb-4 text-sm">
         <div className="flex justify-between">
           <span className="text-gray-500">Blinds:</span>
-          <div className="font-medium text-poker-green-400">
+          <div className="font-medium text-poker-green-400 truncate max-w-[80px]">
             {table.smallBlind}/{table.bigBlind}
           </div>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">Stack:</span>
-          <div className="font-medium text-blue-600">
+          <div className="font-medium text-blue-600 truncate max-w-[100px]">
             {table.startingStack?.toLocaleString() || 'N/A'}
           </div>
         </div>
         {table.gameType === 'tournament' && (
           <div className="flex justify-between">
             <span className="text-gray-500">Buy-in:</span>
-            <div className="font-medium text-purple-600">
+            <div className="font-medium text-purple-600 truncate max-w-[100px]">
               {table.buyIn === 0 ? 'Freeroll' : `${table.buyIn?.toLocaleString()}€`}
             </div>
           </div>

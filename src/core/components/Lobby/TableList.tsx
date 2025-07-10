@@ -3,6 +3,7 @@ import { TableCard } from "./TableCard";
 import { Button } from "../UI/Button";
 import { Table } from "../../../shared/types";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useBreakpoint } from "../../hooks/useBreakpoint";
 
 interface TableListProps {
   tables: Table[];
@@ -17,6 +18,7 @@ export const TableList: React.FC<TableListProps> = ({
   onCreateTable,
   loading = false,
 }) => {
+  const { isMobile } = useBreakpoint();
   const [filter, setFilter] = useState<"all" | "cash" | "tournament">("all");
   const [showPrivate, setShowPrivate] = useState(false);
 
@@ -87,8 +89,12 @@ export const TableList: React.FC<TableListProps> = ({
           </label>
 
           {/* Create table button */}
-          <Button variant="success" onClick={onCreateTable}>
-            + Créer une table
+          <Button
+            variant="success"
+            className="text-sm font-medium"
+            onClick={onCreateTable}
+          >
+            {isMobile ? "+ Créer" : "+ Créer une table"}
           </Button>
         </div>
       </div>

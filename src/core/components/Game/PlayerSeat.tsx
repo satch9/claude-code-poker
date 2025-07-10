@@ -103,8 +103,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       {/* Blind indicators */}
       {(isSmallBlind || isBigBlind) && (
         <div className={cn(
-          "absolute -top-2 -left-2 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg",
-          isMobile ? "min-w-[20px] h-5 text-xs px-1" : "min-w-[24px] h-6 text-xs px-1"
+          "absolute -top-2 -left-2 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg whitespace-nowrap",
+          isMobile ? "min-w-[24px] h-5 text-xs px-1.5" : "min-w-[28px] h-6 text-xs px-2"
         )}>
           {isMobile 
             ? (isSmallBlind ? 'SB' : 'BB')
@@ -132,13 +132,13 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           <div className="flex-1 min-w-0">
             <div className={cn(
               "font-medium text-white truncate",
-              isMobile ? "text-xs" : "text-sm"
+              isMobile ? "text-xs leading-tight" : "text-sm"
             )}>
               {player.user?.name || 'Player'}
             </div>
             <div className={cn(
-              "text-green-400 font-bold",
-              isMobile ? "text-xs" : "text-xs"
+              "text-green-400 font-bold truncate",
+              isMobile ? "text-xs leading-tight" : "text-xs"
             )}>
               {isMobile 
                 ? (player.chips >= 1000 ? `${Math.floor(player.chips/1000)}K` : player.chips.toString())
@@ -146,7 +146,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
               }
             </div>
             {!isMobile && player.lastAction && (
-              <div className="text-xs text-gray-300 font-medium">
+              <div className="text-xs text-gray-300 font-medium truncate">
                 {getActionLabel(player.lastAction)}
               </div>
             )}
@@ -191,7 +191,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           isMobile ? "-bottom-1" : "-bottom-2"
         )}>
           <div className={cn(
-            "bg-red-500 text-white rounded-full font-bold shadow-lg",
+            "bg-red-500 text-white rounded-full font-bold shadow-lg whitespace-nowrap",
             isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
           )}>
             {isMobile && player.currentBet >= 1000
