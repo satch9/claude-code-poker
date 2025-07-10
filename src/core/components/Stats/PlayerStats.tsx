@@ -15,13 +15,20 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   
+  // Validate userId
+  const isValidUserId = userId && 
+    typeof userId === 'string' && 
+    userId.length > 20 && 
+    !userId.includes('notification') &&
+    userId !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1';
+
   const userStats = useQuery(
     api.users.getUserStats, 
-    userId && userId.length > 20 ? { userId } : "skip"
+    isValidUserId ? { userId } : "skip"
   );
   const userRanking = useQuery(
     api.users.getUserRanking, 
-    userId && userId.length > 20 ? { userId } : "skip"
+    isValidUserId ? { userId } : "skip"
   );
 
   if (!userStats) {

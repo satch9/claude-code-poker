@@ -31,9 +31,16 @@ export function useAuthState() {
   const signInMutation = useMutation(api.auth.signInWithPassword);
   
   // Query to get full user data from database
+  // Only call if we have a valid user ID that doesn't come from notifications table
+  const isValidUserId = user && user._id && 
+    typeof user._id === 'string' && 
+    user._id.length > 20 && 
+    !user._id.includes('notification') &&
+    user._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1'; // Block the specific problematic ID
+    
   const userQuery = useQuery(
     api.users.getUser,
-    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
+    isValidUserId ? { userId: user._id } : "skip"
   );
 
   // Charger l'utilisateur depuis localStorage au démarrage
@@ -43,11 +50,16 @@ export function useAuthState() {
       try {
         const parsedUser = JSON.parse(storedUser);
         // Validate that the user ID looks correct (not a notification ID)
-        if (parsedUser._id && parsedUser._id.length > 20 && !parsedUser._id.includes('notification')) {
+        if (parsedUser._id && 
+            parsedUser._id.length > 20 && 
+            !parsedUser._id.includes('notification') &&
+            parsedUser._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1') {
           setUser(parsedUser);
         } else {
           console.error('Invalid user ID found in localStorage:', parsedUser._id);
           localStorage.removeItem('poker-user');
+          // Also clear any other stored data that might be corrupted
+          localStorage.clear();
         }
       } catch (error) {
         console.error('Error parsing stored user:', error);
@@ -56,6 +68,15 @@ export function useAuthState() {
     }
     setIsLoading(false);
   }, []);
+
+  // Additional effect to clean up bad user data
+  useEffect(() => {
+    if (user && user._id === 'jd7514rayy58sj0twv09h2fk0h7h1pn1') {
+      console.error('Detected problematic user ID, clearing user data');
+      setUser(null);
+      localStorage.clear();
+    }
+  }, [user]);
 
   // Sync user data with database when userQuery updates
   useEffect(() => {

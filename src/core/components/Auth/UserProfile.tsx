@@ -38,16 +38,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     user?.avatarImageId ? { imageId: user.avatarImageId } : "skip"
   );
 
+  // Check if user ID is valid
+  const isValidUserId = user && user._id && 
+    typeof user._id === 'string' && 
+    user._id.length > 20 && 
+    !user._id.includes('notification') &&
+    user._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1';
+
   // Query for user statistics
   const userStats = useQuery(
     api.users.getUserStats,
-    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
+    isValidUserId ? { userId: user._id } : "skip"
   );
 
   // Query for user ranking
   const userRanking = useQuery(
     api.users.getUserRanking,
-    user && user._id && user._id.length > 20 ? { userId: user._id } : "skip"
+    isValidUserId ? { userId: user._id } : "skip"
   );
 
   // Avatars disponibles (couleurs et initiales)
