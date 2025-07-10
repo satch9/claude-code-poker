@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
 import { Button } from '../UI/Button';
+import { isValidUserId } from '../../../shared/utils/validation';
 
 interface PlayerStatsProps {
   userId: Id<'users'>;
@@ -16,19 +17,15 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   
   // Validate userId
-  const isValidUserId = userId && 
-    typeof userId === 'string' && 
-    userId.length > 20 && 
-    !userId.includes('notification') &&
-    userId !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1';
+  const userIdValid = isValidUserId(userId);
 
   const userStats = useQuery(
     api.users.getUserStats, 
-    isValidUserId ? { userId } : "skip"
+    userIdValid ? { userId } : "skip"
   );
   const userRanking = useQuery(
     api.users.getUserRanking, 
-    isValidUserId ? { userId } : "skip"
+    userIdValid ? { userId } : "skip"
   );
 
   if (!userStats) {

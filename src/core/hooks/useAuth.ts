@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { User } from '../../shared/types';
+import { isValidUserId, cleanupCorruptedUserData } from '../../shared/utils/validation';
 
 interface AuthContextType {
   user: User | null;
@@ -32,15 +33,11 @@ export function useAuthState() {
   
   // Query to get full user data from database
   // Only call if we have a valid user ID that doesn't come from notifications table
-  const isValidUserId = user && user._id && 
-    typeof user._id === 'string' && 
-    user._id.length > 20 && 
-    !user._id.includes('notification') &&
-    user._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1'; // Block the specific problematic ID
+  const userIdValid = user && isValidUserId(user._id);
     
   const userQuery = useQuery(
     api.users.getUser,
-    isValidUserId ? { userId: user._id } : "skip"
+    userIdValid ? { userId: user._id } : "skip"
   );
 
   // Charger l'utilisateur depuis localStorage au démarrage
@@ -50,15 +47,11 @@ export function useAuthState() {
       try {
         const parsedUser = JSON.parse(storedUser);
         // Validate that the user ID looks correct (not a notification ID)
-        if (parsedUser._id && 
-            parsedUser._id.length > 20 && 
-            !parsedUser._id.includes('notification') &&
-            parsedUser._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1') {
+        if (isValidUserId(parsedUser._id)) {
           setUser(parsedUser);
         } else {
           console.error('Invalid user ID found in localStorage:', parsedUser._id);
-          localStorage.removeItem('poker-user');
-          // Also clear any other stored data that might be corrupted
+          cleanupCorruptedUserData();
           localStorage.clear();
         }
       } catch (error) {
@@ -71,9 +64,10 @@ export function useAuthState() {
 
   // Additional effect to clean up bad user data
   useEffect(() => {
-    if (user && user._id === 'jd7514rayy58sj0twv09h2fk0h7h1pn1') {
-      console.error('Detected problematic user ID, clearing user data');
+    if (user && !isValidUserId(user._id)) {
+      console.error('Detected problematic user ID, clearing user data:', user._id);
       setUser(null);
+      cleanupCorruptedUserData();
       localStorage.clear();
     }
   }, [user]);
@@ -109,8 +103,15 @@ export function useAuthState() {
         createdAt: Date.now(),
         lastSeen: Date.now(),
       };
-      setUser(newUser);
-      localStorage.setItem('poker-user', JSON.stringify(newUser));
+      
+      // Validate the user ID before storing
+      if (isValidUserId(newUser._id)) {
+        setUser(newUser);
+        localStorage.setItem('poker-user', JSON.stringify(newUser));
+      } else {
+        console.error('Invalid user ID received from signup:', newUser._id);
+        throw new Error('Invalid user ID received from server');
+      }
       return result;
     } finally {
       setIsLoading(false);
@@ -124,8 +125,15 @@ export function useAuthState() {
       // Use the full user data returned from the backend
       if (result.user) {
         const userData = result.user as User;
-        setUser(userData);
-        localStorage.setItem('poker-user', JSON.stringify(userData));
+        
+        // Validate the user ID before storing
+        if (isValidUserId(userData._id)) {
+          setUser(userData);
+          localStorage.setItem('poker-user', JSON.stringify(userData));
+        } else {
+          console.error('Invalid user ID received from signin:', userData._id);
+          throw new Error('Invalid user ID received from server');
+        }
       }
       return result;
     } finally {

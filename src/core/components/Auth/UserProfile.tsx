@@ -3,6 +3,7 @@ import { Button } from "../UI/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { isValidUserId } from "../../../shared/utils/validation";
 
 interface UserProfileProps {
   showLogout?: boolean;
@@ -39,22 +40,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   );
 
   // Check if user ID is valid
-  const isValidUserId = user && user._id && 
-    typeof user._id === 'string' && 
-    user._id.length > 20 && 
-    !user._id.includes('notification') &&
-    user._id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1';
+  const userIdValid = user && isValidUserId(user._id);
 
   // Query for user statistics
   const userStats = useQuery(
     api.users.getUserStats,
-    isValidUserId ? { userId: user._id } : "skip"
+    userIdValid ? { userId: user._id } : "skip"
   );
 
   // Query for user ranking
   const userRanking = useQuery(
     api.users.getUserRanking,
-    isValidUserId ? { userId: user._id } : "skip"
+    userIdValid ? { userId: user._id } : "skip"
   );
 
   // Avatars disponibles (couleurs et initiales)

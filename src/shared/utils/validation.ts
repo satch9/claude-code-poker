@@ -1,15 +1,36 @@
+// List of known problematic notification IDs that should never be used as user IDs
+const BLOCKED_NOTIFICATION_IDS = [
+  'jd7514rayy58sj0twv09h2fk0h7h1pn1',
+  'jd7batyfcsa260gfxsz218gr397gyz6c',
+];
+
 /**
  * Validates if a given ID is a valid user ID and not corrupted
  * @param id - The ID to validate
  * @returns true if the ID is valid for users table
  */
 export function isValidUserId(id: any): id is string {
+  if (!id || typeof id !== 'string') {
+    return false;
+  }
+
+  // Check if it's a blocked notification ID
+  if (BLOCKED_NOTIFICATION_IDS.includes(id)) {
+    console.error('Blocked notification ID detected:', id);
+    return false;
+  }
+
+  // Check if it looks like a notification ID (they often start with similar patterns)
+  if (id.startsWith('jd7') && id.length > 30) {
+    console.warn('Potentially suspicious ID pattern detected:', id);
+    return false;
+  }
+
+  // General validation
   return (
-    id &&
-    typeof id === 'string' &&
     id.length > 20 &&
     !id.includes('notification') &&
-    id !== 'jd7514rayy58sj0twv09h2fk0h7h1pn1' // Block the specific problematic ID
+    !id.includes('gameAction') // Block other potentially problematic table IDs
   );
 }
 
