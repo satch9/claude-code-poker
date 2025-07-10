@@ -37,6 +37,7 @@ export function useTableActions() {
     maxPlayers: number;
     gameType: "cash" | "tournament";
     buyIn?: number;
+    startingStack: number;
     smallBlind: number;
     bigBlind: number;
     isPrivate: boolean;

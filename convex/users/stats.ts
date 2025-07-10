@@ -147,14 +147,11 @@ export const getUserStats = query({
 
     // Calculate win streaks
     const gameResults = Array.from(uniqueHands).map(handKey => {
-      const [tableId, handNumber] = handKey.split('-');
+      const [tableId, handNumber] = (handKey as string).split('-');
       return winActions.some(win => 
         win.tableId === tableId && 
         win.handNumber === parseInt(handNumber)
       );
-    }).sort((a, b) => {
-      // Sort by timestamp (simplified, using existence of win action as proxy)
-      return 0; // For now, we'll keep original order
     });
 
     let currentStreak = 0;

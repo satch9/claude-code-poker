@@ -5,7 +5,7 @@ interface ActionFeedItem {
   id?: string;
   _id?: string;
   playerName: string;
-  action: 'fold' | 'check' | 'call' | 'raise' | 'all-in' | 'join' | 'leave' | 'system' | 'blind' | 'win' | 'showdown';
+  action: string; // Allow any action type from the database
   amount?: number;
   message?: string;
   timestamp: number;
