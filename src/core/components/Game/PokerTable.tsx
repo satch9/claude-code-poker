@@ -8,8 +8,10 @@ import { HandStats } from "./HandStats";
 import { TurnIndicator } from "./TurnIndicator";
 import { ShowdownResults } from "./ShowdownResults";
 import { Button } from "../UI/Button";
+import { LandscapeWarning } from "../UI/LandscapeWarning";
 import { cn } from "../../../shared/utils/cn";
 import { useGameLogic } from "../../hooks/useGameLogic";
+import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 interface PokerTableProps {
@@ -26,7 +28,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   onJoinSeat,
 }) => {
   const [showGameInfo, setShowGameInfo] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  // Use hooks
+  const { isMobile, isTablet, isDesktop } = useBreakpoint();
+  
   // Use game logic hook
   const {
     table,
@@ -132,16 +138,43 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-poker-green-700 flex-shrink-0">
+      {/* Landscape Warning for mobile portrait */}
+      <LandscapeWarning />
+      {/* Header - responsive */}
+      <div className={cn(
+        "flex justify-between items-center border-b border-poker-green-700 flex-shrink-0",
+        isMobile ? "p-2" : "p-4"
+      )}>
         <div className="text-white">
-          <h1 className="text-2xl font-bold">{appTitle} - {table.name}</h1>
-          <p className="text-poker-green-200">
+          <h1 className={cn(
+            "font-bold",
+            isMobile ? "text-lg" : "text-2xl"
+          )}>
+            {isMobile ? table.name : `${appTitle} - ${table.name}`}
+          </h1>
+          <p className={cn(
+            "text-poker-green-200",
+            isMobile ? "text-xs" : "text-sm"
+          )}>
             {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
             Blinds: {table.smallBlind}/{table.bigBlind}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
+          {/* Mobile menu button */}
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="text-white"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </Button>
+          )}
+          
           {/* Start game button in header - only for first game */}
           {gameState.phase === "waiting" &&
             table.status === "waiting" &&
@@ -150,58 +183,89 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               <Button
                 onClick={handleStartGame}
                 disabled={isProcessing}
-                size="md"
+                size={isMobile ? "sm" : "md"}
                 variant="primary"
               >
-                {isProcessing ? "Démarrage..." : "Démarrer la partie"}
+                {isProcessing ? "Démarrage..." : (isMobile ? "Démarrer" : "Démarrer la partie")}
               </Button>
             )}
-          <Button variant="secondary" onClick={onLeaveTable}>
-            Quitter la table
-          </Button>
+          
+          {!isMobile && (
+            <Button variant="secondary" onClick={onLeaveTable}>
+              Quitter la table
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Main content - 3 columns layout */}
-      <div
-        className="flex flex-1 overflow-x-auto"
-        style={{ minWidth: "1200px" }}
-      >
-        {/* Left sidebar - Actions */}
-        <div className="w-80 flex-shrink-0 p-4 border-r border-poker-green-700 space-y-4 overflow-y-auto">
-          <ActionFeed actions={actionHistory} />
+      {/* Main content - responsive layout */}
+      <div className={cn(
+        "flex flex-1",
+        isMobile ? "overflow-hidden" : "overflow-x-auto"
+      )} style={!isMobile ? { minWidth: "1200px" } : {}}>
+        
+        {/* Left sidebar - Actions (desktop/tablet only) */}
+        {!isMobile && (
+          <div className={cn(
+            "flex-shrink-0 p-4 border-r border-poker-green-700 space-y-4 overflow-y-auto",
+            isTablet ? "w-60" : "w-80"
+          )}>
+            <ActionFeed actions={actionHistory} />
 
-          <TurnIndicator
-            currentPhase={gameState.phase}
-            currentPlayerPosition={gameState.currentPlayerPosition}
-            dealerPosition={gameState.dealerPosition}
-            isMyTurn={isMyTurn || false}
-            playerName={
-              players.find(
-                (p) => p.seatPosition === gameState.currentPlayerPosition
-              )?.user?.name || ""
-            }
-          />
-
-          {gameStats && (
-            <HandStats
-              handNumber={handNumber}
-              potSize={gameState.pot}
-              totalPlayers={players.length}
-              activePlayers={players.filter((p) => !p.isFolded).length}
-              bigBlind={table.bigBlind}
-              averageStack={gameStats.averageChips}
+            <TurnIndicator
+              currentPhase={gameState.phase}
+              currentPlayerPosition={gameState.currentPlayerPosition}
+              dealerPosition={gameState.dealerPosition}
+              isMyTurn={isMyTurn || false}
+              playerName={
+                players.find(
+                  (p) => p.seatPosition === gameState.currentPlayerPosition
+                )?.user?.name || ""
+              }
             />
-          )}
-        </div>
+
+            {gameStats && (
+              <HandStats
+                handNumber={handNumber}
+                potSize={gameState.pot}
+                totalPlayers={players.length}
+                activePlayers={players.filter((p) => !p.isFolded).length}
+                bigBlind={table.bigBlind}
+                averageStack={gameStats.averageChips}
+              />
+            )}
+          </div>
+        )}
 
         {/* Center - Table */}
-        <div
-          className="flex-1 flex flex-col items-center p-4"
-          style={{ maxWidth: "calc(100% - 640px)" }}
-        >
+        <div className={cn(
+          "flex-1 flex flex-col items-center",
+          isMobile ? "p-2" : "p-4"
+        )} style={!isMobile ? { maxWidth: isTablet ? "calc(100% - 480px)" : "calc(100% - 640px)" } : {}}>
+          
+          {/* Turn indicator for mobile */}
+          {isMobile && (
+            <div className="w-full mb-2 bg-poker-green-800/50 rounded-lg p-2 border border-poker-green-600">
+              <TurnIndicator
+                currentPhase={gameState.phase}
+                currentPlayerPosition={gameState.currentPlayerPosition}
+                dealerPosition={gameState.dealerPosition}
+                isMyTurn={isMyTurn || false}
+                playerName={
+                  players.find(
+                    (p) => p.seatPosition === gameState.currentPlayerPosition
+                  )?.user?.name || ""
+                }
+                compact={true}
+              />
+            </div>
+          )}
+          
           {/* Main table area */}
-          <div className="relative w-full max-w-4xl h-[600px]">
+          <div className={cn(
+            "relative w-full",
+            isMobile ? "h-[400px] max-w-none" : "max-w-4xl h-[600px]"
+          )}>
             {/* Table shadow */}
             <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
 
@@ -365,8 +429,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Right sidebar - Chat and features */}
-        <div className="w-80 flex-shrink-0 p-4 border-l border-poker-green-700 space-y-4 overflow-y-auto">
+        {/* Right sidebar - Chat and features (desktop/tablet only) */}
+        {!isMobile && (
+          <div className={cn(
+            "flex-shrink-0 p-4 border-l border-poker-green-700 space-y-4 overflow-y-auto",
+            isTablet ? "w-60" : "w-80"
+          )}>
           {/* Chat placeholder */}
           <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
@@ -485,7 +553,73 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        )}
+
+        {/* Mobile menu modal */}
+        {isMobile && showMobileMenu && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowMobileMenu(false)}
+            />
+
+            {/* Modal content */}
+            <div className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 w-full max-w-sm mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Menu</h3>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowGameInfo(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg flex items-center gap-3"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Infos de la partie
+                </button>
+                
+                {gameStats && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Statistiques</h4>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div>Main #{handNumber}</div>
+                      <div>Pot: {gameState.pot.toLocaleString()}</div>
+                      <div>Joueurs: {players.filter((p) => !p.isFolded).length}/{players.length}</div>
+                    </div>
+                  </div>
+                )}
+                
+                <button
+                  onClick={() => {
+                    onLeaveTable();
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left p-3 bg-red-50 hover:bg-red-100 rounded-lg flex items-center gap-3 text-red-600"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Quitter la table
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Showdown Results Modal */}
         {showdownResults && (

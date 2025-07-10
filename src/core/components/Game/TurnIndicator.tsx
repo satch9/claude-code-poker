@@ -8,6 +8,7 @@ interface TurnIndicatorProps {
   isMyTurn: boolean;
   playerName?: string;
   className?: string;
+  compact?: boolean;
 }
 
 export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
@@ -17,6 +18,7 @@ export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
   isMyTurn,
   playerName,
   className,
+  compact = false,
 }) => {
   const getPhaseDisplay = (phase: string) => {
     const phases = {
@@ -32,6 +34,39 @@ export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
   };
 
   const phaseInfo = getPhaseDisplay(currentPhase);
+
+  if (compact) {
+    return (
+      <div className={cn('bg-gray-900/90 backdrop-blur-sm rounded-lg p-2 border border-gray-700', className)}>
+        <div className="flex items-center justify-between">
+          {/* Phase and current player in one line */}
+          <div className={cn(
+            'flex items-center gap-2 px-2 py-1 rounded-full text-white text-xs font-medium',
+            phaseInfo.color
+          )}>
+            <span>{phaseInfo.icon}</span>
+            <span>{phaseInfo.name}</span>
+          </div>
+          
+          {/* Current player indicator */}
+          {currentPlayerPosition >= 0 && currentPhase !== 'waiting' && currentPhase !== 'showdown' && (
+            <div className={cn(
+              'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border',
+              isMyTurn 
+                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500' 
+                : 'bg-blue-500/20 text-blue-400 border-blue-500'
+            )}>
+              <div className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                isMyTurn ? 'bg-yellow-400' : 'bg-blue-400'
+              )}></div>
+              <span>{isMyTurn ? 'Vous' : playerName || `J${currentPlayerPosition + 1}`}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700', className)}>
