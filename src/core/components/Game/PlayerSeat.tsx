@@ -4,6 +4,7 @@ import { ChipStack } from '../UI/Chip';
 import { Player } from '../../../shared/types';
 import { cn } from '../../../shared/utils/cn';
 import { PlayerTimer } from './PlayerTimer';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 
 interface PlayerSeatProps {
   player?: Player;
@@ -40,23 +41,38 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   timeLimit = 30,
   className,
 }) => {
+  const { isMobile } = useBreakpoint();
   if (isEmpty) {
     return (
       <div 
         className={cn(
-          'bg-gray-700/50 border-2 border-dashed border-gray-500 rounded-2xl p-3 hover:bg-gray-600/50 cursor-pointer transition-all duration-200 backdrop-blur-sm',
+          'bg-gray-700/50 border-2 border-dashed border-gray-500 rounded-2xl hover:bg-gray-600/50 cursor-pointer transition-all duration-200 backdrop-blur-sm',
+          isMobile ? 'p-2' : 'p-3',
           className
         )}
         onClick={onSeatClick}
       >
         <div className="text-center">
-          <div className="w-12 h-12 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-gray-300">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className={cn(
+            "bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-gray-300",
+            isMobile ? "w-8 h-8" : "w-12 h-12"
+          )}>
+            <svg className={cn(isMobile ? "w-4 h-4" : "w-6 h-6")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           </div>
-          <div className="text-sm font-medium text-gray-300">Siège libre</div>
-          <div className="text-xs text-gray-400">Cliquez pour rejoindre</div>
+          <div className={cn(
+            "font-medium text-gray-300",
+            isMobile ? "text-xs" : "text-sm"
+          )}>
+            {isMobile ? 'Libre' : 'Siège libre'}
+          </div>
+          <div className={cn(
+            "text-gray-400",
+            isMobile ? "text-xs" : "text-xs"
+          )}>
+            {isMobile ? 'Rejoindre' : 'Cliquez pour rejoindre'}
+          </div>
         </div>
       </div>
     );
@@ -74,7 +90,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   return (
     <div 
       className={cn(
-        'relative bg-gray-800/90 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 shadow-xl w-52 h-16',
+        'relative bg-gray-800/90 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-xl',
+        isMobile ? 'p-2 w-40 h-12' : 'p-3 w-52 h-16',
         isCurrentPlayer && 'ring-2 ring-yellow-400 shadow-2xl',
         isActivePlayer && 'ring-4 ring-green-400 animate-pulse shadow-green-400/50',
         player.isFolded && 'opacity-50',
@@ -85,26 +102,50 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Blind indicators */}
       {(isSmallBlind || isBigBlind) && (
-        <div className="absolute -top-2 -left-2 min-w-[24px] h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg px-1">
-          {isSmallBlind ? `SB ${smallBlindAmount}` : `BB ${bigBlindAmount}`}
+        <div className={cn(
+          "absolute -top-2 -left-2 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg",
+          isMobile ? "min-w-[20px] h-5 text-xs px-1" : "min-w-[24px] h-6 text-xs px-1"
+        )}>
+          {isMobile 
+            ? (isSmallBlind ? 'SB' : 'BB')
+            : (isSmallBlind ? `SB ${smallBlindAmount}` : `BB ${bigBlindAmount}`)
+          }
         </div>
       )}
 
       {/* Horizontal layout */}
-      <div className="flex items-center gap-3 h-full">
+      <div className={cn(
+        "flex items-center h-full",
+        isMobile ? "gap-2" : "gap-3"
+      )}>
         {/* Player avatar and info */}
-        <div className="flex items-center gap-2 flex-1">
-          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+        <div className={cn(
+          "flex items-center flex-1",
+          isMobile ? "gap-1.5" : "gap-2"
+        )}>
+          <div className={cn(
+            "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold",
+            isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm"
+          )}>
             {(player.user?.name || 'Player').charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">
+            <div className={cn(
+              "font-medium text-white truncate",
+              isMobile ? "text-xs" : "text-sm"
+            )}>
               {player.user?.name || 'Player'}
             </div>
-            <div className="text-xs text-green-400 font-bold">
-              {player.chips.toLocaleString()}
+            <div className={cn(
+              "text-green-400 font-bold",
+              isMobile ? "text-xs" : "text-xs"
+            )}>
+              {isMobile 
+                ? (player.chips >= 1000 ? `${Math.floor(player.chips/1000)}K` : player.chips.toString())
+                : player.chips.toLocaleString()
+              }
             </div>
-            {player.lastAction && (
+            {!isMobile && player.lastAction && (
               <div className="text-xs text-gray-300 font-medium">
                 {getActionLabel(player.lastAction)}
               </div>
@@ -113,7 +154,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         </div>
 
         {/* Cards */}
-        <div className="flex gap-1">
+        <div className={cn(isMobile ? "flex gap-0.5" : "flex gap-1")}>
           {player.cards.length > 0 ? (
             player.cards.map((cardStr, index) => {
               const parsedCard = showCards ? parseCard(cardStr) : undefined;
@@ -130,14 +171,14 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
                   key={index}
                   card={parsedCard}
                   isHidden={!showCards}
-                  size="sm"
+                  size={isMobile ? "xs" : "sm"}
                 />
               );
             })
           ) : (
             <>
-              <Card size="sm" />
-              <Card size="sm" />
+              <Card size={isMobile ? "xs" : "sm"} />
+              <Card size={isMobile ? "xs" : "sm"} />
             </>
           )}
         </div>
@@ -145,9 +186,18 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Current bet indicator */}
       {player.currentBet > 0 && (
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-          <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-            {player.currentBet.toLocaleString()}
+        <div className={cn(
+          "absolute left-1/2 transform -translate-x-1/2",
+          isMobile ? "-bottom-1" : "-bottom-2"
+        )}>
+          <div className={cn(
+            "bg-red-500 text-white rounded-full font-bold shadow-lg",
+            isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
+          )}>
+            {isMobile && player.currentBet >= 1000
+              ? `${Math.floor(player.currentBet/1000)}K`
+              : player.currentBet.toLocaleString()
+            }
           </div>
         </div>
       )}
@@ -156,7 +206,10 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       {/* All-in indicator */}
       {player.isAllIn && (
         <div className="absolute inset-0 bg-red-500/20 rounded-xl flex items-center justify-center">
-          <span className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+          <span className={cn(
+            "bg-red-600 text-white rounded-full font-bold shadow-lg",
+            isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
+          )}>
             ALL-IN
           </span>
         </div>
@@ -164,7 +217,10 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Player timer */}
       {isActivePlayer && onTimeOut && (
-        <div className="absolute -left-8 top-1/2 transform -translate-y-1/2">
+        <div className={cn(
+          "absolute top-1/2 transform -translate-y-1/2",
+          isMobile ? "-left-6" : "-left-8"
+        )}>
           <PlayerTimer
             isActive={isActivePlayer}
             timeLimit={timeLimit}
