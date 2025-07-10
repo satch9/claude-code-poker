@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
 import { Button } from "../UI/Button";
 import { useAuth } from "../../hooks/useAuth";
+import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { isValidUserId } from "../../../shared/utils/validation";
+import { cn } from "../../../shared/utils/cn";
 
 interface UserProfileProps {
   showLogout?: boolean;
@@ -15,6 +17,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   compact = false,
 }) => {
   const { user, logout, updateUser } = useAuth();
+  const { isMobile, isTablet } = useBreakpoint();
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.name || '');
@@ -196,7 +199,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
         {/* Dialog modal */}
         {showDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center",
+            isMobile ? "p-2" : "p-4"
+          )}>
             {/* Backdrop */}
             <div
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -204,12 +210,26 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             />
 
             {/* Modal content */}
-            <div className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 w-full max-w-md mx-auto my-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className={cn(
+              "relative bg-white shadow-2xl border border-gray-200 w-full mx-auto my-auto",
+              isMobile 
+                ? "rounded-xl p-4 max-w-sm max-h-[90vh] overflow-y-auto" 
+                : "rounded-2xl p-6 max-w-md"
+            )}>
+              <div className={cn(
+                "flex items-center justify-between",
+                isMobile ? "mb-4" : "mb-6"
+              )}>
+                <h3 className={cn(
+                  "font-bold text-gray-900",
+                  isMobile ? "text-lg" : "text-xl"
+                )}>
                   {isEditing ? 'Modifier le profil' : 'Mon Profil'}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center",
+                  isMobile ? "gap-1" : "gap-2"
+                )}>
                   {!isEditing && user && (
                     <button
                       onClick={() => {
@@ -236,9 +256,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               </div>
 
               {/* User info */}
-              <div className="flex items-center gap-4 mb-6">
+              <div className={cn(
+                "flex items-center gap-4",
+                isMobile ? "mb-4" : "mb-6"
+              )}>
                 <div className="relative">
-                  <div className={`w-16 h-16 ${selectedAvatarColor} rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden`}>
+                  <div className={cn(
+                    `${selectedAvatarColor} rounded-full flex items-center justify-center text-white font-bold overflow-hidden`,
+                    isMobile ? "w-12 h-12 text-lg" : "w-16 h-16 text-2xl"
+                  )}>
                     {avatarImageUrl ? (
                       <img 
                         src={avatarImageUrl} 
@@ -253,7 +279,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     <div className="absolute -bottom-1 -right-1 flex gap-1">
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+                        className={cn(
+                          "bg-white border-2 border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors",
+                          isMobile ? "w-5 h-5" : "w-6 h-6"
+                        )}
                         title="Télécharger une image"
                       >
                         <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +293,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       {avatarImageUrl && (
                         <button
                           onClick={handleRemoveImage}
-                          className="w-6 h-6 bg-red-500 border-2 border-red-600 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                          className={cn(
+                            "bg-red-500 border-2 border-red-600 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors",
+                            isMobile ? "w-5 h-5" : "w-6 h-6"
+                          )}
                           title="Supprimer l'image"
                         >
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,13 +321,26 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       type="text"
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
-                      className="w-full text-lg font-semibold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-poker-green-500 focus:border-transparent"
+                      className={cn(
+                        "w-full font-semibold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-poker-green-500 focus:border-transparent",
+                        isMobile ? "text-base px-2 py-1.5" : "text-lg px-3 py-2"
+                      )}
                       placeholder="Votre nom"
                     />
                   ) : (
-                    <h4 className="text-lg font-semibold text-gray-900">{user.name || 'Utilisateur'}</h4>
+                    <h4 className={cn(
+                      "font-semibold text-gray-900",
+                      isMobile ? "text-base" : "text-lg"
+                    )}>
+                      {user.name || 'Utilisateur'}
+                    </h4>
                   )}
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className={cn(
+                    "text-gray-500",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
+                    {user.email}
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-xs text-green-600 font-medium">En ligne</span>
@@ -305,8 +350,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
               {/* Avatar color selector (only in edit mode) */}
               {isEditing && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <label className={cn(
+                    "block font-medium text-gray-700",
+                    isMobile ? "text-xs mb-2" : "text-sm mb-3"
+                  )}>
                     Couleur de l'avatar
                   </label>
                   <div className="flex gap-2 flex-wrap">
@@ -314,11 +362,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       <button
                         key={index}
                         onClick={() => setSelectedAvatarColor(color)}
-                        className={`w-8 h-8 ${color} rounded-full flex items-center justify-center text-white font-bold text-sm transition-all ${
+                        className={cn(
+                          `${color} rounded-full flex items-center justify-center text-white font-bold transition-all`,
+                          isMobile ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm",
                           selectedAvatarColor === color
                             ? 'ring-2 ring-offset-2 ring-poker-green-500 scale-110'
                             : 'hover:scale-105'
-                        }`}
+                        )}
                       >
                         {selectedAvatar}
                       </button>
@@ -328,15 +378,30 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               )}
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-poker-green-600">
+              <div className={cn(
+                "grid grid-cols-2 gap-4",
+                isMobile ? "mb-4" : "mb-6"
+              )}>
+                <div className={cn(
+                  "text-center bg-gray-50 rounded-lg",
+                  isMobile ? "p-2" : "p-3"
+                )}>
+                  <div className={cn(
+                    "font-bold text-poker-green-600",
+                    isMobile ? "text-lg" : "text-2xl"
+                  )}>
                     {userStats?.gamesWon || 0}
                   </div>
                   <div className="text-xs text-gray-500">Parties gagnées</div>
                 </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className={cn(
+                  "text-center bg-gray-50 rounded-lg",
+                  isMobile ? "p-2" : "p-3"
+                )}>
+                  <div className={cn(
+                    "font-bold text-gray-900",
+                    isMobile ? "text-lg" : "text-2xl"
+                  )}>
                     {userStats?.gamesPlayed || 0}
                   </div>
                   <div className="text-xs text-gray-500">Parties jouées</div>
@@ -345,37 +410,72 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
               {/* Detailed Stats */}
               {userStats && userStats.gamesPlayed > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Statistiques détaillées</h4>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="text-center p-2 bg-blue-50 rounded">
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <h4 className={cn(
+                    "font-medium text-gray-700",
+                    isMobile ? "text-xs mb-2" : "text-sm mb-3"
+                  )}>
+                    Statistiques détaillées
+                  </h4>
+                  <div className={cn(isMobile ? "space-y-2" : "space-y-3")}>
+                    <div className={cn(
+                      "grid gap-2",
+                      isMobile ? "grid-cols-2 text-xs" : "grid-cols-3 text-xs"
+                    )}>
+                      <div className={cn(
+                        "text-center bg-blue-50 rounded",
+                        isMobile ? "p-1.5" : "p-2"
+                      )}>
                         <div className="font-bold text-blue-600">{userStats.winRate}%</div>
                         <div className="text-blue-500">Taux victoire</div>
                       </div>
-                      <div className="text-center p-2 bg-green-50 rounded">
+                      <div className={cn(
+                        "text-center bg-green-50 rounded",
+                        isMobile ? "p-1.5" : "p-2"
+                      )}>
                         <div className="font-bold text-green-600">{userStats.totalWinnings}</div>
                         <div className="text-green-500">Jetons gagnés</div>
                       </div>
-                      <div className="text-center p-2 bg-purple-50 rounded">
-                        <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
-                        <div className="text-purple-500">Mains jouées</div>
-                      </div>
+                      {!isMobile && (
+                        <div className="text-center p-2 bg-purple-50 rounded">
+                          <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
+                          <div className="text-purple-500">Mains jouées</div>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-center p-2 bg-orange-50 rounded">
+                      <div className={cn(
+                        "text-center bg-orange-50 rounded",
+                        isMobile ? "p-1.5" : "p-2"
+                      )}>
                         <div className="font-bold text-orange-600">{userStats.biggestWin}</div>
                         <div className="text-orange-500">Plus gros gain</div>
                       </div>
-                      <div className="text-center p-2 bg-red-50 rounded">
+                      <div className={cn(
+                        "text-center bg-red-50 rounded",
+                        isMobile ? "p-1.5" : "p-2"
+                      )}>
                         <div className="font-bold text-red-600">{userStats.tournamentWins}</div>
                         <div className="text-red-500">Tournois gagnés</div>
                       </div>
                     </div>
+                    
+                    {/* Mains jouées sur mobile */}
+                    {isMobile && (
+                      <div className="grid grid-cols-1 gap-2 text-xs">
+                        <div className="text-center p-1.5 bg-purple-50 rounded">
+                          <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
+                          <div className="text-purple-500">Mains jouées</div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Style de jeu */}
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className={cn(
+                      "bg-gray-50 rounded-lg",
+                      isMobile ? "p-2" : "p-3"
+                    )}>
                       <div className="text-xs font-medium text-gray-700 mb-2">Style de jeu</div>
                       <div className="text-xs text-gray-600">
                         Action favorite: <span className="font-bold capitalize">{userStats.mostFrequentAction}</span>
@@ -392,11 +492,22 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
               {/* Ranking */}
               {userRanking && userRanking.totalPlayers > 1 && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Classement</h4>
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border border-yellow-200">
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <h4 className={cn(
+                    "font-medium text-gray-700",
+                    isMobile ? "text-xs mb-2" : "text-sm mb-3"
+                  )}>
+                    Classement
+                  </h4>
+                  <div className={cn(
+                    "bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200",
+                    isMobile ? "p-2" : "p-3"
+                  )}>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-orange-600">
+                      <div className={cn(
+                        "font-bold text-orange-600",
+                        isMobile ? "text-base" : "text-lg"
+                      )}>
                         #{userRanking.userRank}
                       </div>
                       <div className="text-xs text-orange-500">
@@ -408,23 +519,45 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               )}
 
               {/* Account info */}
-              <div className="space-y-3 mb-6">
+              <div className={cn(
+                "space-y-3",
+                isMobile ? "mb-4" : "mb-6"
+              )}>
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Membre depuis</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className={cn(
+                    "text-gray-600",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
+                    Membre depuis
+                  </span>
+                  <span className={cn(
+                    "font-medium text-gray-900",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
                     {new Date(user.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Dernière connexion</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className={cn(
+                    "text-gray-600",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
+                    Dernière connexion
+                  </span>
+                  <span className={cn(
+                    "font-medium text-gray-900",
+                    isMobile ? "text-xs" : "text-sm"
+                  )}>
                     {user.lastSeen ? new Date(user.lastSeen).toLocaleString() : "Maintenant"}
                   </span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className={cn(
+                "flex",
+                isMobile ? "gap-2" : "gap-3"
+              )}>
                 {isEditing ? (
                   <>
                     <Button
