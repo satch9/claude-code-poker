@@ -8,8 +8,9 @@ Développer une application web de poker Texas Hold'em No Limit en temps réel p
 ### 1.2 Stack technique
 - **Frontend** : Vite.js + React + TypeScript
 - **Backend/Database** : Convex (temps réel + base de données)
-- **Styling** : Tailwind CSS (recommandé pour la rapidité)
+- **Styling** : Tailwind CSS + Police Inter (optimisée pour la lisibilité)
 - **State Management** : React Context + Convex Queries/Mutations
+- **Design System** : Responsive-first avec breakpoints mobile/tablet/desktop
 
 ## 2. Fonctionnalités principales
 
@@ -327,11 +328,13 @@ src/
 │   │   └── UI/
 │   │       ├── Card.tsx
 │   │       ├── Chip.tsx
-│   │       └── Button.tsx
+│   │       ├── Button.tsx
+│   │       └── LandscapeWarning.tsx  # Composant orientation mobile
 │   ├── hooks/
 │   │   ├── useTable.ts
 │   │   ├── useGameState.ts
-│   │   └── usePlayer.ts
+│   │   ├── usePlayer.ts
+│   │   └── useBreakpoint.ts  # Hook responsive
 │   └── utils/
 │       ├── pokerLogic.ts
 │       └── handEvaluator.ts
@@ -755,3 +758,53 @@ function calculateBlindStructure(
 - **Validation** : Vérification des emails avant envoi
 - **Structures prétestées** : Bibliothèque de structures validées
 - **Timers serveur** : Synchronisation côté Convex pour éviter les dérives
+
+## 16. Design System et Expérience Utilisateur
+
+### 16.1 Interface Responsive
+- **Mobile First** : Conception prioritaire pour appareils mobiles
+- **Orientation forcée** : Mode landscape obligatoire sur mobile pour optimiser l'expérience
+- **Breakpoints** :
+  - Mobile : < 1024px (landscape forcé)
+  - Tablet : 1024px - 1200px
+  - Desktop : > 1200px
+
+### 16.2 Typographie - Police Inter
+- **Police principale** : Inter (400, 500, 600, 700)
+- **Avantages** :
+  - Lisibilité exceptionnelle sur tous les écrans
+  - Optimisée pour les montants et chiffres
+  - Support complet des caractères spéciaux
+  - Variable font pour flexibilité
+- **Adaptations responsive** :
+  - Troncature automatique des textes longs
+  - Abréviations intelligentes sur mobile (ex: "1/2 Pot" → "½P")
+  - Formatage adaptatif des montants (ex: "1,000,000" → "1M")
+
+### 16.3 Adaptations Mobile Spécifiques
+- **Table de jeu** :
+  - Suppression du header sur mobile
+  - Zone centrale redimensionnée (community cards, pot)
+  - PlayerSeats repositionnés avec z-index élevé
+  - Navigation fixe en bas d'écran
+- **Composants adaptatifs** :
+  - Boutons avec textes raccourcis ("+ Créer une table" → "+ Créer")
+  - Actions de jeu optimisées (Call/Raise avec montants abrégés)
+  - Profil utilisateur avec indicateur en ligne moderne (point vert)
+
+### 16.4 Système de Débordement
+- **Classes Tailwind** :
+  - `truncate` : Textes longs avec ellipse
+  - `max-w-[XXXpx]` : Largeurs maximales définies
+  - `whitespace-nowrap` : Éviter les retours à la ligne
+- **Composants protégés** :
+  - Noms d'utilisateurs (max 120px mobile, 150px desktop)
+  - Montants de jetons (formatage K/M pour grandes valeurs)
+  - Messages d'action (max 200px)
+  - Titres de tables et informations
+
+### 16.5 Indicateurs Visuels Modernes
+- **Statut en ligne** : Point vert sur l'avatar (remplace le texte)
+- **Actions de jeu** : Couleurs distinctives pour chaque action
+- **Progression** : Barres de temps et indicateurs visuels
+- **États de table** : Badges et indicateurs de statut clairs
