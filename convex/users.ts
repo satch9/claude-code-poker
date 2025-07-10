@@ -194,3 +194,6 @@ export const getAvatarImageUrl = query({
     return await ctx.storage.getUrl(args.imageId);
   },
 });
+
+// Re-export stats functions
+export { getUserStats, getUserRanking } from "./users/stats";

@@ -38,6 +38,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     user?.avatarImageId ? { imageId: user.avatarImageId } : "skip"
   );
 
+  // Query for user statistics
+  const userStats = useQuery(
+    api.users.getUserStats,
+    user ? { userId: user._id } : "skip"
+  );
+
+  // Query for user ranking
+  const userRanking = useQuery(
+    api.users.getUserRanking,
+    user ? { userId: user._id } : "skip"
+  );
+
   // Avatars disponibles (couleurs et initiales)
   const avatarColors = [
     'bg-poker-green-500',
@@ -314,14 +326,82 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-poker-green-600">0</div>
+                  <div className="text-2xl font-bold text-poker-green-600">
+                    {userStats?.gamesWon || 0}
+                  </div>
                   <div className="text-xs text-gray-500">Parties gagnées</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900">0</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {userStats?.gamesPlayed || 0}
+                  </div>
                   <div className="text-xs text-gray-500">Parties jouées</div>
                 </div>
               </div>
+
+              {/* Detailed Stats */}
+              {userStats && userStats.gamesPlayed > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Statistiques détaillées</h4>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="text-center p-2 bg-blue-50 rounded">
+                        <div className="font-bold text-blue-600">{userStats.winRate}%</div>
+                        <div className="text-blue-500">Taux victoire</div>
+                      </div>
+                      <div className="text-center p-2 bg-green-50 rounded">
+                        <div className="font-bold text-green-600">{userStats.totalWinnings}</div>
+                        <div className="text-green-500">Jetons gagnés</div>
+                      </div>
+                      <div className="text-center p-2 bg-purple-50 rounded">
+                        <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
+                        <div className="text-purple-500">Mains jouées</div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-center p-2 bg-orange-50 rounded">
+                        <div className="font-bold text-orange-600">{userStats.biggestWin}</div>
+                        <div className="text-orange-500">Plus gros gain</div>
+                      </div>
+                      <div className="text-center p-2 bg-red-50 rounded">
+                        <div className="font-bold text-red-600">{userStats.tournamentWins}</div>
+                        <div className="text-red-500">Tournois gagnés</div>
+                      </div>
+                    </div>
+
+                    {/* Style de jeu */}
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-xs font-medium text-gray-700 mb-2">Style de jeu</div>
+                      <div className="text-xs text-gray-600">
+                        Action favorite: <span className="font-bold capitalize">{userStats.mostFrequentAction}</span>
+                      </div>
+                      {userStats.currentWinStreak > 0 && (
+                        <div className="text-xs text-green-600 mt-1">
+                          🔥 Série de {userStats.currentWinStreak} victoire{userStats.currentWinStreak > 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ranking */}
+              {userRanking && userRanking.totalPlayers > 1 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Classement</h4>
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border border-yellow-200">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-orange-600">
+                        #{userRanking.userRank}
+                      </div>
+                      <div className="text-xs text-orange-500">
+                        sur {userRanking.totalPlayers} joueurs
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Account info */}
               <div className="space-y-3 mb-6">
