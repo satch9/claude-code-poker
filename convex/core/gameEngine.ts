@@ -1092,7 +1092,7 @@ export const getGameActions = query({
       .order("desc")
       .take(50); // Get last 50 actions
 
-    return actions.reverse(); // Return in chronological order
+    return actions; // Return in reverse chronological order (most recent first)
   },
 });
 

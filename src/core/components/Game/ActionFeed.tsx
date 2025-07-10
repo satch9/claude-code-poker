@@ -52,6 +52,11 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
   const getActionText = (item: ActionFeedItem) => {
     const playerName = item.playerName || 'Joueur inconnu';
     
+    // Use message if available, prefixed with player name
+    if (item.message) {
+      return `${playerName} ${item.message}`;
+    }
+    
     switch (item.action) {
       case 'fold':
         return `${playerName} se couche`;
@@ -68,7 +73,7 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
       case 'leave':
         return `${playerName} quitte la table`;
       case 'system':
-        return item.message || 'Message système';
+        return 'Message système';
       default:
         return `${playerName} ${item.action}`;
     }
@@ -92,7 +97,7 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
         </div>
       </div>
       
-      <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+      <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
         {actions.length === 0 ? (
           <div className="text-center text-gray-500 text-sm py-4">
             Aucune action encore

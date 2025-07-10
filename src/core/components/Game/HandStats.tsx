@@ -62,38 +62,30 @@ export const HandStats: React.FC<HandStatsProps> = ({
   ];
 
   return (
-    <div className={cn('bg-gray-900/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700', className)}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Statistiques de la main</h3>
+    <div className={cn('bg-gray-900/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700', className)}>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-white">Statistiques</h3>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
           <span className="text-xs text-gray-400">Live</span>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map((stat, index) => (
+      <div className="grid grid-cols-3 gap-2">
+        {stats.slice(0, 6).map((stat, index) => (
           <div
             key={index}
-            className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
+            className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
           >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm">{stat.icon}</span>
-              <span className="text-xs text-gray-400 font-medium">{stat.label}</span>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-xs">{stat.icon}</span>
+              <span className="text-xs text-gray-400 font-medium truncate">{stat.label}</span>
             </div>
-            <div className={cn('text-sm font-bold', stat.color)}>
+            <div className={cn('text-xs font-bold', stat.color)}>
               {stat.value}
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Additional info */}
-      <div className="mt-3 pt-3 border-t border-gray-700">
-        <div className="flex justify-between items-center text-xs text-gray-500">
-          <span>Taille moyenne du pot</span>
-          <span className="font-medium">{(potSize / Math.max(activePlayers, 1)).toLocaleString()}</span>
-        </div>
       </div>
     </div>
   );
