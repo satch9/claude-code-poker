@@ -11,7 +11,7 @@ interface GameAction {
   maxAmount?: number;
 }
 
-export const useGameLogic = (tableId: Id<'tables'> | null) => {
+export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => void) => {
   const { user } = useAuth();
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
@@ -198,6 +198,21 @@ export const useGameLogic = (tableId: Id<'tables'> | null) => {
       setHandNumber(prev => prev + 1);
     }
   }, [gameState?.phase, gameState?.pot]);
+
+  // Check for tournament end and redirect to lobby
+  useEffect(() => {
+    if (!table || !user || !onLeaveTable) return;
+
+    if (table.status === 'finished' && table.gameType === 'tournament') {
+      // Tournament has ended, redirect to lobby after a delay to show final results
+      const timeoutId = setTimeout(() => {
+        console.log('Tournament finished, redirecting to lobby...');
+        onLeaveTable();
+      }, 5000); // 5 second delay to see results
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [table?.status, table?.gameType, user, onLeaveTable]);
 
   // Calculate betting info
   const getBettingInfo = () => {

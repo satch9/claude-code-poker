@@ -45,7 +45,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     handNumber,
     handleTimeOut,
     showdownResults,
-  } = useGameLogic(tableId);
+  } = useGameLogic(tableId, onLeaveTable);
 
   // Early return if no tableId or no data
   if (!tableId || !gameState || !players || !table) {

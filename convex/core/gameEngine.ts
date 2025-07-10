@@ -899,47 +899,136 @@ async function endGame(ctx: any, tableId: string) {
     throw new Error("Table not found");
   }
 
-  // Reset game state completely
-  await ctx.db
-    .query("gameStates")
-    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
-    .unique()
-    .then(async (gameState: any) => {
-      if (gameState) {
-        await ctx.db.patch(gameState._id, {
-          phase: "waiting",
-          communityCards: [],
-          pot: 0,
-          currentBet: 0,
-          dealerPosition: 0, // Reset dealer position
-          currentPlayerPosition: -1,
-          sidePots: [],
-          updatedAt: Date.now(),
-        });
-      }
-    });
-
-  // Reset players
   const players = await ctx.db
     .query("players")
     .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
 
-  await Promise.all(
-    players.map((player: any) =>
-      ctx.db.patch(player._id, {
-        cards: [],
-        currentBet: 0,
-        hasActed: false,
-        isAllIn: false,
-        isFolded: false,
-        lastAction: undefined,
-      })
-    )
-  );
+  const playersWithChips = players.filter((p: any) => p.chips > 0);
 
-  // Update table status
-  await ctx.db.patch(tableId, { status: "waiting" });
+  if (table.gameType === "tournament") {
+    // Tournament end logic
+    if (playersWithChips.length === 1) {
+      // Tournament winner!
+      const winner = playersWithChips[0];
+      const winnerUser = await ctx.db.get(winner.userId);
+      
+      // Add tournament winner to action feed
+      await addActionToFeed(ctx, tableId, {
+        playerId: winner._id,
+        playerName: winnerUser?.name || "Joueur",
+        action: "win",
+        amount: winner.chips,
+        message: `remporte le tournoi avec ${winner.chips} jetons!`,
+        isSystem: false,
+      });
+
+      // Add tournament end system message
+      await addActionToFeed(ctx, tableId, {
+        playerName: "Système",
+        action: "system",
+        message: "Tournoi terminé - Redirection vers le lobby",
+        isSystem: true,
+      });
+
+      // Create notifications for all players about tournament end
+      for (const player of players) {
+        const user = await ctx.db.get(player.userId);
+        if (user) {
+          await ctx.db.insert("notifications", {
+            userId: player.userId,
+            type: "game_end",
+            title: "Tournoi terminé",
+            message: player._id === winner._id 
+              ? `Félicitations! Vous avez remporté le tournoi avec ${winner.chips} jetons!`
+              : `Le tournoi est terminé. ${winnerUser?.name || "Un joueur"} a remporté avec ${winner.chips} jetons.`,
+            data: {
+              tableId,
+              isWinner: player._id === winner._id,
+              winnerName: winnerUser?.name,
+              finalChips: player.chips,
+            },
+            isRead: false,
+            createdAt: Date.now(),
+          });
+        }
+      }
+    }
+
+    // Mark table as finished for tournament
+    await ctx.db.patch(tableId, { status: "finished" });
+
+    // Reset game state for tournament end
+    await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+      .unique()
+      .then(async (gameState: any) => {
+        if (gameState) {
+          await ctx.db.patch(gameState._id, {
+            phase: "waiting",
+            communityCards: [],
+            pot: 0,
+            currentBet: 0,
+            currentPlayerPosition: -1,
+            sidePots: [],
+            updatedAt: Date.now(),
+          });
+        }
+      });
+
+    // Don't reset players chips for tournament - keep final standings
+    await Promise.all(
+      players.map((player: any) =>
+        ctx.db.patch(player._id, {
+          cards: [],
+          currentBet: 0,
+          hasActed: false,
+          isAllIn: false,
+          isFolded: false,
+          lastAction: undefined,
+        })
+      )
+    );
+
+  } else {
+    // Cash game logic - reset everything and allow restart
+    await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+      .unique()
+      .then(async (gameState: any) => {
+        if (gameState) {
+          await ctx.db.patch(gameState._id, {
+            phase: "waiting",
+            communityCards: [],
+            pot: 0,
+            currentBet: 0,
+            dealerPosition: 0, // Reset dealer position
+            currentPlayerPosition: -1,
+            sidePots: [],
+            updatedAt: Date.now(),
+          });
+        }
+      });
+
+    // Reset players for cash game
+    await Promise.all(
+      players.map((player: any) =>
+        ctx.db.patch(player._id, {
+          cards: [],
+          currentBet: 0,
+          hasActed: false,
+          isAllIn: false,
+          isFolded: false,
+          lastAction: undefined,
+        })
+      )
+    );
+
+    // Update table status to waiting for cash games
+    await ctx.db.patch(tableId, { status: "waiting" });
+  }
 }
 
 // Get game actions available to player
