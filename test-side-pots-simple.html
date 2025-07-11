@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Side Pots - Version Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-container {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .scenario {
+            background: #3a3a3a;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #00ff00;
+        }
+        .player {
+            background: #4a4a4a;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .pot {
+            background: #2d5a2d;
+            border: 1px solid #4a7c4a;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .result {
+            background: #5a2d2d;
+            border: 1px solid #7c4a4a;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #2980b9; }
+        .log {
+            background: #1a1a1a;
+            border: 1px solid #4a4a4a;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: #44ff44; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>🎰 Test Side Pots - Version Simple</h1>
+    <p>Test rapide pour vérifier si le système de side pots fonctionne</p>
+    
+    <div class="test-container">
+        <h2>Scénario de Test : 3 Joueurs All-In</h2>
+        
+        <div class="scenario">
+            <h3>Situation</h3>
+            <div class="player">👤 Alice : 100 jetons → All-in (100)</div>
+            <div class="player">👤 Bob : 50 jetons → All-in (50)</div>
+            <div class="player">👤 Charlie : 30 jetons → All-in (30)</div>
+            <p><strong>Total des mises :</strong> 180 jetons</p>
+        </div>
+
+        <div class="scenario">
+            <h3>Side Pots Attendus</h3>
+            <div class="pot">🎯 Pot Principal : 90 jetons (30×3) → Alice, Bob, Charlie éligibles</div>
+            <div class="pot">🎯 Side Pot 1 : 40 jetons (20×2) → Alice, Bob éligibles</div>
+            <div class="pot">🎯 Side Pot 2 : 50 jetons (50×1) → Alice éligible</div>
+        </div>
+
+        <button onclick="runTest()">🧪 Exécuter Test</button>
+        <button onclick="clearLog()">🧹 Vider Log</button>
+
+        <div class="scenario">
+            <h3>Résultat du Test</h3>
+            <div id="testResult">
+                <p>Cliquez sur "Exécuter Test" pour voir les résultats...</p>
+            </div>
+        </div>
+
+        <div class="log" id="logContainer">
+            <div id="log">Logs du test...</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔍 Comment Utiliser Ce Test</h2>
+        <ol>
+            <li><strong>Cliquez sur "Exécuter Test"</strong> pour simuler le calcul des side pots</li>
+            <li><strong>Vérifiez les résultats</strong> dans la section "Résultat du Test"</li>
+            <li><strong>Consultez les logs</strong> pour voir le détail des calculs</li>
+            <li><strong>Comparez avec votre application</strong> pour valider le comportement</li>
+        </ol>
+        
+        <h3>✅ Indicateurs de Réussite</h3>
+        <ul>
+            <li>3 side pots calculés (90, 40, 50 jetons)</li>
+            <li>Joueurs éligibles corrects pour chaque pot</li>
+            <li>Total distribué = 180 jetons</li>
+            <li>Aucune erreur dans les logs</li>
+        </ul>
+    </div>
+
+    <script>
+        let gameLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            gameLog.push(`<span class="${className}">[${timestamp}] ${message}</span>`);
+            document.getElementById('log').innerHTML = gameLog.join('<br>');
+            document.getElementById('logContainer').scrollTop = document.getElementById('logContainer').scrollHeight;
+        }
+
+        function clearLog() {
+            gameLog = [];
+            document.getElementById('log').innerHTML = 'Logs du test...';
+            document.getElementById('testResult').innerHTML = '<p>Cliquez sur "Exécuter Test" pour voir les résultats...</p>';
+        }
+
+        // Simulation de notre fonction calculateSidePots
+        function calculateSidePots(players) {
+            log('🧮 Calcul des side pots...', 'info');
+            
+            const activePlayers = players.filter(p => !p.isFolded && p.currentBet > 0);
+            log(`👥 Joueurs actifs : ${activePlayers.length}`, 'info');
+            
+            if (activePlayers.length === 0) {
+                log('❌ Aucun joueur actif', 'error');
+                return [];
+            }
+            
+            // Sort by bet amount
+            const sortedBets = activePlayers
+                .map(p => ({ userId: p.id, name: p.name, bet: p.currentBet, isAllIn: p.isAllIn }))
+                .sort((a, b) => a.bet - b.bet);
+            
+            log(`📊 Mises triées : ${sortedBets.map(b => `${b.name}(${b.bet})`).join(', ')}`, 'info');
+            
+            const sidePots = [];
+            let previousBet = 0;
+            
+            for (let i = 0; i < sortedBets.length; i++) {
+                const currentBet = sortedBets[i].bet;
+                const betDifference = currentBet - previousBet;
+                
+                if (betDifference > 0) {
+                    const eligiblePlayers = sortedBets.slice(i).map(p => p.userId);
+                    const eligibleNames = sortedBets.slice(i).map(p => p.name);
+                    const potAmount = betDifference * eligiblePlayers.length;
+                    
+                    sidePots.push({
+                        amount: potAmount,
+                        eligiblePlayers,
+                        eligibleNames
+                    });
+                    
+                    log(`🎯 Side pot ${sidePots.length} : ${potAmount} jetons pour ${eligibleNames.join(', ')}`, 'success');
+                }
+                
+                previousBet = currentBet;
+            }
+            
+            const totalPot = sidePots.reduce((sum, pot) => sum + pot.amount, 0);
+            const totalBets = players.reduce((sum, p) => sum + p.currentBet, 0);
+            
+            log(`💰 Total des pots : ${totalPot} jetons`, totalPot === totalBets ? 'success' : 'error');
+            log(`💰 Total des mises : ${totalBets} jetons`, totalPot === totalBets ? 'success' : 'error');
+            
+            if (totalPot === totalBets) {
+                log('✅ Validation réussie : Total pots = Total mises', 'success');
+            } else {
+                log('❌ Erreur : Total pots ≠ Total mises', 'error');
+            }
+            
+            return sidePots;
+        }
+
+        function runTest() {
+            log('🚀 Démarrage du test des side pots', 'info');
+            
+            // Données de test
+            const players = [
+                { id: 1, name: "Alice", currentBet: 100, isAllIn: true, isFolded: false },
+                { id: 2, name: "Bob", currentBet: 50, isAllIn: true, isFolded: false },
+                { id: 3, name: "Charlie", currentBet: 30, isAllIn: true, isFolded: false }
+            ];
+            
+            log('👥 Joueurs configurés :', 'info');
+            players.forEach(p => {
+                log(`   ${p.name} : ${p.currentBet} jetons (${p.isAllIn ? 'All-in' : 'Normal'})`, 'info');
+            });
+            
+            // Calculer les side pots
+            const sidePots = calculateSidePots(players);
+            
+            // Afficher les résultats
+            let resultHtml = '<h4>🎯 Résultats du Test</h4>';
+            
+            if (sidePots.length === 0) {
+                resultHtml += '<div class="result">❌ Aucun side pot calculé</div>';
+            } else {
+                resultHtml += `<div class="result">✅ ${sidePots.length} side pot(s) calculé(s)</div>`;
+                
+                sidePots.forEach((pot, i) => {
+                    resultHtml += `
+                        <div class="pot">
+                            <strong>Side Pot ${i + 1} :</strong> ${pot.amount} jetons<br>
+                            <strong>Éligibles :</strong> ${pot.eligibleNames.join(', ')}
+                        </div>
+                    `;
+                });
+                
+                const totalDistributed = sidePots.reduce((sum, pot) => sum + pot.amount, 0);
+                const totalBets = players.reduce((sum, p) => sum + p.currentBet, 0);
+                
+                if (totalDistributed === totalBets) {
+                    resultHtml += '<div class="result">✅ Validation : Total distribué = Total des mises</div>';
+                } else {
+                    resultHtml += '<div class="result">❌ Erreur : Total distribué ≠ Total des mises</div>';
+                }
+            }
+            
+            document.getElementById('testResult').innerHTML = resultHtml;
+            log('🏁 Test terminé', 'success');
+        }
+
+        // Initialisation
+        log('🎰 Système de test des side pots initialisé', 'info');
+        log('📋 Prêt à tester le scénario à 3 joueurs', 'info');
+    </script>
+</body>
+</html>
