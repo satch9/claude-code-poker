@@ -178,34 +178,7 @@ export function evaluateHand(cards: Card[]): HandRank {
   return { rank: 0, name: 'High Card', cards: sortedCards.slice(0, 5) };
 }
 
-// Calculate side pots
-export function calculateSidePots(players: { chips: number, currentBet: number, isAllIn: boolean, userId: string }[]): Array<{ amount: number, eligiblePlayers: string[] }> {
-  const sidePots: Array<{ amount: number, eligiblePlayers: string[] }> = [];
-  
-  // Get all unique bet amounts (including all-in amounts)
-  const allBetAmounts = players.map(p => p.currentBet).filter(bet => bet > 0);
-  const uniqueBetAmounts = [...new Set(allBetAmounts)].sort((a, b) => a - b);
-  
-  let previousAmount = 0;
-  
-  for (const betAmount of uniqueBetAmounts) {
-    const potAmount = betAmount - previousAmount;
-    const eligiblePlayers = players
-      .filter(p => p.currentBet >= betAmount)
-      .map(p => p.userId);
-    
-    if (potAmount > 0 && eligiblePlayers.length > 0) {
-      sidePots.push({
-        amount: potAmount * eligiblePlayers.length,
-        eligiblePlayers
-      });
-    }
-    
-    previousAmount = betAmount;
-  }
-  
-  return sidePots;
-}
+// Side pot calculation moved to turnManager.ts to avoid duplication
 
 // Get next player position
 export function getNextPlayerPosition(currentPosition: number, players: { seatPosition: number, isFolded: boolean, isAllIn: boolean }[], maxPlayers: number): number {

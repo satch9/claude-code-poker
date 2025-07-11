@@ -7,7 +7,6 @@ import {
   cardToString,
   getNextPlayerPosition,
   calculateMinRaise,
-  calculateSidePots,
   evaluateHand,
   stringToCard,
   type Card
@@ -20,7 +19,8 @@ import {
   resetPlayersForNewRound,
   shouldEndHand,
   getNextPhase,
-  getNextDealerPosition
+  getNextDealerPosition,
+  calculateSidePots
 } from "../utils/turnManager";
 import {
   evaluateGameConditions,
@@ -769,49 +769,74 @@ async function determineWinner(ctx: any, tableId: string) {
     const highestRank = playerHands[0].handRank.rank;
     const winners = playerHands.filter((h: any) => h.handRank.rank === highestRank);
 
-    // Handle side pots
+    // Calculate side pots
     const sidePots = calculateSidePots(
       players.map((p: any) => ({
-        chips: p.chips,
+        userId: p.userId,
         currentBet: p.currentBet,
         isAllIn: p.isAllIn,
-        userId: p.userId,
+        isFolded: p.isFolded,
       }))
     );
 
-    // Distribute main pot to winner(s)
-    const winAmount = Math.floor(gameState.pot / winners.length);
+    console.log("🎰 Side pots calculated:", sidePots);
 
-    await Promise.all(
-      winners.map((winner: any) =>
-        ctx.db.patch(winner.player._id, {
-          chips: winner.player.chips + winAmount,
-        })
-      )
-    );
+    // Distribute each side pot individually
+    for (let i = 0; i < sidePots.length; i++) {
+      const sidePot = sidePots[i];
+      
+      // Find eligible players for this side pot
+      const eligiblePlayers = playerHands.filter(hand => 
+        sidePot.eligiblePlayers.includes(hand.player.userId)
+      );
+      
+      if (eligiblePlayers.length === 0) continue;
+      
+      // Sort eligible players by hand rank (highest first)
+      eligiblePlayers.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
+      
+      // Find winners for this side pot (players with highest rank among eligible)
+      const highestRankForPot = eligiblePlayers[0].handRank.rank;
+      const potWinners = eligiblePlayers.filter((h: any) => h.handRank.rank === highestRankForPot);
+      
+      // Distribute this side pot among winners
+      const winAmountForPot = Math.floor(sidePot.amount / potWinners.length);
+      
+      console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${winAmountForPot} jetons chacun`);
+      
+      await Promise.all(
+        potWinners.map((winner: any) =>
+          ctx.db.patch(winner.player._id, {
+            chips: winner.player.chips + winAmountForPot,
+          })
+        )
+      );
 
-    // Add winner announcement to action feed
-    if (winners.length === 1) {
-      const winnerUser = await ctx.db.get(winners[0].player.userId);
-      await addActionToFeed(ctx, tableId, {
-        playerId: winners[0].player._id,
-        playerName: winnerUser?.name || "Joueur",
-        action: "win",
-        amount: winAmount,
-        message: `remporte ${winAmount} jetons avec ${winners[0].handRank.name}`,
-        isSystem: false,
-      });
-    } else {
-      // Multiple winners
-      for (const winner of winners) {
-        const winnerUser = await ctx.db.get(winner.player.userId);
+      // Add winner announcement for this side pot
+      if (potWinners.length === 1) {
+        const winnerUser = await ctx.db.get(potWinners[0].player.userId);
         await addActionToFeed(ctx, tableId, {
-          playerId: winner.player._id,
+          playerId: potWinners[0].player._id,
           playerName: winnerUser?.name || "Joueur",
           action: "win",
-          amount: winAmount,
-          message: `partage le pot (${winAmount} jetons) avec ${winner.handRank.name}`,
+          amount: winAmountForPot,
+          message: `remporte ${winAmountForPot} jetons (pot ${i + 1}) avec ${potWinners[0].handRank.name}`,
           isSystem: false,
+        });
+      } else {
+        // Multiple winners for this side pot (tie)
+        const winnerNames = await Promise.all(
+          potWinners.map(async (winner: any) => {
+            const user = await ctx.db.get(winner.player.userId);
+            return user?.name || "Joueur";
+          })
+        );
+        
+        await addActionToFeed(ctx, tableId, {
+          playerName: "Système",
+          action: "tie",
+          message: `${winnerNames.join(", ")} se partagent le pot ${i + 1} de ${sidePot.amount} jetons`,
+          isSystem: true,
         });
       }
     }
