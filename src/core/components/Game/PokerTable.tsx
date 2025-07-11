@@ -71,13 +71,34 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const gameStats = getGameStats();
   const currentBet = gameState?.currentBet || 0;
 
-  // Calculate seat positions for oval table (optimized for 9 players)
+  // Calculate seat positions for oval table (optimized for different player counts)
   const getSeatPosition = (position: number, maxPlayers: number) => {
-    const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+    let angle;
+    
+    // Positionnement optimisé selon le nombre de joueurs
+    if (maxPlayers === 3) {
+      // Pour 3 joueurs : disposition triangulaire naturelle
+      const angles = [
+        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
+        Math.PI * 2/3,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
+      ];
+      angle = angles[position % 3];
+    } else if (maxPlayers === 2) {
+      // Pour 2 joueurs : face à face
+      const angles = [
+        Math.PI / 2,      // Position 0: Bas
+        -Math.PI / 2      // Position 1: Haut
+      ];
+      angle = angles[position % 2];
+    } else {
+      // Pour 4+ joueurs : distribution circulaire standard
+      angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+    }
     
     // Radius ajusté pour éviter les débordements
-    const radiusX = isMobile ? 40 : 45; // Horizontal radius percentage (réduit)
-    const radiusY = isMobile ? 32 : 35; // Vertical radius percentage (réduit)
+    const radiusX = isMobile ? 40 : 45; // Horizontal radius percentage
+    const radiusY = isMobile ? 32 : 35; // Vertical radius percentage
 
     // Calculer la position avec contraintes pour éviter les débordements
     const rawX = 50 + radiusX * Math.cos(angle);
@@ -96,7 +117,26 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Calculate dealer button position (in front of player seat)
   const getDealerButtonPosition = (position: number, maxPlayers: number) => {
-    const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+    let angle;
+    
+    // Utiliser la même logique de positionnement que les seats
+    if (maxPlayers === 3) {
+      const angles = [
+        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
+        Math.PI * 2/3,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
+      ];
+      angle = angles[position % 3];
+    } else if (maxPlayers === 2) {
+      const angles = [
+        Math.PI / 2,      // Position 0: Bas
+        -Math.PI / 2      // Position 1: Haut
+      ];
+      angle = angles[position % 2];
+    } else {
+      angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+    }
+    
     const radiusX = 38; // Closer to center than player seat
     const radiusY = 28; // Closer to center than player seat
 
