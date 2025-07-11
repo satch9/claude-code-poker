@@ -81,17 +81,18 @@
         
         <div class="scenario">
             <h3>Situation</h3>
-            <div class="player">👤 Alice : 100 jetons → All-in (100)</div>
-            <div class="player">👤 Bob : 50 jetons → All-in (50)</div>
+            <div class="player">👤 Alice : 60 jetons → All-in (60)</div>
+            <div class="player">👤 Bob : 40 jetons → All-in (40)</div>
             <div class="player">👤 Charlie : 30 jetons → All-in (30)</div>
-            <p><strong>Total des mises :</strong> 180 jetons</p>
+            <p><strong>Total des mises :</strong> 130 jetons</p>
         </div>
 
         <div class="scenario">
-            <h3>Side Pots Attendus</h3>
+            <h3>Side Pots Attendus (Règles Poker)</h3>
             <div class="pot">🎯 Pot Principal : 90 jetons (30×3) → Alice, Bob, Charlie éligibles</div>
-            <div class="pot">🎯 Side Pot 1 : 40 jetons (20×2) → Alice, Bob éligibles</div>
-            <div class="pot">🎯 Side Pot 2 : 50 jetons (50×1) → Alice éligible</div>
+            <div class="pot">🎯 Side Pot 1 : 20 jetons (10×2) → Alice, Bob éligibles</div>
+            <div class="pot">🎯 Side Pot 2 : 20 jetons (20×1) → Alice éligible</div>
+            <p><strong>✅ Logique :</strong> 3 niveaux de side pots selon les montants différents</p>
         </div>
 
         <button onclick="runTest()">🧪 Exécuter Test</button>
@@ -120,9 +121,9 @@
         
         <h3>✅ Indicateurs de Réussite</h3>
         <ul>
-            <li>3 side pots calculés (90, 40, 50 jetons)</li>
+            <li>3 side pots calculés (90, 20, 20 jetons)</li>
             <li>Joueurs éligibles corrects pour chaque pot</li>
-            <li>Total distribué = 180 jetons</li>
+            <li>Total distribué = 130 jetons</li>
             <li>Aucune erreur dans les logs</li>
         </ul>
     </div>
@@ -207,8 +208,8 @@
             
             // Données de test
             const players = [
-                { id: 1, name: "Alice", currentBet: 100, isAllIn: true, isFolded: false },
-                { id: 2, name: "Bob", currentBet: 50, isAllIn: true, isFolded: false },
+                { id: 1, name: "Alice", currentBet: 60, isAllIn: true, isFolded: false },
+                { id: 2, name: "Bob", currentBet: 40, isAllIn: true, isFolded: false },
                 { id: 3, name: "Charlie", currentBet: 30, isAllIn: true, isFolded: false }
             ];
             
