@@ -151,7 +151,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         </div>
 
         {/* Cards */}
-        <div className={cn(isMobile ? "flex gap-0.5" : "flex gap-1")}>
+        <div className={cn(isMobile ? "flex gap-1" : "flex gap-1.5")}>
           {player.cards.length > 0 ? (
             player.cards.map((cardStr, index) => {
               const parsedCard = showCards ? parseCard(cardStr) : undefined;
@@ -168,14 +168,14 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
                   key={index}
                   card={parsedCard}
                   isHidden={!showCards}
-                  size={isMobile ? "xs" : "sm"}
+                  size={isMobile ? "sm" : "md"}
                 />
               );
             })
           ) : (
             <>
-              <Card size={isMobile ? "xs" : "sm"} />
-              <Card size={isMobile ? "xs" : "sm"} />
+              <Card size={isMobile ? "sm" : "md"} />
+              <Card size={isMobile ? "sm" : "md"} />
             </>
           )}
         </div>

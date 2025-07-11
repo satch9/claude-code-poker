@@ -75,13 +75,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const getSeatPosition = (position: number, maxPlayers: number) => {
     const angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     
-    // Mobile: bigger radius to make seats extend outside table edge
-    // Desktop: normal radius to keep seats on table edge
-    const radiusX = isMobile ? 52 : 48; // Horizontal radius percentage
-    const radiusY = isMobile ? 42 : 38; // Vertical radius percentage
+    // Radius ajusté pour éviter les débordements
+    const radiusX = isMobile ? 40 : 45; // Horizontal radius percentage (réduit)
+    const radiusY = isMobile ? 32 : 35; // Vertical radius percentage (réduit)
 
-    const x = 50 + radiusX * Math.cos(angle);
-    const y = 50 + radiusY * Math.sin(angle);
+    // Calculer la position avec contraintes pour éviter les débordements
+    const rawX = 50 + radiusX * Math.cos(angle);
+    const rawY = 50 + radiusY * Math.sin(angle);
+    
+    // Contraindre dans les limites visibles (15-85% pour laisser de la marge)
+    const x = Math.max(15, Math.min(85, rawX));
+    const y = Math.max(15, Math.min(85, rawY));
 
     return {
       left: `${x}%`,
@@ -224,14 +228,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           {/* Main table area - fullscreen on mobile */}
           <div className={cn(
             "relative w-full",
-            isMobile ? "h-full max-w-none" : "max-w-4xl h-[600px]"
+            isMobile ? "h-full max-w-none" : "max-w-4xl h-[700px]"
           )}>
             {/* Table shadow */}
             <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
 
             {/* Table felt */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl overflow-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl"
               style={{
                 border: "12px solid transparent",
                 backgroundImage:
