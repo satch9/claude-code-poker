@@ -149,8 +149,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       <div className={cn(
         "absolute flex z-5",
         getCardsPosition(position),
-        // Pas d'espacement pour les cartes adversaires, espacement pour le joueur
-        isCurrentPlayer && showCards ? "gap-0" : "gap-0"
+        // Espacement pour toutes les cartes (côte à côte)
+        isMobile ? "gap-1" : "gap-1.5"
       )}>
         {player.cards.length > 0 ? (
           player.cards.map((cardStr, index) => {
@@ -164,31 +164,18 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
               cardSuit: parsedCard?.suit
             });
             return (
-              <div
+              <Card
                 key={index}
-                className={cn(
-                  // Positionnement des cartes selon si c'est le joueur actuel ou pas
-                  isCurrentPlayer && showCards && index === 1 ? "ml-3" : "",
-                  // Cartes adversaires : parfaitement superposées
-                  !showCards && index === 1 ? "absolute top-0 left-0" : ""
-                )}
-              >
-                <Card
-                  card={parsedCard}
-                  isHidden={!showCards}
-                  size={isMobile ? "sm" : "md"}
-                />
-              </div>
+                card={parsedCard}
+                isHidden={!showCards}
+                size={isMobile ? "sm" : "md"}
+              />
             );
           })
         ) : (
           <>
-            <div className="relative">
-              <Card size={isMobile ? "sm" : "md"} />
-              <div className="absolute top-0 left-0">
-                <Card size={isMobile ? "sm" : "md"} />
-              </div>
-            </div>
+            <Card size={isMobile ? "sm" : "md"} />
+            <Card size={isMobile ? "sm" : "md"} />
           </>
         )}
       </div>
