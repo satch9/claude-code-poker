@@ -106,10 +106,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           "absolute -top-2 -left-2 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg whitespace-nowrap",
           isMobile ? "min-w-[24px] h-5 text-xs px-1.5" : "min-w-[28px] h-6 text-xs px-2"
         )}>
-          {isMobile 
-            ? (isSmallBlind ? 'SB' : 'BB')
-            : (isSmallBlind ? `SB ${smallBlindAmount}` : `BB ${bigBlindAmount}`)
-          }
+          {isSmallBlind ? 'SB' : 'BB'}
         </div>
       )}
 

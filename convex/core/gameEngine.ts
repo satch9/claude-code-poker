@@ -1066,8 +1066,15 @@ export const getAvailableActions = query({
 
     // Check if can check - only if no additional money needed to call
     // This means either no bet, or player already matches the current bet
+    // Special case: in preflop, BB can check if no one has raised above the BB
     if (callAmount === 0) {
       actions.push({ action: "check", amount: 0 });
+    } else if (gameState.phase === 'preflop' && gameState.lastRaiserPosition === undefined) {
+      // In preflop, if no one has raised and player's bet equals current bet, they can check
+      // This allows BB to check if everyone just called
+      if (player.currentBet === gameState.currentBet) {
+        actions.push({ action: "check", amount: 0 });
+      }
     }
 
     // Check if can call
