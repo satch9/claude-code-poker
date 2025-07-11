@@ -147,9 +147,10 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       {/* Cards positioned separately towards the center */}
       <div className={cn(
-        "absolute flex",
-        isMobile ? "gap-1" : "gap-1.5",
-        getCardsPosition(position)
+        "absolute flex z-5",
+        getCardsPosition(position),
+        // Pas d'espacement pour les cartes adversaires, espacement pour le joueur
+        isCurrentPlayer && showCards ? "gap-0" : "gap-0"
       )}>
         {player.cards.length > 0 ? (
           player.cards.map((cardStr, index) => {
@@ -163,18 +164,31 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
               cardSuit: parsedCard?.suit
             });
             return (
-              <Card
+              <div
                 key={index}
-                card={parsedCard}
-                isHidden={!showCards}
-                size={isMobile ? "sm" : "md"}
-              />
+                className={cn(
+                  // Positionnement des cartes selon si c'est le joueur actuel ou pas
+                  isCurrentPlayer && showCards && index === 1 ? "ml-3" : "",
+                  // Cartes adversaires : parfaitement superposées
+                  !showCards && index === 1 ? "absolute top-0 left-0" : ""
+                )}
+              >
+                <Card
+                  card={parsedCard}
+                  isHidden={!showCards}
+                  size={isMobile ? "sm" : "md"}
+                />
+              </div>
             );
           })
         ) : (
           <>
-            <Card size={isMobile ? "sm" : "md"} />
-            <Card size={isMobile ? "sm" : "md"} />
+            <div className="relative">
+              <Card size={isMobile ? "sm" : "md"} />
+              <div className="absolute top-0 left-0">
+                <Card size={isMobile ? "sm" : "md"} />
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -282,15 +296,15 @@ function getActionLabel(action: string) {
 }
 
 function getCardsPosition(position: number) {
-  // Position les cartes vers le centre de la table selon la position du joueur
+  // Position les cartes juste devant chaque player seat
   switch (position) {
     case 0: // Dealer (haut)
-      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full';
+      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-2';
     case 1: // Small Blind (bas gauche)
-      return 'top-0 right-0 transform -translate-y-full translate-x-1/2';
+      return 'top-0 right-0 transform -translate-y-2 translate-x-1';
     case 2: // Big Blind (bas droite)
-      return 'top-0 left-0 transform -translate-y-full -translate-x-1/2';
+      return 'top-0 left-0 transform -translate-y-2 -translate-x-1';
     default:
-      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full';
+      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-2';
   }
 }
