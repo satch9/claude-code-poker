@@ -107,6 +107,7 @@ async function startGameInternal(ctx: any, tableId: string) {
 
   const playerPositions = players.map((p: any) => p.seatPosition);
   const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
+  
 
   // Post blinds
   let pot = 0;

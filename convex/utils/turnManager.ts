@@ -152,9 +152,13 @@ export function getBlindPositions(
   
   if (numPlayers === 2) {
     // Heads-up: dealer is small blind
+    const bigBlindPosition = playerPositions.find(pos => pos !== dealerPosition);
+    if (bigBlindPosition === undefined) {
+      throw new Error("Cannot find big blind position in heads-up");
+    }
     return {
       smallBlind: dealerPosition,
-      bigBlind: playerPositions.find(pos => pos !== dealerPosition) || dealerPosition
+      bigBlind: bigBlindPosition
     };
   } else {
     // Multi-way: small blind is next to dealer
