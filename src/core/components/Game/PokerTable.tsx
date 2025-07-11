@@ -96,17 +96,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
     
-    // Radius ajusté pour créer une forme plus ovale
-    const radiusX = isMobile ? 45 : 48; // Horizontal radius percentage (plus large)
-    const radiusY = isMobile ? 25 : 28; // Vertical radius percentage (plus petit = plus ovale)
+    // Radius ajusté pour positionner les seats en dehors de la table
+    const radiusX = isMobile ? 52 : 58; // Horizontal radius percentage (en dehors de la table)
+    const radiusY = isMobile ? 35 : 40; // Vertical radius percentage (en dehors de la table)
 
     // Calculer la position avec contraintes pour éviter les débordements
     const rawX = 50 + radiusX * Math.cos(angle);
     const rawY = 50 + radiusY * Math.sin(angle);
     
-    // Contraindre dans les limites visibles (forme ovale)
-    const x = Math.max(8, Math.min(92, rawX)); // Plus large horizontalement
-    const y = Math.max(15, Math.min(85, rawY)); // Plus serré verticalement
+    // Contraindre dans les limites visibles (seats en dehors de la table)
+    const x = Math.max(2, Math.min(98, rawX)); // Plus large pour seats en dehors
+    const y = Math.max(5, Math.min(95, rawY)); // Plus d'espace vertical
 
     return {
       left: `${x}%`,
@@ -137,8 +137,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
     
-    const radiusX = 35; // Closer to center than player seat
-    const radiusY = 25; // Closer to center than player seat
+    const radiusX = 42; // Entre le centre et les player seats
+    const radiusY = 30; // Entre le centre et les player seats
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);
@@ -400,12 +400,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )}
 
 
-              {/* Game info button */}
-              <div className="absolute top-4 right-4 z-50">
-                <button
-                  onClick={() => setShowGameInfo(!showGameInfo)}
-                  className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
-                >
+              {/* Game info button - Mobile only */}
+              {isMobile && (
+                <div className="absolute top-4 right-4 z-50">
+                  <button
+                    onClick={() => setShowGameInfo(!showGameInfo)}
+                    className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  >
                   <svg
                     className="w-6 h-6 text-gray-700"
                     fill="none"
@@ -419,8 +420,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                </button>
-              </div>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
