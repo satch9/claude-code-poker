@@ -313,9 +313,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
               {/* Center area with community cards */}
               <div className={cn(
-                "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center",
+                "absolute top-1/2 left-1/2 z-10 flex flex-col items-center",
                 isMobile && "scale-75"
-              )}>
+              )}
+              style={{
+                transform: isMobile ? 'translate(-50%, -50%) scaleY(1.43) scale(0.75)' : 'translate(-50%, -50%) scaleY(1.43)'
+              }}>
                 {/* Community cards */}
                 <CommunityCards
                   cards={gameState.communityCards}
@@ -338,6 +341,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     ),
                     boxShadow:
                       "0 8px 25px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)",
+                    transform: `${getDealerButtonPosition(gameState.dealerPosition, table.maxPlayers).transform} scaleY(1.43)`
                   }}
                 >
                   <span className="drop-shadow-sm">D</span>
@@ -353,7 +357,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     "absolute",
                     isMobile ? "z-30" : "z-10"
                   )}
-                  style={getSeatPosition(seat.position, table.maxPlayers)}
+                  style={{
+                    ...getSeatPosition(seat.position, table.maxPlayers),
+                    transform: `${getSeatPosition(seat.position, table.maxPlayers).transform} scaleY(1.43)`
+                  }}
                 >
                   <PlayerSeat
                     player={seat.player as any}
@@ -380,7 +387,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
               {/* Side pots indicator */}
               {gameState.sidePots.length > 0 && (
-                <div className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50">
+                <div 
+                  className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50"
+                  style={{ transform: 'scaleY(1.43)' }}
+                >
                   <div className="text-sm font-bold text-gray-800 mb-3 flex items-center">
                     <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
                     Side Pots
