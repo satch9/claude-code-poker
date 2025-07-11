@@ -1355,12 +1355,28 @@ async function advanceToNextPhaseWithStateMachine(
     }
   }
 
+  // Find first player to act for post-flop phases
+  const activePlayers = players.filter((p: any) => !p.isFolded && !p.isAllIn);
+  const playerPositions = activePlayers.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
+  
+  let currentPlayerPosition = -1;
+  
+  // Only set currentPlayerPosition if there are players who need to act
+  if (playerPositions.length > 0 && !nextPhaseInfo.autoAdvance) {
+    currentPlayerPosition = getFirstPlayerToAct(
+      gameState.dealerPosition,
+      playerPositions,
+      'postflop'
+    );
+    console.log(`🎮 Setting currentPlayerPosition to ${currentPlayerPosition} for phase ${nextPhaseInfo.nextPhase}`);
+  }
+
   // Update game state
   await ctx.db.patch(gameState._id, {
     phase: nextPhaseInfo.nextPhase,
     communityCards,
     currentBet: 0,
-    currentPlayerPosition: -1,
+    currentPlayerPosition,
     lastRaiserPosition: undefined,
     autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
     updatedAt: Date.now(),
