@@ -77,10 +77,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     
     // Positionnement optimisé selon le nombre de joueurs
     if (maxPlayers === 3) {
-      // Pour 3 joueurs : disposition triangulaire naturelle
+      // Pour 3 joueurs : reproduction exacte de l'image de référence
       const angles = [
         -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 2/3,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI * 7/6,         // Position 1 (SB): Bas/gauche (8h)
         Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
       ];
       angle = angles[position % 3];
@@ -96,17 +96,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
     
-    // Radius ajusté pour éviter les débordements
-    const radiusX = isMobile ? 40 : 45; // Horizontal radius percentage
-    const radiusY = isMobile ? 32 : 35; // Vertical radius percentage
+    // Radius ajusté pour créer une forme plus ovale
+    const radiusX = isMobile ? 45 : 48; // Horizontal radius percentage (plus large)
+    const radiusY = isMobile ? 25 : 28; // Vertical radius percentage (plus petit = plus ovale)
 
     // Calculer la position avec contraintes pour éviter les débordements
     const rawX = 50 + radiusX * Math.cos(angle);
     const rawY = 50 + radiusY * Math.sin(angle);
     
-    // Contraindre dans les limites visibles (15-85% pour laisser de la marge)
-    const x = Math.max(15, Math.min(85, rawX));
-    const y = Math.max(15, Math.min(85, rawY));
+    // Contraindre dans les limites visibles (forme ovale)
+    const x = Math.max(8, Math.min(92, rawX)); // Plus large horizontalement
+    const y = Math.max(15, Math.min(85, rawY)); // Plus serré verticalement
 
     return {
       left: `${x}%`,
@@ -123,7 +123,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     if (maxPlayers === 3) {
       const angles = [
         -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 2/3,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI * 7/6,         // Position 1 (SB): Bas/gauche (8h)
         Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
       ];
       angle = angles[position % 3];
@@ -137,8 +137,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
     
-    const radiusX = 38; // Closer to center than player seat
-    const radiusY = 28; // Closer to center than player seat
+    const radiusX = 35; // Closer to center than player seat
+    const radiusY = 25; // Closer to center than player seat
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);
@@ -271,12 +271,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             isMobile ? "h-full max-w-none" : "max-w-4xl h-[700px]"
           )}>
             {/* Table shadow */}
-            <div className="absolute inset-2 bg-black/20 rounded-full blur-xl"></div>
+            <div className="absolute inset-2 bg-black/20 blur-xl" style={{borderRadius: '50%'}}></div>
 
-            {/* Table felt */}
+            {/* Table felt - More oval shape */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 rounded-full shadow-2xl"
+              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 shadow-2xl"
               style={{
+                borderRadius: '50%',
+                transform: 'scaleY(0.7)', // Make it more oval
                 border: "12px solid transparent",
                 backgroundImage:
                   "linear-gradient(to bottom right, #10b981, #059669, #047857), linear-gradient(45deg, #f59e0b, #d97706, #92400e, #d97706, #f59e0b)",
