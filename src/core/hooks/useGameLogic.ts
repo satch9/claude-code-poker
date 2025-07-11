@@ -178,8 +178,9 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
   useEffect(() => {
     if (!gameState?.autoAdvanceAt || !tableId) return;
     
-    const timeUntilAdvance = gameState.autoAdvanceAt - Date.now();
-    console.log(`🎮 Client: autoAdvanceAt detected, phase=${gameState.phase}, timeUntilAdvance=${timeUntilAdvance}`);
+    const now = Date.now();
+    const timeUntilAdvance = gameState.autoAdvanceAt - now;
+    console.log(`🎮 Client: autoAdvanceAt detected, phase=${gameState.phase}, timeUntilAdvance=${timeUntilAdvance}, serverTime=${gameState.autoAdvanceAt}, clientTime=${now}`);
     
     if (timeUntilAdvance <= 0) {
       // Should advance immediately
@@ -188,11 +189,14 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
       return;
     }
     
-    console.log(`🎮 Client: Setting timeout for ${timeUntilAdvance}ms to advance from ${gameState.phase}`);
+    // Add 100ms buffer to ensure server is ready
+    const adjustedDelay = Math.max(100, timeUntilAdvance + 100);
+    console.log(`🎮 Client: Setting timeout for ${adjustedDelay}ms (original: ${timeUntilAdvance}ms + 100ms buffer) to advance from ${gameState.phase}`);
+    
     const timeoutId = setTimeout(() => {
       console.log(`🎮 Client: Timeout fired, advancing from ${gameState.phase}`);
       advancePhase({ tableId }).catch(console.error);
-    }, timeUntilAdvance);
+    }, adjustedDelay);
 
     return () => {
       console.log(`🎮 Client: Clearing timeout for ${gameState.phase}`);

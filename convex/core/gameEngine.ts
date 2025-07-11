@@ -495,8 +495,11 @@ export const advancePhase = mutation({
     }
 
     // Only advance if autoAdvanceAt is set and time has passed
-    if (!gameState.autoAdvanceAt || Date.now() < gameState.autoAdvanceAt) {
-      console.log(`🎮 Server: advancePhase called but not ready. autoAdvanceAt: ${gameState.autoAdvanceAt}, now: ${Date.now()}`);
+    // Add 500ms tolerance for client-server clock differences
+    const tolerance = 500;
+    const now = Date.now();
+    if (!gameState.autoAdvanceAt || now < (gameState.autoAdvanceAt - tolerance)) {
+      console.log(`🎮 Server: advancePhase called but not ready. autoAdvanceAt: ${gameState.autoAdvanceAt}, now: ${now}, tolerance: ${tolerance}ms`);
       return { success: false };
     }
 
