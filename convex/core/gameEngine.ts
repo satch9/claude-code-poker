@@ -633,7 +633,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   if (allPlayersAllIn) {
     // All players are all-in, set a special flag to trigger auto-advance
-    const autoAdvanceDelay = nextPhase === "showdown" ? 3000 : 2000;
+    const autoAdvanceDelay = nextPhase === "showdown" ? 6000 : 2000;
     const autoAdvanceAt = Date.now() + autoAdvanceDelay;
     
     console.log(`🎮 Server: Setting up auto-advance for ${nextPhase} in ${autoAdvanceDelay}ms`);

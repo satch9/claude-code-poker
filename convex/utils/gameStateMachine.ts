@@ -17,7 +17,7 @@ export const GAME_TRANSITIONS: GameStateTransition[] = [
   { from: 'flop', to: 'turn', condition: 'betting_complete', autoAdvance: false },
   { from: 'turn', to: 'river', condition: 'betting_complete', autoAdvance: false },
   { from: 'river', to: 'showdown', condition: 'betting_complete', autoAdvance: false },
-  { from: 'showdown', to: 'ended', condition: 'winner_determined', autoAdvance: true, delay: 3000 },
+  { from: 'showdown', to: 'ended', condition: 'winner_determined', autoAdvance: true, delay: 6000 },
   
   // Special transitions for all-in scenarios
   { from: 'preflop', to: 'flop', condition: 'all_players_all_in', autoAdvance: true, delay: 1000 },
