@@ -514,8 +514,37 @@ export const advancePhase = mutation({
       return { success: true };
     }
 
-    // Advance to next phase
-    await advanceToNextPhase(ctx, args.tableId);
+    // Use state machine to determine next phase
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+    
+    const playerStates: PlayerState[] = players.map(p => ({
+      chips: p.chips,
+      currentBet: p.currentBet,
+      hasActed: p.hasActed,
+      isFolded: p.isFolded,
+      isAllIn: p.isAllIn,
+      lastAction: p.lastAction,
+      seatPosition: p.seatPosition
+    }));
+    
+    const conditions = evaluateGameConditions(playerStates, gameState.currentBet, gameState.lastRaiserPosition);
+    const nextPhaseInfo = getNextPhaseFromStateMachine(gameState.phase as any, conditions);
+    
+    console.log(`🎮 Server: advancePhase checking next phase for ${gameState.phase}`, {
+      conditions,
+      nextPhaseInfo
+    });
+    
+    if (nextPhaseInfo) {
+      // Continue with state machine
+      await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
+    } else {
+      // Fallback to regular advance
+      await advanceToNextPhase(ctx, args.tableId);
+    }
     return { success: true };
   },
 });
@@ -1313,6 +1342,22 @@ async function advanceToNextPhaseWithStateMachine(
   console.log(`🎮 Game state updated: phase=${nextPhaseInfo.nextPhase}, autoAdvanceAt=${nextPhaseInfo.autoAdvance ? 'SET' : 'NOT SET'}, delay=${nextPhaseInfo.delay}`);
 
   console.log(`🎮 Phase advanced to ${nextPhaseInfo.nextPhase}, autoAdvance: ${nextPhaseInfo.autoAdvance}, delay: ${nextPhaseInfo.delay}`);
+
+  // Add phase announcement to action feed
+  const phaseNames = {
+    'flop': 'Flop',
+    'turn': 'Turn',
+    'river': 'River',
+    'showdown': 'Abattage'
+  };
+  
+  await addActionToFeed(ctx, tableId, {
+    playerName: "Système",
+    action: "phase",
+    message: `Phase: ${phaseNames[nextPhaseInfo.nextPhase as keyof typeof phaseNames]}`,
+    phase: nextPhaseInfo.nextPhase,
+    isSystem: true,
+  });
 }
 
 export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine };

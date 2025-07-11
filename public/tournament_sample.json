@@ -1,0 +1,541 @@
+{
+    "tournoi": {
+        "nom": "Tournoi Fictif Texas Hold'em",
+        "joueurs": [
+            {
+                "id": 1,
+                "nom": "Alice"
+            },
+            {
+                "id": 2,
+                "nom": "Bob"
+            },
+            {
+                "id": 3,
+                "nom": "Charlie"
+            },
+            {
+                "id": 4,
+                "nom": "David"
+            },
+            {
+                "id": 5,
+                "nom": "Emma"
+            },
+            {
+                "id": 6,
+                "nom": "Fabrice"
+            },
+            {
+                "id": 7,
+                "nom": "Gina"
+            },
+            {
+                "id": 8,
+                "nom": "Hugo"
+            },
+            {
+                "id": 9,
+                "nom": "Inès"
+            },
+            {
+                "id": 10,
+                "nom": "Julien"
+            },
+            {
+                "id": 11,
+                "nom": "Karim"
+            },
+            {
+                "id": 12,
+                "nom": "Léa"
+            },
+            {
+                "id": 13,
+                "nom": "Marc"
+            },
+            {
+                "id": 14,
+                "nom": "Nina"
+            },
+            {
+                "id": 15,
+                "nom": "Olivier"
+            },
+            {
+                "id": 16,
+                "nom": "Paul"
+            },
+            {
+                "id": 17,
+                "nom": "Quentin"
+            },
+            {
+                "id": 18,
+                "nom": "Rania"
+            }
+        ],
+        "mains": [
+            {
+                "numero": 1,
+                "cartes_communautaires": [
+                    "Ah",
+                    "Kd",
+                    "7c",
+                    "7h",
+                    "2s"
+                ],
+                "joueurs": [
+                    {
+                        "id": 1,
+                        "cartes": [
+                            "As",
+                            "Ad"
+                        ],
+                        "actions": [
+                            "raise",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 2,
+                        "cartes": [
+                            "Ks",
+                            "Kh"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 3,
+                        "cartes": [
+                            "7s",
+                            "7d"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 4,
+                        "cartes": [
+                            "2c",
+                            "2d"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 5,
+                        "cartes": [
+                            "Qh",
+                            "Jd"
+                        ],
+                        "actions": [
+                            "fold"
+                        ]
+                    }
+                ],
+                "pots": [
+                    {
+                        "type": "main",
+                        "montant": 4000,
+                        "joueurs": [
+                            1,
+                            2,
+                            3,
+                            4
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 2000,
+                        "joueurs": [
+                            1,
+                            2,
+                            3
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 1000,
+                        "joueurs": [
+                            1,
+                            2
+                        ]
+                    }
+                ],
+                "gagnants": [
+                    {
+                        "pot": "main",
+                        "joueurs": [
+                            3
+                        ],
+                        "main": "Carré de 7"
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            1
+                        ],
+                        "main": "Full As par les 7"
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            1,
+                            2
+                        ],
+                        "main": "Full As par les 7",
+                        "egalite": true
+                    }
+                ]
+            },
+            {
+                "numero": 2,
+                "cartes_communautaires": [
+                    "9h",
+                    "9d",
+                    "9s",
+                    "Qc",
+                    "Qd"
+                ],
+                "joueurs": [
+                    {
+                        "id": 6,
+                        "cartes": [
+                            "9c",
+                            "Qh"
+                        ],
+                        "actions": [
+                            "raise",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 7,
+                        "cartes": [
+                            "Qs",
+                            "Jh"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 8,
+                        "cartes": [
+                            "Jc",
+                            "Js"
+                        ],
+                        "actions": [
+                            "call"
+                        ]
+                    },
+                    {
+                        "id": 9,
+                        "cartes": [
+                            "Kc",
+                            "Kh"
+                        ],
+                        "actions": [
+                            "fold"
+                        ]
+                    }
+                ],
+                "pots": [
+                    {
+                        "type": "main",
+                        "montant": 3000,
+                        "joueurs": [
+                            6,
+                            7
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 1000,
+                        "joueurs": [
+                            6,
+                            7,
+                            8
+                        ]
+                    }
+                ],
+                "gagnants": [
+                    {
+                        "pot": "main",
+                        "joueurs": [
+                            6
+                        ],
+                        "main": "Carré de 9"
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            6,
+                            7
+                        ],
+                        "main": "Full 9 par les Dames",
+                        "egalite": true
+                    }
+                ]
+            },
+            {
+                "numero": 3,
+                "cartes_communautaires": [
+                    "2h",
+                    "3d",
+                    "4s",
+                    "5c",
+                    "6h"
+                ],
+                "joueurs": [
+                    {
+                        "id": 10,
+                        "cartes": [
+                            "7h",
+                            "8h"
+                        ],
+                        "actions": [
+                            "raise",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 11,
+                        "cartes": [
+                            "9h",
+                            "Th"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 12,
+                        "cartes": [
+                            "5d",
+                            "5s"
+                        ],
+                        "actions": [
+                            "call"
+                        ]
+                    }
+                ],
+                "pots": [
+                    {
+                        "type": "main",
+                        "montant": 2500,
+                        "joueurs": [
+                            10,
+                            11
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 500,
+                        "joueurs": [
+                            10,
+                            11,
+                            12
+                        ]
+                    }
+                ],
+                "gagnants": [
+                    {
+                        "pot": "main",
+                        "joueurs": [
+                            10
+                        ],
+                        "main": "Suite 4-8"
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            12
+                        ],
+                        "main": "Brelan de 5"
+                    }
+                ]
+            },
+            {
+                "numero": 4,
+                "cartes_communautaires": [
+                    "Ac",
+                    "Ad",
+                    "Kc",
+                    "Kh",
+                    "Qs"
+                ],
+                "joueurs": [
+                    {
+                        "id": 13,
+                        "cartes": [
+                            "As",
+                            "Ks"
+                        ],
+                        "actions": [
+                            "raise",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 14,
+                        "cartes": [
+                            "Ah",
+                            "Qh"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 15,
+                        "cartes": [
+                            "Kd",
+                            "Qd"
+                        ],
+                        "actions": [
+                            "call"
+                        ]
+                    },
+                    {
+                        "id": 16,
+                        "cartes": [
+                            "Jc",
+                            "Js"
+                        ],
+                        "actions": [
+                            "fold"
+                        ]
+                    }
+                ],
+                "pots": [
+                    {
+                        "type": "main",
+                        "montant": 3500,
+                        "joueurs": [
+                            13,
+                            14
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 1000,
+                        "joueurs": [
+                            13,
+                            14,
+                            15
+                        ]
+                    }
+                ],
+                "gagnants": [
+                    {
+                        "pot": "main",
+                        "joueurs": [
+                            13,
+                            14
+                        ],
+                        "main": "Full As par les Rois",
+                        "egalite": true
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            13
+                        ],
+                        "main": "Full As par les Rois"
+                    }
+                ]
+            },
+            {
+                "numero": 5,
+                "cartes_communautaires": [
+                    "2c",
+                    "2d",
+                    "2h",
+                    "3c",
+                    "3d"
+                ],
+                "joueurs": [
+                    {
+                        "id": 17,
+                        "cartes": [
+                            "2s",
+                            "3s"
+                        ],
+                        "actions": [
+                            "raise",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 18,
+                        "cartes": [
+                            "4c",
+                            "4d"
+                        ],
+                        "actions": [
+                            "call",
+                            "all-in"
+                        ]
+                    },
+                    {
+                        "id": 1,
+                        "cartes": [
+                            "5c",
+                            "5d"
+                        ],
+                        "actions": [
+                            "call"
+                        ]
+                    }
+                ],
+                "pots": [
+                    {
+                        "type": "main",
+                        "montant": 2000,
+                        "joueurs": [
+                            17,
+                            18
+                        ]
+                    },
+                    {
+                        "type": "side",
+                        "montant": 1000,
+                        "joueurs": [
+                            17,
+                            18,
+                            1
+                        ]
+                    }
+                ],
+                "gagnants": [
+                    {
+                        "pot": "main",
+                        "joueurs": [
+                            17
+                        ],
+                        "main": "Carré de 2 et full aux 3"
+                    },
+                    {
+                        "pot": "side",
+                        "joueurs": [
+                            1
+                        ],
+                        "main": "Full 2 par les 5"
+                    }
+                ]
+            }
+        ]
+    }
+}
