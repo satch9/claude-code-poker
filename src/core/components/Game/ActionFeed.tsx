@@ -106,14 +106,14 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
           actions.map((item, index) => (
             <div
               key={item.id || item._id || `${item.timestamp}-${index}`}
-              className="flex items-center justify-between text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
+              className="relative text-sm p-2 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800/70 transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <div className={cn('font-medium truncate max-w-[200px]', getActionColor(item.action))}>
+              <div className="pr-16">
+                <div className={cn('font-medium text-xs leading-relaxed', getActionColor(item.action))}>
                   {getActionText(item)}
                 </div>
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="absolute bottom-1 right-2 text-xs text-gray-500">
                 {formatTime(item.timestamp)}
               </div>
             </div>

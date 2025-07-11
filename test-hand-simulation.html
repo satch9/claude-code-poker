@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Hand Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .hand-container {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #4a4a4a;
+        }
+        .phase {
+            background: #3a3a3a;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #00ff00;
+        }
+        .phase.waiting { border-left-color: #888; }
+        .phase.preflop { border-left-color: #ff6b6b; }
+        .phase.flop { border-left-color: #4ecdc4; }
+        .phase.turn { border-left-color: #45b7d1; }
+        .phase.river { border-left-color: #f9ca24; }
+        .phase.showdown { border-left-color: #6c5ce7; }
+        
+        .player {
+            display: inline-block;
+            background: #4a4a4a;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .player.all-in { background: #e74c3c; }
+        .player.folded { background: #7f8c8d; opacity: 0.5; }
+        .player.active { background: #27ae60; }
+        
+        .board {
+            text-align: center;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        .card {
+            display: inline-block;
+            background: white;
+            color: black;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .log {
+            background: #1a1a1a;
+            border: 1px solid #4a4a4a;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .expected {
+            background: #2d5a2d;
+            border: 1px solid #4a7c4a;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .current {
+            background: #5a2d2d;
+            border: 1px solid #7c4a4a;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Test Hand Simulation - Diagnostique des All-In</h1>
+    
+    <div class="hand-container">
+        <h2>Scénario de Test : All-In préflop</h2>
+        <p><strong>Objectif :</strong> Tester le flow complet d'une main où les deux joueurs font all-in préflop</p>
+        
+        <div class="controls">
+            <button onclick="startSimulation()">Démarrer Simulation</button>
+            <button onclick="nextPhase()" id="nextBtn" disabled>Phase Suivante</button>
+            <button onclick="autoAdvance()" id="autoBtn">Auto-Avancement</button>
+            <button onclick="resetSimulation()">Reset</button>
+        </div>
+
+        <div class="comparison">
+            <div class="expected">
+                <h3>🎯 Comportement Attendu</h3>
+                <div id="expectedBehavior">
+                    <p>Cliquez sur "Démarrer Simulation" pour voir le flow attendu</p>
+                </div>
+            </div>
+            <div class="current">
+                <h3>🔧 Notre Logique Actuelle</h3>
+                <div id="currentBehavior">
+                    <p>Notre système devrait reproduire le même comportement</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameState">
+            <div class="phase waiting">
+                <h3>En attente</h3>
+                <p>Prêt à commencer la simulation</p>
+            </div>
+        </div>
+
+        <div class="log" id="logContainer">
+            <div id="log">Logs de simulation...</div>
+        </div>
+    </div>
+
+    <script>
+        // Simulation d'une main complète avec all-in
+        let currentPhase = 'waiting';
+        let gameLog = [];
+        let autoAdvanceTimer = null;
+        
+        const expectedFlow = [
+            { 
+                phase: 'preflop', 
+                description: 'Preflop - Blinds payées', 
+                players: { p1: { chips: 30, bet: 20, status: 'BB' }, p2: { chips: 40, bet: 10, status: 'SB' } },
+                actions: 'SB doit agir en premier (call, raise, ou fold)',
+                timing: 'Immédiat après distribution des cartes'
+            },
+            { 
+                phase: 'preflop-action', 
+                description: 'Preflop - Action SB', 
+                players: { p1: { chips: 30, bet: 20, status: 'BB' }, p2: { chips: 10, bet: 40, status: 'SB All-In' } },
+                actions: 'SB fait all-in pour 40 jetons',
+                timing: 'Immédiat après action joueur'
+            },
+            { 
+                phase: 'preflop-response', 
+                description: 'Preflop - Réponse BB', 
+                players: { p1: { chips: 0, bet: 50, status: 'BB Call All-In' }, p2: { chips: 10, bet: 40, status: 'SB All-In' } },
+                actions: 'BB call l\'all-in avec ses 30 jetons restants',
+                timing: 'Immédiat après action joueur'
+            },
+            { 
+                phase: 'flop', 
+                description: 'Flop - Cartes communautaires', 
+                players: { p1: { chips: 0, bet: 50, status: 'All-In' }, p2: { chips: 10, bet: 40, status: 'All-In' } },
+                actions: 'Flop révélé automatiquement (les deux joueurs sont all-in)',
+                timing: 'Immédiat car tous les joueurs sont all-in'
+            },
+            { 
+                phase: 'turn', 
+                description: 'Turn - Carte communautaire', 
+                players: { p1: { chips: 0, bet: 50, status: 'All-In' }, p2: { chips: 10, bet: 40, status: 'All-In' } },
+                actions: 'Turn révélé automatiquement',
+                timing: '2 secondes après flop'
+            },
+            { 
+                phase: 'river', 
+                description: 'River - Dernière carte', 
+                players: { p1: { chips: 0, bet: 50, status: 'All-In' }, p2: { chips: 10, bet: 40, status: 'All-In' } },
+                actions: 'River révélé automatiquement',
+                timing: '2 secondes après turn'
+            },
+            { 
+                phase: 'showdown', 
+                description: 'Showdown - Évaluation des mains', 
+                players: { p1: { chips: 0, bet: 50, status: 'All-In' }, p2: { chips: 10, bet: 40, status: 'All-In' } },
+                actions: 'Cartes révélées, main évaluée',
+                timing: '2 secondes après river'
+            },
+            { 
+                phase: 'winner', 
+                description: 'Résultat - Gagnant déterminé', 
+                players: { p1: { chips: 90, bet: 0, status: 'Winner' }, p2: { chips: 0, bet: 0, status: 'Loser' } },
+                actions: 'Pot distribué au gagnant',
+                timing: '3 secondes après showdown'
+            }
+        ];
+
+        let currentStep = 0;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            gameLog.push(`[${timestamp}] ${message}`);
+            document.getElementById('log').innerHTML = gameLog.join('<br>');
+            document.getElementById('logContainer').scrollTop = document.getElementById('logContainer').scrollHeight;
+        }
+
+        function updateDisplay() {
+            const step = expectedFlow[currentStep];
+            if (!step) return;
+
+            // Update expected behavior
+            const expectedHtml = `
+                <h4>Phase: ${step.phase}</h4>
+                <p><strong>Description:</strong> ${step.description}</p>
+                <p><strong>Actions:</strong> ${step.actions}</p>
+                <p><strong>Timing:</strong> ${step.timing}</p>
+                <div class="player">P1: ${step.players.p1.chips} jetons, bet: ${step.players.p1.bet}, status: ${step.players.p1.status}</div>
+                <div class="player">P2: ${step.players.p2.chips} jetons, bet: ${step.players.p2.bet}, status: ${step.players.p2.status}</div>
+            `;
+            document.getElementById('expectedBehavior').innerHTML = expectedHtml;
+
+            // Update current behavior (would be filled by our actual game logic)
+            const currentHtml = `
+                <h4>Notre Système</h4>
+                <p><strong>Phase actuelle:</strong> ${currentPhase}</p>
+                <p><strong>Status:</strong> ${currentStep === 0 ? 'En attente' : 'Simulation en cours'}</p>
+                <div class="player">État des joueurs selon notre logique</div>
+                <div class="player">Comparaison avec le comportement attendu</div>
+            `;
+            document.getElementById('currentBehavior').innerHTML = currentHtml;
+
+            // Update game state display
+            const gameStateHtml = `
+                <div class="phase ${step.phase}">
+                    <h3>${step.description}</h3>
+                    <p>${step.actions}</p>
+                    <div class="board">
+                        ${step.phase === 'flop' ? '<span class="card">8♦</span><span class="card">A♦</span><span class="card">8♠</span>' : ''}
+                        ${step.phase === 'turn' ? '<span class="card">8♦</span><span class="card">A♦</span><span class="card">8♠</span><span class="card">5♥</span>' : ''}
+                        ${step.phase === 'river' ? '<span class="card">8♦</span><span class="card">A♦</span><span class="card">8♠</span><span class="card">5♥</span><span class="card">7♥</span>' : ''}
+                        ${step.phase === 'showdown' ? '<span class="card">8♦</span><span class="card">A♦</span><span class="card">8♠</span><span class="card">5♥</span><span class="card">7♥</span>' : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('gameState').innerHTML = gameStateHtml;
+        }
+
+        function startSimulation() {
+            currentStep = 0;
+            currentPhase = 'preflop';
+            gameLog = [];
+            log('🎮 Simulation démarrée');
+            log('📋 Scénario: All-in préflop entre 2 joueurs');
+            log('👥 Joueur 1 (BB): 50 jetons, paie 20');
+            log('👥 Joueur 2 (SB): 50 jetons, paie 10');
+            
+            updateDisplay();
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('autoBtn').disabled = false;
+        }
+
+        function nextPhase() {
+            if (currentStep >= expectedFlow.length - 1) {
+                log('✅ Simulation terminée!');
+                document.getElementById('nextBtn').disabled = true;
+                return;
+            }
+
+            currentStep++;
+            const step = expectedFlow[currentStep];
+            currentPhase = step.phase;
+            
+            log(`🎯 Phase: ${step.phase} - ${step.description}`);
+            log(`⏱️ Timing: ${step.timing}`);
+            log(`🎮 Actions: ${step.actions}`);
+            
+            updateDisplay();
+        }
+
+        function autoAdvance() {
+            if (autoAdvanceTimer) {
+                clearInterval(autoAdvanceTimer);
+                autoAdvanceTimer = null;
+                document.getElementById('autoBtn').textContent = 'Auto-Avancement';
+                log('⏸️ Auto-avancement arrêté');
+                return;
+            }
+
+            log('▶️ Auto-avancement démarré (toutes les 2 secondes)');
+            document.getElementById('autoBtn').textContent = 'Arrêter Auto';
+            
+            autoAdvanceTimer = setInterval(() => {
+                if (currentStep >= expectedFlow.length - 1) {
+                    clearInterval(autoAdvanceTimer);
+                    autoAdvanceTimer = null;
+                    document.getElementById('autoBtn').textContent = 'Auto-Avancement';
+                    log('🏁 Auto-avancement terminé');
+                    return;
+                }
+                nextPhase();
+            }, 2000);
+        }
+
+        function resetSimulation() {
+            currentStep = 0;
+            currentPhase = 'waiting';
+            gameLog = [];
+            
+            if (autoAdvanceTimer) {
+                clearInterval(autoAdvanceTimer);
+                autoAdvanceTimer = null;
+            }
+            
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('autoBtn').disabled = true;
+            document.getElementById('autoBtn').textContent = 'Auto-Avancement';
+            
+            // Reset display
+            document.getElementById('expectedBehavior').innerHTML = '<p>Cliquez sur "Démarrer Simulation" pour voir le flow attendu</p>';
+            document.getElementById('currentBehavior').innerHTML = '<p>Notre système devrait reproduire le même comportement</p>';
+            document.getElementById('gameState').innerHTML = '<div class="phase waiting"><h3>En attente</h3><p>Prêt à commencer la simulation</p></div>';
+            document.getElementById('log').innerHTML = 'Logs de simulation...';
+            
+            log('🔄 Simulation réinitialisée');
+        }
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>

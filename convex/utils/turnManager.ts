@@ -67,9 +67,34 @@ export function isBettingRoundComplete(
     return true;
   }
   
-  // If only one player is not all-in, they must have had a chance to act
+  // If only one player is not all-in, they must have had a chance to act AFTER the all-in
   if (playersNotAllIn.length === 1) {
     const remainingPlayer = playersNotAllIn[0];
+    
+    // Check if there's a raise that this player hasn't responded to
+    if (lastRaiserPosition !== undefined) {
+      // If someone raised/went all-in and this player hasn't acted since, they need to act
+      const hasActedAfterRaise = remainingPlayer.hasActed && (
+        remainingPlayer.lastAction === 'call' ||
+        remainingPlayer.lastAction === 'raise' ||
+        remainingPlayer.lastAction === 'all-in' ||
+        remainingPlayer.lastAction === 'fold'
+      );
+      
+      console.log("Only one player not all-in (with raise):", {
+        seat: remainingPlayer.seatPosition,
+        hasActed: remainingPlayer.hasActed,
+        lastAction: remainingPlayer.lastAction,
+        currentBet: remainingPlayer.currentBet,
+        expectedBet: currentBet,
+        hasActedAfterRaise,
+        shouldEnd: hasActedAfterRaise && remainingPlayer.currentBet === currentBet
+      });
+      
+      return hasActedAfterRaise && remainingPlayer.currentBet === currentBet;
+    }
+    
+    // No raise, just check if they've acted
     const hasActedAfterAllIn = remainingPlayer.hasActed;
     console.log("Only one player not all-in:", {
       seat: remainingPlayer.seatPosition,

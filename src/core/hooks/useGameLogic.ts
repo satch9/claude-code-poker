@@ -179,17 +179,25 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     if (!gameState?.autoAdvanceAt || !tableId) return;
     
     const timeUntilAdvance = gameState.autoAdvanceAt - Date.now();
+    console.log(`🎮 Client: autoAdvanceAt detected, phase=${gameState.phase}, timeUntilAdvance=${timeUntilAdvance}`);
+    
     if (timeUntilAdvance <= 0) {
       // Should advance immediately
+      console.log(`🎮 Client: Advancing immediately for phase ${gameState.phase}`);
       advancePhase({ tableId }).catch(console.error);
       return;
     }
     
+    console.log(`🎮 Client: Setting timeout for ${timeUntilAdvance}ms to advance from ${gameState.phase}`);
     const timeoutId = setTimeout(() => {
+      console.log(`🎮 Client: Timeout fired, advancing from ${gameState.phase}`);
       advancePhase({ tableId }).catch(console.error);
     }, timeUntilAdvance);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      console.log(`🎮 Client: Clearing timeout for ${gameState.phase}`);
+      clearTimeout(timeoutId);
+    };
   }, [gameState?.autoAdvanceAt, tableId]);
 
   // Track hand number

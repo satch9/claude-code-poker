@@ -22,6 +22,13 @@ import {
   getNextPhase,
   getNextDealerPosition
 } from "../utils/turnManager";
+import {
+  evaluateGameConditions,
+  getNextPhase as getNextPhaseFromStateMachine,
+  shouldAutoAdvance,
+  debugGameState,
+  type PlayerState
+} from "../utils/gameStateMachine";
 import { internal } from "../_generated/api";
 
 // Helper function to add action to server-side feed
@@ -418,26 +425,25 @@ export const playerAction = mutation({
       throw new Error("Game state not found after update");
     }
 
-    // Check if betting round is complete
-    const isBettingComplete = isBettingRoundComplete(allPlayers, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
+    // Use state machine to determine next action
+    const playerStates: PlayerState[] = allPlayers.map(p => ({
+      chips: p.chips,
+      currentBet: p.currentBet,
+      hasActed: p.hasActed,
+      isFolded: p.isFolded,
+      isAllIn: p.isAllIn,
+      lastAction: p.lastAction,
+      seatPosition: p.seatPosition
+    }));
     
-    console.log("Debug betting round:", {
-      isBettingComplete,
-      currentBet: updatedGameState.currentBet,
-      lastRaiserPosition: updatedGameState.lastRaiserPosition,
-      players: allPlayers.map(p => ({
-        seatPosition: p.seatPosition,
-        currentBet: p.currentBet,
-        hasActed: p.hasActed,
-        isFolded: p.isFolded,
-        isAllIn: p.isAllIn,
-        lastAction: p.lastAction
-      }))
-    });
+    const conditions = evaluateGameConditions(playerStates, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
+    const nextPhaseInfo = getNextPhaseFromStateMachine(updatedGameState.phase as any, conditions);
     
-    if (isBettingComplete) {
+    debugGameState(updatedGameState.phase as any, playerStates, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
+    
+    if (nextPhaseInfo) {
       // Move to next phase
-      await advanceToNextPhase(ctx, args.tableId);
+      await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
     } else {
       // Move to next active player
       // Don't filter all-in players when looking for next player, 
@@ -490,13 +496,23 @@ export const advancePhase = mutation({
 
     // Only advance if autoAdvanceAt is set and time has passed
     if (!gameState.autoAdvanceAt || Date.now() < gameState.autoAdvanceAt) {
+      console.log(`🎮 Server: advancePhase called but not ready. autoAdvanceAt: ${gameState.autoAdvanceAt}, now: ${Date.now()}`);
       return { success: false };
     }
+
+    console.log(`🎮 Server: Advancing from phase ${gameState.phase} (auto-advance triggered)`);
 
     // Clear the autoAdvanceAt flag
     await ctx.db.patch(gameState._id, {
       autoAdvanceAt: undefined,
     });
+
+    // If we're in showdown phase, determine winner instead of advancing
+    if (gameState.phase === "showdown") {
+      console.log("🎮 Server: Showdown phase, determining winner");
+      await determineWinner(ctx, args.tableId);
+      return { success: true };
+    }
 
     // Advance to next phase
     await advanceToNextPhase(ctx, args.tableId);
@@ -566,10 +582,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     }
   }
 
-  if (nextPhase === "showdown") {
-    await determineWinner(ctx, tableId);
-    return;
-  }
+  // Check if we should go to showdown, but handle it after allPlayersAllIn logic
 
   // Find first player to act (post-flop)
   const playerPositions = activePlayers
@@ -588,15 +601,41 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   if (allPlayersAllIn) {
     // All players are all-in, set a special flag to trigger auto-advance
+    const autoAdvanceDelay = nextPhase === "showdown" ? 3000 : 2000;
+    const autoAdvanceAt = Date.now() + autoAdvanceDelay;
+    
+    console.log(`🎮 Server: Setting up auto-advance for ${nextPhase} in ${autoAdvanceDelay}ms`);
+    
     await ctx.db.patch(gameState._id, {
       phase: nextPhase,
       communityCards,
       currentBet: 0,
       currentPlayerPosition: -1, // No player to act
       lastRaiserPosition: undefined,
-      autoAdvanceAt: Date.now() + 2000, // Auto-advance in 2 seconds
+      autoAdvanceAt: autoAdvanceAt,
       updatedAt: Date.now(),
     });
+    
+    // Add phase announcement to action feed
+    const phaseNames = {
+      'flop': 'Flop',
+      'turn': 'Turn',
+      'river': 'River',
+      'showdown': 'Abattage'
+    };
+    
+    await addActionToFeed(ctx, tableId, {
+      playerName: "Système",
+      action: "phase",
+      message: `Phase: ${phaseNames[nextPhase as keyof typeof phaseNames]}`,
+      phase: nextPhase,
+      isSystem: true,
+    });
+    
+    // If next phase is showdown, trigger winner determination after delay
+    if (nextPhase === "showdown") {
+      console.log("🎮 Server: Setting up showdown with auto-advance");
+    }
     return;
   }
 
@@ -1193,5 +1232,88 @@ export const getGameActions = query({
   },
 });
 
-export { endHand, advanceToNextPhase };
+// New state machine-based phase advancement
+async function advanceToNextPhaseWithStateMachine(
+  ctx: any, 
+  tableId: string, 
+  nextPhaseInfo: { nextPhase: any; autoAdvance: boolean; delay: number }
+) {
+  const gameState = await ctx.db
+    .query("gameStates")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .unique();
+
+  if (!gameState) {
+    throw new Error("Game state not found");
+  }
+
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .collect();
+
+  // Handle showdown specially
+  if (nextPhaseInfo.nextPhase === "showdown") {
+    await ctx.db.patch(gameState._id, {
+      phase: "showdown",
+      currentPlayerPosition: -1,
+      autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
+      updatedAt: Date.now(),
+    });
+    return;
+  }
+
+  // Handle winner determination
+  if (nextPhaseInfo.nextPhase === "ended") {
+    await determineWinner(ctx, tableId);
+    return;
+  }
+
+  // Reset players for new betting round
+  const playersToReset = resetPlayersForNewRound(players);
+  await Promise.all(
+    playersToReset.map(({ playerId, resetData }) =>
+      ctx.db.patch(playerId, resetData)
+    )
+  );
+
+  // Deal community cards for new phase
+  let communityCards = [...gameState.communityCards];
+  if (nextPhaseInfo.nextPhase !== 'showdown') {
+    const deck = shuffleDeck(createDeck());
+
+    switch (nextPhaseInfo.nextPhase) {
+      case "flop":
+        const flopCards = dealCards(deck, 3);
+        communityCards = flopCards.dealtCards.map(cardToString);
+        break;
+      case "turn":
+        const turnCard = dealCards(deck, 1);
+        communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
+        break;
+      case "river":
+        const riverCard = dealCards(deck, 1);
+        communityCards = [...gameState.communityCards, ...riverCard.dealtCards.map(cardToString)];
+        break;
+    }
+  }
+
+  // Update game state
+  await ctx.db.patch(gameState._id, {
+    phase: nextPhaseInfo.nextPhase,
+    communityCards,
+    currentBet: 0,
+    currentPlayerPosition: -1,
+    lastRaiserPosition: undefined,
+    autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
+    updatedAt: Date.now(),
+  });
+
+  // Debug log to verify autoAdvanceAt is set
+  console.log(`🎮 Game state updated: phase=${nextPhaseInfo.nextPhase}, autoAdvanceAt=${nextPhaseInfo.autoAdvance ? 'SET' : 'NOT SET'}, delay=${nextPhaseInfo.delay}`);
+
+  console.log(`🎮 Phase advanced to ${nextPhaseInfo.nextPhase}, autoAdvance: ${nextPhaseInfo.autoAdvance}, delay: ${nextPhaseInfo.delay}`);
+}
+
+export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine };
 

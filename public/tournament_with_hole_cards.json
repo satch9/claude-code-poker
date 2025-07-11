@@ -1,0 +1,3341 @@
+{
+  "tournament_id": "cc60a60d-cd9b-46e2-a8da-704f68cfaddd",
+  "name": "Texas Hold'em Invitational",
+  "start_time": "2025-07-11T08:54:58.961474",
+  "players": [
+    "Alice",
+    "Bob",
+    "Charlie",
+    "Diana",
+    "Eric",
+    "Fiona",
+    "George",
+    "Hannah",
+    "Ivan",
+    "Julia",
+    "Kevin",
+    "Laura",
+    "Mike",
+    "Nina",
+    "Oscar",
+    "Paula",
+    "Quentin",
+    "Rachel",
+    "Steve",
+    "Tina",
+    "Ugo",
+    "Vera",
+    "Will",
+    "Xena",
+    "Yves",
+    "Zara",
+    "Liam",
+    "Emma",
+    "Noah",
+    "Olivia"
+  ],
+  "hands": [
+    {
+      "hand_id": "H001",
+      "timestamp": "2025-07-11T08:55:58.961724",
+      "players": [
+        "Liam",
+        "Quentin",
+        "Mike",
+        "Vera",
+        "Charlie",
+        "Rachel"
+      ],
+      "winners": [
+        "Mike"
+      ],
+      "board": [
+        "8♦",
+        "7♠",
+        "K♠",
+        "5♥",
+        "7♥"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 1665,
+      "hole_cards": {
+        "Liam": [
+          "Q♣",
+          "9♣"
+        ],
+        "Quentin": [
+          "K♣",
+          "T♠"
+        ],
+        "Mike": [
+          "K♥",
+          "A♠"
+        ],
+        "Vera": [
+          "J♠",
+          "A♣"
+        ],
+        "Charlie": [
+          "A♦",
+          "8♣"
+        ],
+        "Rachel": [
+          "5♠",
+          "Q♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H002",
+      "timestamp": "2025-07-11T08:56:58.961724",
+      "players": [
+        "Paula",
+        "Rachel",
+        "Yves",
+        "Diana",
+        "Tina",
+        "Quentin"
+      ],
+      "winners": [
+        "Quentin"
+      ],
+      "board": [
+        "8♥",
+        "A♥",
+        "7♦",
+        "3♠",
+        "3♠"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 845,
+      "hole_cards": {
+        "Paula": [
+          "J♦",
+          "9♠"
+        ],
+        "Rachel": [
+          "9♥",
+          "3♠"
+        ],
+        "Yves": [
+          "4♠",
+          "4♥"
+        ],
+        "Diana": [
+          "9♣",
+          "K♦"
+        ],
+        "Tina": [
+          "Q♦",
+          "5♣"
+        ],
+        "Quentin": [
+          "Q♠",
+          "A♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H003",
+      "timestamp": "2025-07-11T08:57:58.961724",
+      "players": [
+        "Xena",
+        "George",
+        "Hannah",
+        "Rachel",
+        "Charlie",
+        "Alice"
+      ],
+      "winners": [
+        "Alice"
+      ],
+      "board": [
+        "2♣",
+        "T♣",
+        "9♦",
+        "T♦",
+        "T♦"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 4334,
+      "hole_cards": {
+        "Xena": [
+          "2♣",
+          "J♦"
+        ],
+        "George": [
+          "4♣",
+          "K♦"
+        ],
+        "Hannah": [
+          "3♦",
+          "T♠"
+        ],
+        "Rachel": [
+          "2♥",
+          "K♥"
+        ],
+        "Charlie": [
+          "T♦",
+          "J♠"
+        ],
+        "Alice": [
+          "5♣",
+          "5♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H004",
+      "timestamp": "2025-07-11T08:58:58.961724",
+      "players": [
+        "Quentin",
+        "Kevin",
+        "Ugo",
+        "Tina",
+        "Paula",
+        "George"
+      ],
+      "winners": [
+        "Tina"
+      ],
+      "board": [
+        "5♠",
+        "K♥",
+        "3♣",
+        "A♣",
+        "6♠"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 1364,
+      "hole_cards": {
+        "Quentin": [
+          "4♦",
+          "4♣"
+        ],
+        "Kevin": [
+          "5♦",
+          "4♥"
+        ],
+        "Ugo": [
+          "K♦",
+          "9♥"
+        ],
+        "Tina": [
+          "9♦",
+          "K♣"
+        ],
+        "Paula": [
+          "7♦",
+          "2♣"
+        ],
+        "George": [
+          "9♠",
+          "T♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H005",
+      "timestamp": "2025-07-11T08:59:58.961724",
+      "players": [
+        "Oscar",
+        "Charlie",
+        "Mike",
+        "Paula",
+        "Olivia",
+        "Kevin"
+      ],
+      "winners": [
+        "Oscar"
+      ],
+      "board": [
+        "7♣",
+        "8♥",
+        "T♠",
+        "3♣",
+        "Q♣"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 915,
+      "hole_cards": {
+        "Oscar": [
+          "A♣",
+          "6♠"
+        ],
+        "Charlie": [
+          "3♣",
+          "6♣"
+        ],
+        "Mike": [
+          "T♠",
+          "7♣"
+        ],
+        "Paula": [
+          "Q♠",
+          "Q♣"
+        ],
+        "Olivia": [
+          "T♥",
+          "5♦"
+        ],
+        "Kevin": [
+          "3♦",
+          "6♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H006",
+      "timestamp": "2025-07-11T09:00:58.961724",
+      "players": [
+        "Mike",
+        "Quentin",
+        "Hannah",
+        "Emma",
+        "Rachel",
+        "Xena"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "4♥",
+        "9♣",
+        "6♣",
+        "7♣",
+        "4♠"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 4349,
+      "hole_cards": {
+        "Mike": [
+          "K♦",
+          "6♠"
+        ],
+        "Quentin": [
+          "Q♦",
+          "4♦"
+        ],
+        "Hannah": [
+          "2♥",
+          "J♥"
+        ],
+        "Emma": [
+          "Q♣",
+          "6♣"
+        ],
+        "Rachel": [
+          "6♥",
+          "A♠"
+        ],
+        "Xena": [
+          "4♣",
+          "9♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H007",
+      "timestamp": "2025-07-11T09:01:58.961724",
+      "players": [
+        "Noah",
+        "Olivia",
+        "Charlie",
+        "George",
+        "Ugo",
+        "Mike"
+      ],
+      "winners": [
+        "Noah"
+      ],
+      "board": [
+        "9♦",
+        "T♠",
+        "8♠",
+        "2♠",
+        "4♥"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 3906,
+      "hole_cards": {
+        "Noah": [
+          "6♠",
+          "K♦"
+        ],
+        "Olivia": [
+          "4♥",
+          "3♣"
+        ],
+        "Charlie": [
+          "Q♥",
+          "K♠"
+        ],
+        "George": [
+          "3♦",
+          "9♦"
+        ],
+        "Ugo": [
+          "5♦",
+          "8♣"
+        ],
+        "Mike": [
+          "8♥",
+          "A♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H008",
+      "timestamp": "2025-07-11T09:02:58.961724",
+      "players": [
+        "Kevin",
+        "Nina",
+        "Oscar",
+        "Rachel",
+        "Laura",
+        "George"
+      ],
+      "winners": [
+        "George"
+      ],
+      "board": [
+        "Q♣",
+        "2♦",
+        "6♥",
+        "9♠",
+        "A♣"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 4793,
+      "hole_cards": {
+        "Kevin": [
+          "2♥",
+          "6♣"
+        ],
+        "Nina": [
+          "3♦",
+          "J♣"
+        ],
+        "Oscar": [
+          "A♣",
+          "T♦"
+        ],
+        "Rachel": [
+          "8♣",
+          "J♥"
+        ],
+        "Laura": [
+          "5♥",
+          "A♠"
+        ],
+        "George": [
+          "8♦",
+          "Q♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H009",
+      "timestamp": "2025-07-11T09:03:58.961724",
+      "players": [
+        "Vera",
+        "Xena",
+        "Tina",
+        "Liam",
+        "Ugo",
+        "Hannah"
+      ],
+      "winners": [
+        "Tina"
+      ],
+      "board": [
+        "7♣",
+        "K♠",
+        "A♠",
+        "6♣",
+        "5♠"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 4965,
+      "hole_cards": {
+        "Vera": [
+          "2♦",
+          "2♠"
+        ],
+        "Xena": [
+          "7♦",
+          "8♥"
+        ],
+        "Tina": [
+          "6♠",
+          "J♠"
+        ],
+        "Liam": [
+          "Q♦",
+          "A♥"
+        ],
+        "Ugo": [
+          "J♦",
+          "4♠"
+        ],
+        "Hannah": [
+          "T♠",
+          "6♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H010",
+      "timestamp": "2025-07-11T09:04:58.961724",
+      "players": [
+        "Rachel",
+        "Kevin",
+        "Charlie",
+        "Oscar",
+        "Noah",
+        "Mike"
+      ],
+      "winners": [
+        "Mike"
+      ],
+      "board": [
+        "A♥",
+        "A♥",
+        "6♣",
+        "9♦",
+        "4♥"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 1903,
+      "hole_cards": {
+        "Rachel": [
+          "T♠",
+          "J♠"
+        ],
+        "Kevin": [
+          "5♠",
+          "8♦"
+        ],
+        "Charlie": [
+          "4♠",
+          "T♦"
+        ],
+        "Oscar": [
+          "4♣",
+          "Q♣"
+        ],
+        "Noah": [
+          "4♥",
+          "6♠"
+        ],
+        "Mike": [
+          "9♦",
+          "K♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H011",
+      "timestamp": "2025-07-11T09:05:58.961724",
+      "players": [
+        "Bob",
+        "Nina",
+        "Quentin",
+        "Julia",
+        "Liam",
+        "Zara"
+      ],
+      "winners": [
+        "Zara"
+      ],
+      "board": [
+        "7♠",
+        "2♣",
+        "T♣",
+        "8♥",
+        "T♣"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 4260,
+      "hole_cards": {
+        "Bob": [
+          "8♥",
+          "J♦"
+        ],
+        "Nina": [
+          "9♦",
+          "A♦"
+        ],
+        "Quentin": [
+          "8♦",
+          "4♥"
+        ],
+        "Julia": [
+          "7♠",
+          "A♣"
+        ],
+        "Liam": [
+          "9♥",
+          "2♥"
+        ],
+        "Zara": [
+          "6♦",
+          "7♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H012",
+      "timestamp": "2025-07-11T09:06:58.961724",
+      "players": [
+        "Mike",
+        "Zara",
+        "Alice",
+        "Noah",
+        "Tina",
+        "Nina"
+      ],
+      "winners": [
+        "Zara"
+      ],
+      "board": [
+        "5♠",
+        "K♣",
+        "K♠",
+        "T♣",
+        "K♥"
+      ],
+      "small_blind": 100,
+      "big_blind": 200,
+      "pot": 3774,
+      "hole_cards": {
+        "Mike": [
+          "T♠",
+          "8♦"
+        ],
+        "Zara": [
+          "9♥",
+          "8♥"
+        ],
+        "Alice": [
+          "J♣",
+          "T♥"
+        ],
+        "Noah": [
+          "Q♦",
+          "5♦"
+        ],
+        "Tina": [
+          "T♦",
+          "J♦"
+        ],
+        "Nina": [
+          "6♠",
+          "5♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H013",
+      "timestamp": "2025-07-11T09:07:58.961724",
+      "players": [
+        "Nina",
+        "Bob",
+        "Diana",
+        "Hannah",
+        "Quentin",
+        "Oscar"
+      ],
+      "winners": [
+        "Bob"
+      ],
+      "board": [
+        "K♦",
+        "4♣",
+        "K♣",
+        "9♥",
+        "5♣"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 3505,
+      "hole_cards": {
+        "Nina": [
+          "4♠",
+          "A♦"
+        ],
+        "Bob": [
+          "T♦",
+          "9♥"
+        ],
+        "Diana": [
+          "8♥",
+          "7♥"
+        ],
+        "Hannah": [
+          "7♦",
+          "Q♠"
+        ],
+        "Quentin": [
+          "Q♣",
+          "3♠"
+        ],
+        "Oscar": [
+          "4♦",
+          "Q♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H014",
+      "timestamp": "2025-07-11T09:08:58.961724",
+      "players": [
+        "Rachel",
+        "Nina",
+        "Ugo",
+        "Will",
+        "Xena",
+        "Bob"
+      ],
+      "winners": [
+        "Nina"
+      ],
+      "board": [
+        "4♦",
+        "8♦",
+        "9♠",
+        "Q♠",
+        "3♠"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 2208,
+      "hole_cards": {
+        "Rachel": [
+          "7♣",
+          "2♣"
+        ],
+        "Nina": [
+          "6♠",
+          "9♦"
+        ],
+        "Ugo": [
+          "8♣",
+          "4♣"
+        ],
+        "Will": [
+          "4♠",
+          "A♠"
+        ],
+        "Xena": [
+          "6♦",
+          "9♥"
+        ],
+        "Bob": [
+          "J♦",
+          "5♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H015",
+      "timestamp": "2025-07-11T09:09:58.961724",
+      "players": [
+        "Diana",
+        "Liam",
+        "Hannah",
+        "Oscar",
+        "Kevin",
+        "Alice"
+      ],
+      "winners": [
+        "Hannah"
+      ],
+      "board": [
+        "5♣",
+        "A♥",
+        "A♦",
+        "4♦",
+        "Q♦"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 3887,
+      "hole_cards": {
+        "Diana": [
+          "K♦",
+          "Q♣"
+        ],
+        "Liam": [
+          "9♥",
+          "9♦"
+        ],
+        "Hannah": [
+          "T♥",
+          "5♥"
+        ],
+        "Oscar": [
+          "T♠",
+          "8♦"
+        ],
+        "Kevin": [
+          "8♠",
+          "5♣"
+        ],
+        "Alice": [
+          "6♠",
+          "8♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H016",
+      "timestamp": "2025-07-11T09:10:58.961724",
+      "players": [
+        "Eric",
+        "Yves",
+        "Zara",
+        "Paula",
+        "Diana",
+        "Quentin"
+      ],
+      "winners": [
+        "Yves"
+      ],
+      "board": [
+        "5♦",
+        "9♥",
+        "7♥",
+        "3♠",
+        "A♦"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 1466,
+      "hole_cards": {
+        "Eric": [
+          "7♣",
+          "7♠"
+        ],
+        "Yves": [
+          "2♠",
+          "4♥"
+        ],
+        "Zara": [
+          "T♠",
+          "J♦"
+        ],
+        "Paula": [
+          "8♥",
+          "6♦"
+        ],
+        "Diana": [
+          "5♦",
+          "A♦"
+        ],
+        "Quentin": [
+          "3♣",
+          "8♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H017",
+      "timestamp": "2025-07-11T09:11:58.961724",
+      "players": [
+        "Mike",
+        "Ivan",
+        "Emma",
+        "Vera",
+        "Rachel",
+        "Fiona"
+      ],
+      "winners": [
+        "Ivan"
+      ],
+      "board": [
+        "Q♥",
+        "Q♥",
+        "7♥",
+        "Q♠",
+        "T♥"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 1726,
+      "hole_cards": {
+        "Mike": [
+          "K♥",
+          "3♥"
+        ],
+        "Ivan": [
+          "8♠",
+          "4♦"
+        ],
+        "Emma": [
+          "A♦",
+          "J♥"
+        ],
+        "Vera": [
+          "9♥",
+          "9♠"
+        ],
+        "Rachel": [
+          "J♠",
+          "5♦"
+        ],
+        "Fiona": [
+          "6♦",
+          "K♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H018",
+      "timestamp": "2025-07-11T09:12:58.961724",
+      "players": [
+        "Alice",
+        "Quentin",
+        "Hannah",
+        "Zara",
+        "Noah",
+        "Olivia"
+      ],
+      "winners": [
+        "Quentin"
+      ],
+      "board": [
+        "6♥",
+        "3♠",
+        "2♥",
+        "K♥",
+        "J♥"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 991,
+      "hole_cards": {
+        "Alice": [
+          "A♦",
+          "4♥"
+        ],
+        "Quentin": [
+          "8♦",
+          "J♠"
+        ],
+        "Hannah": [
+          "8♠",
+          "2♠"
+        ],
+        "Zara": [
+          "T♣",
+          "K♦"
+        ],
+        "Noah": [
+          "9♣",
+          "6♦"
+        ],
+        "Olivia": [
+          "K♥",
+          "9♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H019",
+      "timestamp": "2025-07-11T09:13:58.961724",
+      "players": [
+        "Diana",
+        "Hannah",
+        "Ugo",
+        "Quentin",
+        "Vera",
+        "Yves"
+      ],
+      "winners": [
+        "Diana"
+      ],
+      "board": [
+        "6♠",
+        "3♣",
+        "A♣",
+        "4♥",
+        "Q♦"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 4763,
+      "hole_cards": {
+        "Diana": [
+          "6♠",
+          "K♠"
+        ],
+        "Hannah": [
+          "K♦",
+          "3♣"
+        ],
+        "Ugo": [
+          "A♠",
+          "9♥"
+        ],
+        "Quentin": [
+          "3♥",
+          "9♦"
+        ],
+        "Vera": [
+          "8♠",
+          "7♥"
+        ],
+        "Yves": [
+          "Q♦",
+          "J♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H020",
+      "timestamp": "2025-07-11T09:14:58.961724",
+      "players": [
+        "Tina",
+        "Kevin",
+        "Paula",
+        "Emma",
+        "Steve",
+        "Oscar"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "5♠",
+        "A♦",
+        "9♠",
+        "Q♠",
+        "7♠"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 1906,
+      "hole_cards": {
+        "Tina": [
+          "T♥",
+          "8♣"
+        ],
+        "Kevin": [
+          "2♠",
+          "Q♥"
+        ],
+        "Paula": [
+          "A♠",
+          "8♥"
+        ],
+        "Emma": [
+          "4♣",
+          "4♦"
+        ],
+        "Steve": [
+          "7♥",
+          "3♦"
+        ],
+        "Oscar": [
+          "7♦",
+          "A♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H021",
+      "timestamp": "2025-07-11T09:15:58.961724",
+      "players": [
+        "Julia",
+        "Olivia",
+        "Nina",
+        "Charlie",
+        "Rachel",
+        "Liam"
+      ],
+      "winners": [
+        "Olivia"
+      ],
+      "board": [
+        "5♠",
+        "6♠",
+        "8♦",
+        "9♠",
+        "8♥"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 4649,
+      "hole_cards": {
+        "Julia": [
+          "T♣",
+          "4♥"
+        ],
+        "Olivia": [
+          "3♥",
+          "5♦"
+        ],
+        "Nina": [
+          "8♠",
+          "5♣"
+        ],
+        "Charlie": [
+          "7♠",
+          "4♠"
+        ],
+        "Rachel": [
+          "T♦",
+          "K♠"
+        ],
+        "Liam": [
+          "2♣",
+          "J♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H022",
+      "timestamp": "2025-07-11T09:16:58.961724",
+      "players": [
+        "George",
+        "Alice",
+        "Kevin",
+        "Bob",
+        "Ugo",
+        "Julia"
+      ],
+      "winners": [
+        "Bob"
+      ],
+      "board": [
+        "5♦",
+        "5♣",
+        "8♣",
+        "J♠",
+        "8♦"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 3772,
+      "hole_cards": {
+        "George": [
+          "6♣",
+          "7♥"
+        ],
+        "Alice": [
+          "J♥",
+          "2♠"
+        ],
+        "Kevin": [
+          "K♣",
+          "7♠"
+        ],
+        "Bob": [
+          "9♦",
+          "8♥"
+        ],
+        "Ugo": [
+          "Q♥",
+          "A♦"
+        ],
+        "Julia": [
+          "J♠",
+          "4♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H023",
+      "timestamp": "2025-07-11T09:17:58.961724",
+      "players": [
+        "Emma",
+        "Alice",
+        "Nina",
+        "Charlie",
+        "Tina",
+        "Mike"
+      ],
+      "winners": [
+        "Alice"
+      ],
+      "board": [
+        "J♥",
+        "4♣",
+        "J♥",
+        "2♥",
+        "3♣"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 1908,
+      "hole_cards": {
+        "Emma": [
+          "Q♣",
+          "9♣"
+        ],
+        "Alice": [
+          "6♥",
+          "4♠"
+        ],
+        "Nina": [
+          "K♣",
+          "6♠"
+        ],
+        "Charlie": [
+          "5♥",
+          "9♥"
+        ],
+        "Tina": [
+          "5♠",
+          "5♣"
+        ],
+        "Mike": [
+          "2♥",
+          "Q♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H024",
+      "timestamp": "2025-07-11T09:18:58.961724",
+      "players": [
+        "Alice",
+        "Paula",
+        "Zara",
+        "Bob",
+        "Kevin",
+        "Tina"
+      ],
+      "winners": [
+        "Tina"
+      ],
+      "board": [
+        "2♠",
+        "6♦",
+        "A♥",
+        "3♦",
+        "K♣"
+      ],
+      "small_blind": 200,
+      "big_blind": 400,
+      "pot": 546,
+      "hole_cards": {
+        "Alice": [
+          "A♣",
+          "2♣"
+        ],
+        "Paula": [
+          "3♣",
+          "J♣"
+        ],
+        "Zara": [
+          "3♥",
+          "J♦"
+        ],
+        "Bob": [
+          "A♦",
+          "6♥"
+        ],
+        "Kevin": [
+          "J♠",
+          "8♦"
+        ],
+        "Tina": [
+          "4♦",
+          "Q♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H025",
+      "timestamp": "2025-07-11T09:19:58.961724",
+      "players": [
+        "Zara",
+        "Diana",
+        "Julia",
+        "Laura",
+        "Steve",
+        "Olivia"
+      ],
+      "winners": [
+        "Steve"
+      ],
+      "board": [
+        "J♦",
+        "9♥",
+        "5♥",
+        "J♦",
+        "9♥"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 4903,
+      "hole_cards": {
+        "Zara": [
+          "9♠",
+          "8♣"
+        ],
+        "Diana": [
+          "7♠",
+          "T♦"
+        ],
+        "Julia": [
+          "K♥",
+          "4♠"
+        ],
+        "Laura": [
+          "6♥",
+          "5♠"
+        ],
+        "Steve": [
+          "A♥",
+          "J♥"
+        ],
+        "Olivia": [
+          "T♥",
+          "5♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H026",
+      "timestamp": "2025-07-11T09:20:58.961724",
+      "players": [
+        "Paula",
+        "Emma",
+        "Diana",
+        "Will",
+        "Laura",
+        "Oscar"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "Q♦",
+        "5♥",
+        "2♣",
+        "Q♦",
+        "K♥"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 2665,
+      "hole_cards": {
+        "Paula": [
+          "3♣",
+          "9♥"
+        ],
+        "Emma": [
+          "4♣",
+          "5♣"
+        ],
+        "Diana": [
+          "T♠",
+          "K♣"
+        ],
+        "Will": [
+          "Q♥",
+          "7♠"
+        ],
+        "Laura": [
+          "3♥",
+          "T♥"
+        ],
+        "Oscar": [
+          "A♦",
+          "K♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H027",
+      "timestamp": "2025-07-11T09:21:58.961724",
+      "players": [
+        "Diana",
+        "Julia",
+        "Hannah",
+        "Charlie",
+        "Vera",
+        "Oscar"
+      ],
+      "winners": [
+        "Charlie"
+      ],
+      "board": [
+        "4♠",
+        "T♥",
+        "J♣",
+        "K♥",
+        "K♣"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 4306,
+      "hole_cards": {
+        "Diana": [
+          "K♦",
+          "5♥"
+        ],
+        "Julia": [
+          "A♠",
+          "4♦"
+        ],
+        "Hannah": [
+          "Q♥",
+          "2♦"
+        ],
+        "Charlie": [
+          "T♥",
+          "J♦"
+        ],
+        "Vera": [
+          "7♣",
+          "3♣"
+        ],
+        "Oscar": [
+          "J♣",
+          "9♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H028",
+      "timestamp": "2025-07-11T09:22:58.961724",
+      "players": [
+        "Charlie",
+        "Kevin",
+        "Steve",
+        "Noah",
+        "Ugo",
+        "Quentin"
+      ],
+      "winners": [
+        "Ugo"
+      ],
+      "board": [
+        "8♥",
+        "5♦",
+        "K♦",
+        "8♥",
+        "A♠"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 4365,
+      "hole_cards": {
+        "Charlie": [
+          "J♦",
+          "9♠"
+        ],
+        "Kevin": [
+          "7♦",
+          "2♥"
+        ],
+        "Steve": [
+          "3♣",
+          "J♠"
+        ],
+        "Noah": [
+          "J♥",
+          "4♣"
+        ],
+        "Ugo": [
+          "4♥",
+          "3♥"
+        ],
+        "Quentin": [
+          "A♦",
+          "4♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H029",
+      "timestamp": "2025-07-11T09:23:58.961724",
+      "players": [
+        "Steve",
+        "Oscar",
+        "Mike",
+        "Charlie",
+        "Paula",
+        "Emma"
+      ],
+      "winners": [
+        "Paula"
+      ],
+      "board": [
+        "T♠",
+        "A♠",
+        "9♥",
+        "5♠",
+        "Q♣"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 4126,
+      "hole_cards": {
+        "Steve": [
+          "6♦",
+          "6♥"
+        ],
+        "Oscar": [
+          "8♣",
+          "A♦"
+        ],
+        "Mike": [
+          "2♥",
+          "J♥"
+        ],
+        "Charlie": [
+          "Q♦",
+          "4♦"
+        ],
+        "Paula": [
+          "4♣",
+          "A♠"
+        ],
+        "Emma": [
+          "T♥",
+          "K♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H030",
+      "timestamp": "2025-07-11T09:24:58.961724",
+      "players": [
+        "Hannah",
+        "Paula",
+        "Oscar",
+        "Fiona",
+        "Ugo",
+        "Liam"
+      ],
+      "winners": [
+        "Paula"
+      ],
+      "board": [
+        "2♣",
+        "8♠",
+        "K♣",
+        "T♥",
+        "Q♠"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 1567,
+      "hole_cards": {
+        "Hannah": [
+          "Q♠",
+          "J♣"
+        ],
+        "Paula": [
+          "T♥",
+          "5♠"
+        ],
+        "Oscar": [
+          "4♥",
+          "8♠"
+        ],
+        "Fiona": [
+          "5♦",
+          "9♠"
+        ],
+        "Ugo": [
+          "A♣",
+          "T♦"
+        ],
+        "Liam": [
+          "Q♥",
+          "2♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H031",
+      "timestamp": "2025-07-11T09:25:58.961724",
+      "players": [
+        "George",
+        "Charlie",
+        "Laura",
+        "Emma",
+        "Olivia",
+        "Oscar"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "T♠",
+        "J♦",
+        "Q♠",
+        "A♦",
+        "4♠"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 2997,
+      "hole_cards": {
+        "George": [
+          "3♦",
+          "A♣"
+        ],
+        "Charlie": [
+          "7♠",
+          "3♣"
+        ],
+        "Laura": [
+          "5♠",
+          "T♣"
+        ],
+        "Emma": [
+          "8♦",
+          "A♥"
+        ],
+        "Olivia": [
+          "7♦",
+          "3♠"
+        ],
+        "Oscar": [
+          "6♠",
+          "8♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H032",
+      "timestamp": "2025-07-11T09:26:58.961724",
+      "players": [
+        "Tina",
+        "Alice",
+        "Bob",
+        "Quentin",
+        "Vera",
+        "Steve"
+      ],
+      "winners": [
+        "Alice"
+      ],
+      "board": [
+        "2♦",
+        "J♥",
+        "T♠",
+        "K♠",
+        "9♠"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 1813,
+      "hole_cards": {
+        "Tina": [
+          "7♣",
+          "T♣"
+        ],
+        "Alice": [
+          "6♠",
+          "9♠"
+        ],
+        "Bob": [
+          "K♣",
+          "9♣"
+        ],
+        "Quentin": [
+          "Q♥",
+          "8♣"
+        ],
+        "Vera": [
+          "5♦",
+          "4♣"
+        ],
+        "Steve": [
+          "K♥",
+          "2♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H033",
+      "timestamp": "2025-07-11T09:27:58.961724",
+      "players": [
+        "Rachel",
+        "Charlie",
+        "Zara",
+        "Tina",
+        "Emma",
+        "Kevin"
+      ],
+      "winners": [
+        "Tina"
+      ],
+      "board": [
+        "J♣",
+        "7♠",
+        "3♦",
+        "9♣",
+        "J♦"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 3343,
+      "hole_cards": {
+        "Rachel": [
+          "2♦",
+          "4♥"
+        ],
+        "Charlie": [
+          "K♠",
+          "8♠"
+        ],
+        "Zara": [
+          "9♥",
+          "8♦"
+        ],
+        "Tina": [
+          "6♥",
+          "6♣"
+        ],
+        "Emma": [
+          "3♦",
+          "4♠"
+        ],
+        "Kevin": [
+          "7♥",
+          "2♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H034",
+      "timestamp": "2025-07-11T09:28:58.961724",
+      "players": [
+        "Eric",
+        "Quentin",
+        "Alice",
+        "Emma",
+        "Will",
+        "Oscar"
+      ],
+      "winners": [
+        "Will"
+      ],
+      "board": [
+        "K♠",
+        "Q♣",
+        "2♠",
+        "4♠",
+        "2♠"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 963,
+      "hole_cards": {
+        "Eric": [
+          "3♦",
+          "T♥"
+        ],
+        "Quentin": [
+          "9♠",
+          "2♣"
+        ],
+        "Alice": [
+          "A♣",
+          "7♥"
+        ],
+        "Emma": [
+          "A♦",
+          "5♠"
+        ],
+        "Will": [
+          "K♦",
+          "A♠"
+        ],
+        "Oscar": [
+          "5♥",
+          "T♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H035",
+      "timestamp": "2025-07-11T09:29:58.961724",
+      "players": [
+        "Olivia",
+        "Ugo",
+        "Paula",
+        "Nina",
+        "Fiona",
+        "George"
+      ],
+      "winners": [
+        "Olivia"
+      ],
+      "board": [
+        "2♣",
+        "7♦",
+        "2♣",
+        "2♣",
+        "Q♥"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 848,
+      "hole_cards": {
+        "Olivia": [
+          "3♣",
+          "4♦"
+        ],
+        "Ugo": [
+          "J♦",
+          "4♣"
+        ],
+        "Paula": [
+          "9♣",
+          "8♥"
+        ],
+        "Nina": [
+          "5♦",
+          "8♠"
+        ],
+        "Fiona": [
+          "5♥",
+          "9♥"
+        ],
+        "George": [
+          "J♥",
+          "5♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H036",
+      "timestamp": "2025-07-11T09:30:58.961724",
+      "players": [
+        "George",
+        "Paula",
+        "Rachel",
+        "Ugo",
+        "Vera",
+        "Hannah"
+      ],
+      "winners": [
+        "George"
+      ],
+      "board": [
+        "3♠",
+        "9♠",
+        "J♥",
+        "A♠",
+        "3♦"
+      ],
+      "small_blind": 300,
+      "big_blind": 600,
+      "pot": 1452,
+      "hole_cards": {
+        "George": [
+          "9♥",
+          "6♠"
+        ],
+        "Paula": [
+          "Q♣",
+          "6♦"
+        ],
+        "Rachel": [
+          "2♥",
+          "T♠"
+        ],
+        "Ugo": [
+          "K♠",
+          "5♦"
+        ],
+        "Vera": [
+          "A♣",
+          "6♥"
+        ],
+        "Hannah": [
+          "5♣",
+          "A♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H037",
+      "timestamp": "2025-07-11T09:31:58.961724",
+      "players": [
+        "Julia",
+        "Will",
+        "Eric",
+        "Rachel",
+        "Mike",
+        "Olivia"
+      ],
+      "winners": [
+        "Julia"
+      ],
+      "board": [
+        "2♦",
+        "3♣",
+        "Q♠",
+        "8♥",
+        "7♠"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 3321,
+      "hole_cards": {
+        "Julia": [
+          "9♣",
+          "8♣"
+        ],
+        "Will": [
+          "3♠",
+          "6♠"
+        ],
+        "Eric": [
+          "K♠",
+          "A♦"
+        ],
+        "Rachel": [
+          "2♥",
+          "7♣"
+        ],
+        "Mike": [
+          "7♥",
+          "J♥"
+        ],
+        "Olivia": [
+          "5♥",
+          "Q♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H038",
+      "timestamp": "2025-07-11T09:32:58.961724",
+      "players": [
+        "Rachel",
+        "George",
+        "Liam",
+        "Ugo",
+        "Kevin",
+        "Hannah"
+      ],
+      "winners": [
+        "George"
+      ],
+      "board": [
+        "Q♣",
+        "4♣",
+        "6♠",
+        "5♦",
+        "Q♥"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 3920,
+      "hole_cards": {
+        "Rachel": [
+          "4♦",
+          "7♣"
+        ],
+        "George": [
+          "J♥",
+          "9♣"
+        ],
+        "Liam": [
+          "3♠",
+          "4♠"
+        ],
+        "Ugo": [
+          "J♣",
+          "T♦"
+        ],
+        "Kevin": [
+          "5♥",
+          "8♠"
+        ],
+        "Hannah": [
+          "K♦",
+          "Q♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H039",
+      "timestamp": "2025-07-11T09:33:58.961724",
+      "players": [
+        "Olivia",
+        "Oscar",
+        "Ugo",
+        "Will",
+        "Tina",
+        "Diana"
+      ],
+      "winners": [
+        "Olivia"
+      ],
+      "board": [
+        "K♦",
+        "Q♠",
+        "4♠",
+        "6♦",
+        "6♦"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 1845,
+      "hole_cards": {
+        "Olivia": [
+          "4♣",
+          "6♣"
+        ],
+        "Oscar": [
+          "2♣",
+          "8♦"
+        ],
+        "Ugo": [
+          "7♥",
+          "3♥"
+        ],
+        "Will": [
+          "Q♣",
+          "9♣"
+        ],
+        "Tina": [
+          "2♦",
+          "5♦"
+        ],
+        "Diana": [
+          "9♦",
+          "7♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H040",
+      "timestamp": "2025-07-11T09:34:58.961724",
+      "players": [
+        "Xena",
+        "Julia",
+        "George",
+        "Emma",
+        "Will",
+        "Bob"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "T♣",
+        "T♥",
+        "Q♠",
+        "A♣",
+        "9♣"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 4059,
+      "hole_cards": {
+        "Xena": [
+          "5♥",
+          "5♣"
+        ],
+        "Julia": [
+          "6♦",
+          "A♦"
+        ],
+        "George": [
+          "3♦",
+          "T♣"
+        ],
+        "Emma": [
+          "T♠",
+          "Q♥"
+        ],
+        "Will": [
+          "8♥",
+          "J♥"
+        ],
+        "Bob": [
+          "J♣",
+          "9♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H041",
+      "timestamp": "2025-07-11T09:35:58.961724",
+      "players": [
+        "Diana",
+        "Eric",
+        "George",
+        "Ugo",
+        "Bob",
+        "Ivan"
+      ],
+      "winners": [
+        "Ivan"
+      ],
+      "board": [
+        "2♠",
+        "7♠",
+        "4♣",
+        "6♣",
+        "8♣"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 4236,
+      "hole_cards": {
+        "Diana": [
+          "8♣",
+          "T♣"
+        ],
+        "Eric": [
+          "6♠",
+          "Q♣"
+        ],
+        "George": [
+          "J♣",
+          "8♥"
+        ],
+        "Ugo": [
+          "A♣",
+          "6♦"
+        ],
+        "Bob": [
+          "5♦",
+          "T♠"
+        ],
+        "Ivan": [
+          "5♣",
+          "Q♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H042",
+      "timestamp": "2025-07-11T09:36:58.961724",
+      "players": [
+        "Yves",
+        "Ugo",
+        "Bob",
+        "Noah",
+        "Hannah",
+        "Paula"
+      ],
+      "winners": [
+        "Yves"
+      ],
+      "board": [
+        "4♦",
+        "2♦",
+        "8♠",
+        "A♥",
+        "5♦"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 2815,
+      "hole_cards": {
+        "Yves": [
+          "2♦",
+          "J♦"
+        ],
+        "Ugo": [
+          "7♠",
+          "4♣"
+        ],
+        "Bob": [
+          "K♣",
+          "2♥"
+        ],
+        "Noah": [
+          "7♣",
+          "6♦"
+        ],
+        "Hannah": [
+          "Q♦",
+          "A♦"
+        ],
+        "Paula": [
+          "3♣",
+          "8♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H043",
+      "timestamp": "2025-07-11T09:37:58.961724",
+      "players": [
+        "Zara",
+        "Olivia",
+        "Yves",
+        "Fiona",
+        "Mike",
+        "Laura"
+      ],
+      "winners": [
+        "Mike"
+      ],
+      "board": [
+        "5♥",
+        "T♥",
+        "T♥",
+        "5♥",
+        "7♣"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 3033,
+      "hole_cards": {
+        "Zara": [
+          "T♣",
+          "A♠"
+        ],
+        "Olivia": [
+          "3♠",
+          "6♣"
+        ],
+        "Yves": [
+          "7♠",
+          "Q♠"
+        ],
+        "Fiona": [
+          "T♥",
+          "7♣"
+        ],
+        "Mike": [
+          "9♠",
+          "A♥"
+        ],
+        "Laura": [
+          "T♠",
+          "8♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H044",
+      "timestamp": "2025-07-11T09:38:58.961724",
+      "players": [
+        "George",
+        "Fiona",
+        "Charlie",
+        "Emma",
+        "Ivan",
+        "Laura"
+      ],
+      "winners": [
+        "George"
+      ],
+      "board": [
+        "A♥",
+        "8♦",
+        "8♥",
+        "Q♥",
+        "J♣"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 1699,
+      "hole_cards": {
+        "George": [
+          "4♥",
+          "2♥"
+        ],
+        "Fiona": [
+          "J♣",
+          "K♠"
+        ],
+        "Charlie": [
+          "6♥",
+          "5♠"
+        ],
+        "Emma": [
+          "4♣",
+          "A♣"
+        ],
+        "Ivan": [
+          "Q♦",
+          "Q♥"
+        ],
+        "Laura": [
+          "9♣",
+          "Q♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H045",
+      "timestamp": "2025-07-11T09:39:58.961724",
+      "players": [
+        "George",
+        "Ugo",
+        "Tina",
+        "Alice",
+        "Steve",
+        "Mike"
+      ],
+      "winners": [
+        "Alice"
+      ],
+      "board": [
+        "K♠",
+        "5♣",
+        "A♣",
+        "J♥",
+        "3♥"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 3804,
+      "hole_cards": {
+        "George": [
+          "8♦",
+          "K♠"
+        ],
+        "Ugo": [
+          "A♦",
+          "2♣"
+        ],
+        "Tina": [
+          "7♣",
+          "J♠"
+        ],
+        "Alice": [
+          "K♣",
+          "8♥"
+        ],
+        "Steve": [
+          "7♥",
+          "Q♣"
+        ],
+        "Mike": [
+          "4♦",
+          "9♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H046",
+      "timestamp": "2025-07-11T09:40:58.961724",
+      "players": [
+        "Zara",
+        "George",
+        "Olivia",
+        "Rachel",
+        "Alice",
+        "Ivan"
+      ],
+      "winners": [
+        "Ivan"
+      ],
+      "board": [
+        "2♦",
+        "2♠",
+        "9♦",
+        "Q♣",
+        "5♥"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 4336,
+      "hole_cards": {
+        "Zara": [
+          "K♦",
+          "8♣"
+        ],
+        "George": [
+          "J♦",
+          "7♥"
+        ],
+        "Olivia": [
+          "8♥",
+          "4♦"
+        ],
+        "Rachel": [
+          "J♠",
+          "4♥"
+        ],
+        "Alice": [
+          "7♠",
+          "5♥"
+        ],
+        "Ivan": [
+          "3♣",
+          "J♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H047",
+      "timestamp": "2025-07-11T09:41:58.961724",
+      "players": [
+        "Noah",
+        "Zara",
+        "Vera",
+        "Paula",
+        "Bob",
+        "Laura"
+      ],
+      "winners": [
+        "Vera"
+      ],
+      "board": [
+        "K♠",
+        "8♥",
+        "3♥",
+        "J♦",
+        "6♦"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 4153,
+      "hole_cards": {
+        "Noah": [
+          "6♣",
+          "A♥"
+        ],
+        "Zara": [
+          "2♣",
+          "K♠"
+        ],
+        "Vera": [
+          "J♥",
+          "4♠"
+        ],
+        "Paula": [
+          "9♦",
+          "8♣"
+        ],
+        "Bob": [
+          "T♠",
+          "9♠"
+        ],
+        "Laura": [
+          "5♣",
+          "A♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H048",
+      "timestamp": "2025-07-11T09:42:58.961724",
+      "players": [
+        "Hannah",
+        "Laura",
+        "George",
+        "Fiona",
+        "Zara",
+        "Olivia"
+      ],
+      "winners": [
+        "Hannah"
+      ],
+      "board": [
+        "T♦",
+        "2♠",
+        "3♥",
+        "9♥",
+        "6♠"
+      ],
+      "small_blind": 500,
+      "big_blind": 1000,
+      "pot": 2135,
+      "hole_cards": {
+        "Hannah": [
+          "8♣",
+          "J♥"
+        ],
+        "Laura": [
+          "Q♣",
+          "9♦"
+        ],
+        "George": [
+          "5♦",
+          "A♠"
+        ],
+        "Fiona": [
+          "Q♥",
+          "9♣"
+        ],
+        "Zara": [
+          "3♠",
+          "T♣"
+        ],
+        "Olivia": [
+          "3♥",
+          "5♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H049",
+      "timestamp": "2025-07-11T09:43:58.961724",
+      "players": [
+        "Liam",
+        "Fiona",
+        "Hannah",
+        "Zara",
+        "Alice",
+        "Diana"
+      ],
+      "winners": [
+        "Diana"
+      ],
+      "board": [
+        "J♥",
+        "5♥",
+        "9♥",
+        "6♥",
+        "4♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 3595,
+      "hole_cards": {
+        "Liam": [
+          "6♦",
+          "3♦"
+        ],
+        "Fiona": [
+          "2♥",
+          "8♠"
+        ],
+        "Hannah": [
+          "9♣",
+          "4♠"
+        ],
+        "Zara": [
+          "T♦",
+          "T♠"
+        ],
+        "Alice": [
+          "9♠",
+          "7♦"
+        ],
+        "Diana": [
+          "T♣",
+          "7♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H050",
+      "timestamp": "2025-07-11T09:44:58.961724",
+      "players": [
+        "Emma",
+        "Fiona",
+        "Alice",
+        "Tina",
+        "Quentin",
+        "Kevin"
+      ],
+      "winners": [
+        "Kevin"
+      ],
+      "board": [
+        "2♣",
+        "4♥",
+        "8♣",
+        "5♣",
+        "2♠"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 584,
+      "hole_cards": {
+        "Emma": [
+          "8♣",
+          "7♠"
+        ],
+        "Fiona": [
+          "K♥",
+          "8♥"
+        ],
+        "Alice": [
+          "Q♠",
+          "Q♦"
+        ],
+        "Tina": [
+          "7♣",
+          "5♣"
+        ],
+        "Quentin": [
+          "J♣",
+          "5♥"
+        ],
+        "Kevin": [
+          "A♥",
+          "8♠"
+        ]
+      }
+    },
+    {
+      "hand_id": "H051",
+      "timestamp": "2025-07-11T09:45:58.961724",
+      "players": [
+        "Fiona",
+        "Xena",
+        "Zara",
+        "Yves",
+        "Mike",
+        "Olivia"
+      ],
+      "winners": [
+        "Zara"
+      ],
+      "board": [
+        "T♠",
+        "A♠",
+        "8♠",
+        "Q♥",
+        "4♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 507,
+      "hole_cards": {
+        "Fiona": [
+          "K♠",
+          "3♦"
+        ],
+        "Xena": [
+          "A♦",
+          "9♥"
+        ],
+        "Zara": [
+          "2♦",
+          "3♠"
+        ],
+        "Yves": [
+          "Q♣",
+          "A♠"
+        ],
+        "Mike": [
+          "9♦",
+          "J♠"
+        ],
+        "Olivia": [
+          "T♣",
+          "4♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H052",
+      "timestamp": "2025-07-11T09:46:58.961724",
+      "players": [
+        "Vera",
+        "Quentin",
+        "Noah",
+        "Tina",
+        "Bob",
+        "Oscar"
+      ],
+      "winners": [
+        "Quentin"
+      ],
+      "board": [
+        "7♠",
+        "T♥",
+        "T♠",
+        "T♠",
+        "A♣"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 4670,
+      "hole_cards": {
+        "Vera": [
+          "2♠",
+          "Q♠"
+        ],
+        "Quentin": [
+          "A♠",
+          "3♣"
+        ],
+        "Noah": [
+          "Q♣",
+          "A♦"
+        ],
+        "Tina": [
+          "8♣",
+          "Q♥"
+        ],
+        "Bob": [
+          "Q♦",
+          "6♦"
+        ],
+        "Oscar": [
+          "T♠",
+          "T♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H053",
+      "timestamp": "2025-07-11T09:47:58.961724",
+      "players": [
+        "Zara",
+        "Rachel",
+        "Laura",
+        "Ivan",
+        "Eric",
+        "Yves"
+      ],
+      "winners": [
+        "Zara"
+      ],
+      "board": [
+        "7♥",
+        "T♣",
+        "4♠",
+        "Q♣",
+        "5♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 3197,
+      "hole_cards": {
+        "Zara": [
+          "K♥",
+          "2♦"
+        ],
+        "Rachel": [
+          "2♥",
+          "8♠"
+        ],
+        "Laura": [
+          "4♥",
+          "K♦"
+        ],
+        "Ivan": [
+          "4♦",
+          "3♣"
+        ],
+        "Eric": [
+          "K♣",
+          "3♦"
+        ],
+        "Yves": [
+          "A♥",
+          "6♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H054",
+      "timestamp": "2025-07-11T09:48:58.961724",
+      "players": [
+        "Vera",
+        "Ugo",
+        "Quentin",
+        "Fiona",
+        "Nina",
+        "Mike"
+      ],
+      "winners": [
+        "Ugo"
+      ],
+      "board": [
+        "6♦",
+        "J♦",
+        "8♥",
+        "2♦",
+        "5♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 4612,
+      "hole_cards": {
+        "Vera": [
+          "3♠",
+          "4♠"
+        ],
+        "Ugo": [
+          "J♦",
+          "K♥"
+        ],
+        "Quentin": [
+          "4♣",
+          "2♦"
+        ],
+        "Fiona": [
+          "T♥",
+          "4♦"
+        ],
+        "Nina": [
+          "4♥",
+          "9♦"
+        ],
+        "Mike": [
+          "7♣",
+          "2♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H055",
+      "timestamp": "2025-07-11T09:49:58.961724",
+      "players": [
+        "Rachel",
+        "Ugo",
+        "Eric",
+        "Will",
+        "Olivia",
+        "Oscar"
+      ],
+      "winners": [
+        "Eric"
+      ],
+      "board": [
+        "9♥",
+        "9♣",
+        "K♥",
+        "4♠",
+        "2♠"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 2771,
+      "hole_cards": {
+        "Rachel": [
+          "4♥",
+          "9♥"
+        ],
+        "Ugo": [
+          "8♠",
+          "Q♦"
+        ],
+        "Eric": [
+          "5♦",
+          "A♦"
+        ],
+        "Will": [
+          "K♣",
+          "A♠"
+        ],
+        "Olivia": [
+          "A♥",
+          "8♦"
+        ],
+        "Oscar": [
+          "4♠",
+          "K♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H056",
+      "timestamp": "2025-07-11T09:50:58.961724",
+      "players": [
+        "Emma",
+        "Oscar",
+        "Nina",
+        "Kevin",
+        "Julia",
+        "Will"
+      ],
+      "winners": [
+        "Emma"
+      ],
+      "board": [
+        "9♠",
+        "A♦",
+        "2♠",
+        "Q♣",
+        "5♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 3152,
+      "hole_cards": {
+        "Emma": [
+          "6♥",
+          "J♥"
+        ],
+        "Oscar": [
+          "2♠",
+          "Q♦"
+        ],
+        "Nina": [
+          "3♦",
+          "4♦"
+        ],
+        "Kevin": [
+          "J♠",
+          "T♣"
+        ],
+        "Julia": [
+          "T♦",
+          "3♠"
+        ],
+        "Will": [
+          "T♠",
+          "2♥"
+        ]
+      }
+    },
+    {
+      "hand_id": "H057",
+      "timestamp": "2025-07-11T09:51:58.961724",
+      "players": [
+        "Charlie",
+        "Quentin",
+        "Rachel",
+        "Oscar",
+        "Bob",
+        "Diana"
+      ],
+      "winners": [
+        "Quentin"
+      ],
+      "board": [
+        "Q♠",
+        "4♣",
+        "K♥",
+        "6♠",
+        "Q♠"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 1081,
+      "hole_cards": {
+        "Charlie": [
+          "9♠",
+          "J♥"
+        ],
+        "Quentin": [
+          "2♣",
+          "5♥"
+        ],
+        "Rachel": [
+          "3♥",
+          "6♣"
+        ],
+        "Oscar": [
+          "2♠",
+          "K♦"
+        ],
+        "Bob": [
+          "Q♣",
+          "J♦"
+        ],
+        "Diana": [
+          "A♠",
+          "8♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H058",
+      "timestamp": "2025-07-11T09:52:58.961724",
+      "players": [
+        "Olivia",
+        "Nina",
+        "Steve",
+        "Ivan",
+        "Oscar",
+        "Fiona"
+      ],
+      "winners": [
+        "Olivia"
+      ],
+      "board": [
+        "Q♦",
+        "A♥",
+        "6♦",
+        "Q♦",
+        "Q♣"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 3724,
+      "hole_cards": {
+        "Olivia": [
+          "Q♣",
+          "6♦"
+        ],
+        "Nina": [
+          "2♠",
+          "T♠"
+        ],
+        "Steve": [
+          "6♥",
+          "6♣"
+        ],
+        "Ivan": [
+          "J♥",
+          "3♣"
+        ],
+        "Oscar": [
+          "K♠",
+          "J♠"
+        ],
+        "Fiona": [
+          "A♣",
+          "9♦"
+        ]
+      }
+    },
+    {
+      "hand_id": "H059",
+      "timestamp": "2025-07-11T09:53:58.961724",
+      "players": [
+        "Mike",
+        "Ugo",
+        "Liam",
+        "Tina",
+        "Bob",
+        "Alice"
+      ],
+      "winners": [
+        "Liam"
+      ],
+      "board": [
+        "8♥",
+        "9♦",
+        "6♣",
+        "9♠",
+        "2♦"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 4081,
+      "hole_cards": {
+        "Mike": [
+          "K♠",
+          "J♣"
+        ],
+        "Ugo": [
+          "7♠",
+          "T♦"
+        ],
+        "Liam": [
+          "Q♠",
+          "K♥"
+        ],
+        "Tina": [
+          "4♣",
+          "J♦"
+        ],
+        "Bob": [
+          "9♣",
+          "3♠"
+        ],
+        "Alice": [
+          "K♦",
+          "T♣"
+        ]
+      }
+    },
+    {
+      "hand_id": "H060",
+      "timestamp": "2025-07-11T09:54:58.961724",
+      "players": [
+        "Will",
+        "Mike",
+        "Paula",
+        "Yves",
+        "Oscar",
+        "Zara"
+      ],
+      "winners": [
+        "Will"
+      ],
+      "board": [
+        "Q♦",
+        "2♦",
+        "5♥",
+        "6♣",
+        "5♥"
+      ],
+      "small_blind": 1000,
+      "big_blind": 2000,
+      "pot": 1704,
+      "hole_cards": {
+        "Will": [
+          "4♠",
+          "8♦"
+        ],
+        "Mike": [
+          "2♦",
+          "3♥"
+        ],
+        "Paula": [
+          "T♦",
+          "6♠"
+        ],
+        "Yves": [
+          "K♦",
+          "A♥"
+        ],
+        "Oscar": [
+          "4♦",
+          "4♣"
+        ],
+        "Zara": [
+          "T♥",
+          "Q♠"
+        ]
+      }
+    }
+  ],
+  "final_standings": [
+    {
+      "id": "e7e2d20a-b123-41c0-b1f9-4b188dcbac5e",
+      "name": "Emma",
+      "starting_stack": 10000,
+      "current_stack": 25037,
+      "eliminated": false,
+      "rank": 1
+    },
+    {
+      "id": "4e4bb80e-1544-4329-be58-55a4e2f734d9",
+      "name": "Ivan",
+      "starting_stack": 10000,
+      "current_stack": 18525,
+      "eliminated": false,
+      "rank": 2
+    },
+    {
+      "id": "112ce0da-5cba-48c6-bd91-c43b1bd239c0",
+      "name": "Alice",
+      "starting_stack": 10000,
+      "current_stack": 16755,
+      "eliminated": false,
+      "rank": 3
+    },
+    {
+      "id": "c892bd64-e806-4b48-ab62-e52a304ee5b8",
+      "name": "Tina",
+      "starting_stack": 10000,
+      "current_stack": 16381,
+      "eliminated": false,
+      "rank": 4
+    },
+    {
+      "id": "b4f6aebe-3d7e-436a-b88b-6eb78cad629e",
+      "name": "George",
+      "starting_stack": 10000,
+      "current_stack": 16360,
+      "eliminated": false,
+      "rank": 5
+    },
+    {
+      "id": "8f92fcde-8d39-44fa-a7ac-47ce01bf8371",
+      "name": "Zara",
+      "starting_stack": 10000,
+      "current_stack": 16289,
+      "eliminated": false,
+      "rank": 6
+    },
+    {
+      "id": "b76e0286-84df-4770-be50-608969df0d15",
+      "name": "Olivia",
+      "starting_stack": 10000,
+      "current_stack": 15578,
+      "eliminated": false,
+      "rank": 7
+    },
+    {
+      "id": "86ce3ce1-639d-4fb8-97f0-ed19742e91e1",
+      "name": "Diana",
+      "starting_stack": 10000,
+      "current_stack": 14158,
+      "eliminated": false,
+      "rank": 8
+    },
+    {
+      "id": "0f0c25dc-3145-49b4-a9a7-d4feedc03e56",
+      "name": "Steve",
+      "starting_stack": 10000,
+      "current_stack": 11872,
+      "eliminated": false,
+      "rank": 9
+    },
+    {
+      "id": "287badc7-0c6f-43cd-b4b6-ce9380f81e28",
+      "name": "Bob",
+      "starting_stack": 10000,
+      "current_stack": 10557,
+      "eliminated": false,
+      "rank": 10
+    },
+    {
+      "id": "c38c4d38-ca55-4f18-85a5-d772d9333aba",
+      "name": "Yves",
+      "starting_stack": 10000,
+      "current_stack": 10176,
+      "eliminated": false,
+      "rank": 11
+    },
+    {
+      "id": "444952a4-635e-40c6-b9cb-49122069850e",
+      "name": "Mike",
+      "starting_stack": 10000,
+      "current_stack": 10070,
+      "eliminated": false,
+      "rank": 12
+    },
+    {
+      "id": "f16237a2-c7ad-4ba7-948d-978753f428f4",
+      "name": "Noah",
+      "starting_stack": 10000,
+      "current_stack": 10039,
+      "eliminated": false,
+      "rank": 13
+    },
+    {
+      "id": "5e99e31a-6ebe-4c81-ac51-7d2ec4682a89",
+      "name": "Eric",
+      "starting_stack": 10000,
+      "current_stack": 10036,
+      "eliminated": false,
+      "rank": 14
+    },
+    {
+      "id": "ee5c5cf9-8308-4ab5-b557-c9e36ce69e8d",
+      "name": "Hannah",
+      "starting_stack": 10000,
+      "current_stack": 9959,
+      "eliminated": false,
+      "rank": 15
+    },
+    {
+      "id": "5a9d26e9-2ec8-4a86-aafe-23d4fa4d69e6",
+      "name": "Julia",
+      "starting_stack": 10000,
+      "current_stack": 9843,
+      "eliminated": false,
+      "rank": 16
+    },
+    {
+      "id": "14665e45-cd1b-4832-b531-f1914d949337",
+      "name": "Ugo",
+      "starting_stack": 10000,
+      "current_stack": 9789,
+      "eliminated": false,
+      "rank": 17
+    },
+    {
+      "id": "98a3699c-0c76-488a-99c7-9bafc137876b",
+      "name": "Paula",
+      "starting_stack": 10000,
+      "current_stack": 9736,
+      "eliminated": false,
+      "rank": 18
+    },
+    {
+      "id": "1d212d02-a446-4efc-bdc5-2c3767b1084d",
+      "name": "Quentin",
+      "starting_stack": 10000,
+      "current_stack": 9632,
+      "eliminated": false,
+      "rank": 19
+    },
+    {
+      "id": "6a5e05dc-f857-4c89-9e89-af79e633f7c5",
+      "name": "Liam",
+      "starting_stack": 10000,
+      "current_stack": 9606,
+      "eliminated": false,
+      "rank": 20
+    },
+    {
+      "id": "56ac1e7b-f2ac-4629-9ce6-72b4f0fc1e6f",
+      "name": "Vera",
+      "starting_stack": 10000,
+      "current_stack": 8528,
+      "eliminated": false,
+      "rank": 21
+    },
+    {
+      "id": "f7a5b329-1bdf-4c4c-aa45-0529c7660cfa",
+      "name": "Will",
+      "starting_stack": 10000,
+      "current_stack": 8433,
+      "eliminated": false,
+      "rank": 22
+    },
+    {
+      "id": "8fc6b89c-5db2-43a3-ad9e-57a4ff6e3f31",
+      "name": "Charlie",
+      "starting_stack": 10000,
+      "current_stack": 7287,
+      "eliminated": false,
+      "rank": 23
+    },
+    {
+      "id": "a36ca6ba-dfb5-45f7-b0da-78f1026a1daa",
+      "name": "Xena",
+      "starting_stack": 10000,
+      "current_stack": 6862,
+      "eliminated": false,
+      "rank": 24
+    },
+    {
+      "id": "10597d8b-6068-42af-8485-41a800e47c71",
+      "name": "Nina",
+      "starting_stack": 10000,
+      "current_stack": 6383,
+      "eliminated": false,
+      "rank": 25
+    },
+    {
+      "id": "647e0fc2-acb8-47c4-b152-ac9d87214284",
+      "name": "Laura",
+      "starting_stack": 10000,
+      "current_stack": 4944,
+      "eliminated": false,
+      "rank": 26
+    },
+    {
+      "id": "100d9789-32cd-4002-8425-f9d22c5d0835",
+      "name": "Kevin",
+      "starting_stack": 10000,
+      "current_stack": 4509,
+      "eliminated": false,
+      "rank": 27
+    },
+    {
+      "id": "6dc6e73d-9e4a-496f-ab39-bd1b2edda0ef",
+      "name": "Fiona",
+      "starting_stack": 10000,
+      "current_stack": 3876,
+      "eliminated": false,
+      "rank": 28
+    },
+    {
+      "id": "dfe00f34-1569-4ea5-b489-7554f366c4bb",
+      "name": "Rachel",
+      "starting_stack": 10000,
+      "current_stack": 137,
+      "eliminated": false,
+      "rank": 29
+    },
+    {
+      "id": "27a5cdff-99ef-4e4e-b31c-621a008b45ce",
+      "name": "Oscar",
+      "starting_stack": 10000,
+      "current_stack": 40,
+      "eliminated": false,
+      "rank": 30
+    }
+  ]
+}
