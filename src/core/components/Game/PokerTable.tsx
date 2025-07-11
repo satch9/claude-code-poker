@@ -137,8 +137,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
     
-    const radiusX = 42; // Entre le centre et les player seats
-    const radiusY = 30; // Entre le centre et les player seats
+    const radiusX = 38; // Entre le centre et les player seats, visible
+    const radiusY = 28; // Entre le centre et les player seats, visible
 
     const x = 50 + radiusX * Math.cos(angle);
     const y = 50 + radiusY * Math.sin(angle);

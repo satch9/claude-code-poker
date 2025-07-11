@@ -110,75 +110,73 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         </div>
       )}
 
-      {/* Horizontal layout */}
+      {/* Player avatar and info only - cards separated */}
       <div className={cn(
         "flex items-center h-full",
-        isMobile ? "gap-2" : "gap-3"
+        isMobile ? "gap-1.5" : "gap-2"
       )}>
-        {/* Player avatar and info */}
         <div className={cn(
-          "flex items-center flex-1",
-          isMobile ? "gap-1.5" : "gap-2"
+          "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold",
+          isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm"
         )}>
-          <div className={cn(
-            "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold",
-            isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm"
-          )}>
-            {(player.user?.name || 'Player').charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className={cn(
-              "font-medium text-white truncate",
-              isMobile ? "text-xs leading-tight" : "text-sm"
-            )}>
-              {player.user?.name || 'Player'}
-            </div>
-            <div className={cn(
-              "text-green-400 font-bold truncate",
-              isMobile ? "text-xs leading-tight" : "text-xs"
-            )}>
-              {isMobile 
-                ? (player.chips >= 1000 ? `${Math.floor(player.chips/1000)}K` : player.chips.toString())
-                : player.chips.toLocaleString()
-              }
-            </div>
-            {!isMobile && player.lastAction && (
-              <div className="text-xs text-gray-300 font-medium truncate">
-                {getActionLabel(player.lastAction)}
-              </div>
-            )}
-          </div>
+          {(player.user?.name || 'Player').charAt(0).toUpperCase()}
         </div>
-
-        {/* Cards */}
-        <div className={cn(isMobile ? "flex gap-1" : "flex gap-1.5")}>
-          {player.cards.length > 0 ? (
-            player.cards.map((cardStr, index) => {
-              const parsedCard = showCards ? parseCard(cardStr) : undefined;
-              console.log(`Card ${index} for player at position ${position}:`, {
-                cardStr,
-                showCards,
-                parsedCard,
-                isHidden: !showCards,
-                cardRank: parsedCard?.rank,
-                cardSuit: parsedCard?.suit
-              });
-              return (
-                <Card
-                  key={index}
-                  card={parsedCard}
-                  isHidden={!showCards}
-                  size={isMobile ? "sm" : "md"}
-                />
-              );
-            })
-          ) : (
-            <>
-              <Card size={isMobile ? "sm" : "md"} />
-              <Card size={isMobile ? "sm" : "md"} />
-            </>
+        <div className="flex-1 min-w-0">
+          <div className={cn(
+            "font-medium text-white truncate",
+            isMobile ? "text-xs leading-tight" : "text-sm"
+          )}>
+            {player.user?.name || 'Player'}
+          </div>
+          <div className={cn(
+            "text-green-400 font-bold truncate",
+            isMobile ? "text-xs leading-tight" : "text-xs"
+          )}>
+            {isMobile 
+              ? (player.chips >= 1000 ? `${Math.floor(player.chips/1000)}K` : player.chips.toString())
+              : player.chips.toLocaleString()
+            }
+          </div>
+          {!isMobile && player.lastAction && (
+            <div className="text-xs text-gray-300 font-medium truncate">
+              {getActionLabel(player.lastAction)}
+            </div>
           )}
         </div>
+      </div>
+
+      {/* Cards positioned separately towards the center */}
+      <div className={cn(
+        "absolute flex",
+        isMobile ? "gap-1" : "gap-1.5",
+        getCardsPosition(position)
+      )}>
+        {player.cards.length > 0 ? (
+          player.cards.map((cardStr, index) => {
+            const parsedCard = showCards ? parseCard(cardStr) : undefined;
+            console.log(`Card ${index} for player at position ${position}:`, {
+              cardStr,
+              showCards,
+              parsedCard,
+              isHidden: !showCards,
+              cardRank: parsedCard?.rank,
+              cardSuit: parsedCard?.suit
+            });
+            return (
+              <Card
+                key={index}
+                card={parsedCard}
+                isHidden={!showCards}
+                size={isMobile ? "sm" : "md"}
+              />
+            );
+          })
+        ) : (
+          <>
+            <Card size={isMobile ? "sm" : "md"} />
+            <Card size={isMobile ? "sm" : "md"} />
+          </>
+        )}
       </div>
 
       {/* Current bet indicator */}
@@ -280,5 +278,19 @@ function getActionLabel(action: string) {
       return 'ALL-IN';
     default:
       return action.toUpperCase();
+  }
+}
+
+function getCardsPosition(position: number) {
+  // Position les cartes vers le centre de la table selon la position du joueur
+  switch (position) {
+    case 0: // Dealer (haut)
+      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full';
+    case 1: // Small Blind (bas gauche)
+      return 'top-0 right-0 transform -translate-y-full translate-x-1/2';
+    case 2: // Big Blind (bas droite)
+      return 'top-0 left-0 transform -translate-y-full -translate-x-1/2';
+    default:
+      return 'bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full';
   }
 }
