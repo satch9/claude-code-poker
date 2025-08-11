@@ -8,7 +8,7 @@ interface ShowdownResult {
     userId: string;
     user?: {
       name: string;
-    };
+    } | null;
     chips: number;
   };
   handRank: {
@@ -35,17 +35,17 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
 }) => {
   const parseCard = (cardStr: string) => {
     if (!cardStr || cardStr.length < 2) return undefined;
-    
+
     const rank = cardStr.slice(0, -1) as any;
     const suitChar = cardStr.slice(-1);
-    
+
     const suitMap: Record<string, any> = {
       'h': 'hearts',
       'd': 'diamonds',
       'c': 'clubs',
       's': 'spades',
     };
-    
+
     return {
       rank,
       suit: suitMap[suitChar.toLowerCase()],
@@ -67,7 +67,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
             🎉 Résultats du Showdown
           </h2>
           <p className="text-gray-600">
-            {winners.length === 1 ? 
+            {winners.length === 1 ?
               `${winnerNames} remporte ${pot.toLocaleString()} jetons !` :
               `${winnerNames} se partagent ${pot.toLocaleString()} jetons (${winningsPerPlayer.toLocaleString()} chacun)`
             }
@@ -95,14 +95,14 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
         <div className="space-y-4 mb-6">
           {results.map((result, index) => {
             const isWinner = result.handRank.rank === results[0].handRank.rank;
-            
+
             return (
               <div
                 key={result.player.userId}
                 className={cn(
                   'flex items-center justify-between p-4 rounded-lg border-2',
-                  isWinner 
-                    ? 'bg-green-50 border-green-200 shadow-md' 
+                  isWinner
+                    ? 'bg-green-50 border-green-200 shadow-md'
                     : 'bg-gray-50 border-gray-200'
                 )}
               >
@@ -139,7 +139,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
                       />
                     ))}
                   </div>
-                  
+
                   {/* Winnings */}
                   {isWinner && (
                     <div className="text-right">

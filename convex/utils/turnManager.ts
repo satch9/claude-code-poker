@@ -321,8 +321,8 @@ export function calculateSidePots(
 }
 
 // Check if hand should end (only one player left)
-export function shouldEndHand(players: Array<{ isFolded: boolean }>): boolean {
-  const activePlayers = players.filter(p => !p.isFolded);
+export function shouldEndHand(players: Array<{ isFolded: boolean; chips: number }>): boolean {
+  const activePlayers = players.filter(p => !p.isFolded && p.chips > 0);
   return activePlayers.length <= 1;
 }
 

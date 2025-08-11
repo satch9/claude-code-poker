@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '../UI/Card';
 import { cn } from '../../../shared/utils/cn';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 
 interface CommunityCardsProps {
   cards: string[];
@@ -15,6 +16,7 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   pot,
   className,
 }) => {
+  const { isMobile } = useBreakpoint();
   // Parse card strings to Card objects
   const parseCard = (cardStr: string) => {
     if (!cardStr || cardStr.length < 2) return undefined;
@@ -78,20 +80,26 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   return (
     <div className={cn('text-center', className)}>
       {/* Phase indicator */}
-      <div className="mb-4">
-        <span className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-700 shadow-sm">
+      <div className={cn("mb-4", isMobile && "mb-2")}>
+        <span className={cn(
+          "bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-700 shadow-sm",
+          isMobile && "px-3 py-1 text-xs"
+        )}>
           {getPhaseLabel()}
         </span>
       </div>
 
       {/* Community cards */}
-      <div className="flex gap-3 justify-center mb-4">
+      <div className={cn(
+        "flex gap-3 justify-center mb-4",
+        isMobile && "gap-1 mb-2"
+      )}>
         {/* Show revealed cards with animations */}
         {cardsToShow.map((cardStr, index) => (
           <Card
             key={index}
             card={parseCard(cardStr)}
-            size="md"
+            size={isMobile ? "sm" : "md"}
             animation="deal"
             animationDelay={index * 300}
             className="shadow-xl transform hover:scale-105 transition-transform duration-200"
@@ -102,7 +110,7 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
         {Array.from({ length: emptySlots }).map((_, index) => (
           <Card
             key={`empty-${index}`}
-            size="md"
+            size={isMobile ? "sm" : "md"}
             className="opacity-20 border-dashed"
           />
         ))}
@@ -112,20 +120,25 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       <div className="relative">
         <div className={cn(
           "bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl px-6 py-3 shadow-lg border-2 border-amber-200",
-          pot > 0 && "border-amber-400"
+          pot > 0 && "border-amber-400",
+          isMobile && "px-4 py-2"
         )}>
           {/* Pot label */}
           <div className="flex items-center justify-center mb-1">
-            <div className="w-2 h-2 bg-amber-500 rounded-full mr-2"></div>
-            <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">POT TOTAL</span>
+            <div className={cn("w-2 h-2 bg-amber-500 rounded-full mr-2", isMobile && "w-1.5 h-1.5")}></div>
+            <span className={cn(
+              "text-xs font-medium text-gray-700 uppercase tracking-wide",
+              isMobile && "text-xs"
+            )}>POT TOTAL</span>
           </div>
           
           {/* Pot amount */}
           <div className={cn(
             "text-xl font-bold text-center",
-            pot > 0 ? "text-green-600" : "text-gray-500"
+            pot > 0 ? "text-green-600" : "text-gray-500",
+            isMobile && "text-lg"
           )}>
-            {pot > 0 ? pot.toLocaleString() : '0'}
+            {pot > 0 ? (isMobile && pot >= 1000 ? `${Math.floor(pot/1000)}K` : pot.toLocaleString()) : '0'}
           </div>
           
           {/* Pot glow effect when there's money */}

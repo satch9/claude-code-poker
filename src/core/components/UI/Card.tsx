@@ -26,11 +26,11 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
   animationDelay = 0,
 }) => {
   const sizeClasses = {
-    xs: 'w-8 h-12',
-    sm: 'w-12 h-16',
-    md: 'w-16 h-24',
-    lg: 'w-20 h-28',
-    xl: 'w-24 h-36',
+    xs: 'w-8 h-12 aspect-[2/3]',
+    sm: 'w-12 h-18 aspect-[2/3]',
+    md: 'w-16 h-24 aspect-[2/3]',
+    lg: 'w-20 h-30 aspect-[2/3]',
+    xl: 'w-24 h-36 aspect-[2/3]',
   };
 
   const fontSizes = {
@@ -157,11 +157,21 @@ const PlayingCard: React.FC<PlayingCardProps> = ({
         <div className={fontSizes[size].symbol}>{getSuitSymbol(card.suit)}</div>
       </div>
 
+      {/* Top-right corner */}
+      <div className={cn('absolute top-1 right-1 flex flex-col items-end leading-none font-bold', getSuitColor(card.suit))}>
+        <div className={fontSizes[size].symbol}>{getSuitSymbol(card.suit)}</div>
+      </div>
+
       {/* Center symbol */}
       <div className={cn('absolute inset-0 flex items-center justify-center', getSuitColor(card.suit))}>
         <div className={cn(fontSizes[size].center, 'font-normal')}>
           {getSuitSymbol(card.suit)}
         </div>
+      </div>
+
+      {/* Bottom-left corner */}
+      <div className={cn('absolute bottom-1 left-1 flex flex-col items-start leading-none font-bold', getSuitColor(card.suit))}>
+        <div className={fontSizes[size].symbol}>{getSuitSymbol(card.suit)}</div>
       </div>
 
       {/* Bottom-right corner (upside down) */}

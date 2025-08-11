@@ -5,16 +5,18 @@ import {
   shuffleDeck,
   dealCards,
   cardToString,
-  getNextPlayerPosition,
-  calculateMinRaise,
-  evaluateHand,
   stringToCard,
-  type Card
+  type Card,
+  calculateMinRaise,
 } from "../utils/poker";
+import {
+  evaluateHandRobust,
+  determineWinners,
+  getHandDescription,
+} from "../utils/handEvaluator";
 import {
   getBlindPositions,
   getFirstPlayerToAct,
-  isBettingRoundComplete,
   getNextActivePlayer,
   resetPlayersForNewRound,
   shouldEndHand,
@@ -25,7 +27,6 @@ import {
 import {
   evaluateGameConditions,
   getNextPhase as getNextPhaseFromStateMachine,
-  shouldAutoAdvance,
   debugGameState,
   type PlayerState
 } from "../utils/gameStateMachine";
@@ -114,7 +115,7 @@ async function startGameInternal(ctx: any, tableId: string) {
 
   const playerPositions = players.map((p: any) => p.seatPosition);
   const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
-  
+
 
   // Post blinds
   let pot = 0;
@@ -177,9 +178,9 @@ async function startGameInternal(ctx: any, tableId: string) {
   console.log(`🎯 === ANALYSE ORDRE D'ACTION - PHASE: PREFLOP ===`);
   console.log(`📍 Dealer position: ${dealerPosition}`);
   console.log(`👥 All players: ${JSON.stringify(playerPositions)}`);
-  
+
   const firstPlayerPosition = getFirstPlayerToAct(dealerPosition, playerPositions, 'preflop');
-  
+
   console.log(`✅ Premier joueur calculé (preflop): Pos${firstPlayerPosition}`);
   console.log(`📜 Règle: En preflop, UTG (Dealer+3) parle en premier`);
   console.log(`🎯 Logique: Dealer(${dealerPosition}) + 3 → Pos${firstPlayerPosition}`);
@@ -285,7 +286,7 @@ export const playerAction = mutation({
           hasActed: true,
           lastAction: "fold",
         });
-        
+
         // Add to action feed
         const foldUser = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, args.tableId, {
@@ -304,7 +305,7 @@ export const playerAction = mutation({
           hasActed: true,
           lastAction: "check",
         });
-        
+
         // Add to action feed
         const checkUser = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, args.tableId, {
@@ -331,7 +332,7 @@ export const playerAction = mutation({
           isAllIn,
           lastAction: "call",
         });
-        
+
         // Add to action feed
         const callUser = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, args.tableId, {
@@ -347,7 +348,7 @@ export const playerAction = mutation({
         if (!args.amount) {
           throw new Error("Raise amount required");
         }
-        
+
         const minRaise = calculateMinRaise(gameState.currentBet, table.bigBlind);
         if (args.amount < minRaise) {
           throw new Error(`Minimum raise is ${minRaise}`);
@@ -371,7 +372,7 @@ export const playerAction = mutation({
           currentBet: newCurrentBet,
           lastRaiserPosition: player.seatPosition,
         });
-        
+
         // Add to action feed
         const raiseUser = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, args.tableId, {
@@ -404,7 +405,7 @@ export const playerAction = mutation({
             lastRaiserPosition: player.seatPosition,
           });
         }
-        
+
         // Add to action feed
         const allInUser = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, args.tableId, {
@@ -450,12 +451,12 @@ export const playerAction = mutation({
       lastAction: p.lastAction,
       seatPosition: p.seatPosition
     }));
-    
+
     const conditions = evaluateGameConditions(playerStates, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
     const nextPhaseInfo = getNextPhaseFromStateMachine(updatedGameState.phase as any, conditions);
-    
+
     debugGameState(updatedGameState.phase as any, playerStates, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
-    
+
     if (nextPhaseInfo) {
       // Move to next phase
       await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
@@ -466,7 +467,7 @@ export const playerAction = mutation({
       const activePlayers = allPlayers
         .filter(p => !p.isFolded)
         .map(p => p.seatPosition);
-      
+
       const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
 
       console.log("Debug next player:", {
@@ -537,7 +538,7 @@ export const advancePhase = mutation({
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .collect();
-    
+
     const playerStates: PlayerState[] = players.map(p => ({
       chips: p.chips,
       currentBet: p.currentBet,
@@ -547,15 +548,15 @@ export const advancePhase = mutation({
       lastAction: p.lastAction,
       seatPosition: p.seatPosition
     }));
-    
+
     const conditions = evaluateGameConditions(playerStates, gameState.currentBet, gameState.lastRaiserPosition);
     const nextPhaseInfo = getNextPhaseFromStateMachine(gameState.phase as any, conditions);
-    
+
     console.log(`🎮 Server: advancePhase checking next phase for ${gameState.phase}`, {
       conditions,
       nextPhaseInfo
     });
-    
+
     if (nextPhaseInfo) {
       // Continue with state machine
       await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
@@ -563,6 +564,33 @@ export const advancePhase = mutation({
       // Fallback to regular advance
       await advanceToNextPhase(ctx, args.tableId);
     }
+    return { success: true };
+  },
+});
+
+// Manual advance from showdown (called by client when clicking "Continue")
+export const advanceFromShowdown = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+
+    if (!gameState) {
+      throw new Error("Game state not found");
+    }
+
+    // Only allow manual advance from showdown phase
+    if (gameState.phase !== "showdown") {
+      console.log(`🎮 Server: advanceFromShowdown called but not in showdown phase. Current phase: ${gameState.phase}`);
+      return { success: false };
+    }
+
+    console.log(`🎮 Server: Manual advance from showdown triggered`);
+
+    // Determine winner and end hand
+    await determineWinner(ctx, args.tableId);
     return { success: true };
   },
 });
@@ -639,7 +667,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   // If all players are all-in, we need to continue automatically
   const allPlayersAllIn = playerPositions.length === 0;
-  
+
   console.log("Debug advanceToNextPhase:", {
     nextPhase,
     allPlayersAllIn,
@@ -650,9 +678,9 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     // All players are all-in, set a special flag to trigger auto-advance
     const autoAdvanceDelay = nextPhase === "showdown" ? 6000 : 2000;
     const autoAdvanceAt = Date.now() + autoAdvanceDelay;
-    
+
     console.log(`🎮 Server: Setting up auto-advance for ${nextPhase} in ${autoAdvanceDelay}ms`);
-    
+
     await ctx.db.patch(gameState._id, {
       phase: nextPhase,
       communityCards,
@@ -662,7 +690,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
       autoAdvanceAt: autoAdvanceAt,
       updatedAt: Date.now(),
     });
-    
+
     // Add phase announcement to action feed
     const phaseNames = {
       'flop': 'Flop',
@@ -670,7 +698,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
       'river': 'River',
       'showdown': 'Abattage'
     };
-    
+
     await addActionToFeed(ctx, tableId, {
       playerName: "Système",
       action: "phase",
@@ -678,7 +706,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
       phase: nextPhase,
       isSystem: true,
     });
-    
+
     // If next phase is showdown, trigger winner determination after delay
     if (nextPhase === "showdown") {
       console.log("🎮 Server: Setting up showdown with auto-advance");
@@ -689,13 +717,13 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
   console.log(`🎯 === ANALYSE ORDRE D'ACTION - PHASE: ${nextPhase.toUpperCase()} ===`);
   console.log(`📍 Dealer position: ${gameState.dealerPosition}`);
   console.log(`👥 Active players (non all-in): ${JSON.stringify(playerPositions)}`);
-  
+
   const firstPlayerPosition = getFirstPlayerToAct(
     gameState.dealerPosition,
     playerPositions,
     'postflop'
   );
-  
+
   console.log(`✅ Premier joueur calculé: Pos${firstPlayerPosition}`);
   console.log(`📜 Règle: En ${nextPhase}, SB (ou premier après dealer) parle en premier`);
   console.log(`🎯 Logique: Dealer(${gameState.dealerPosition}) + 1 → Pos${firstPlayerPosition}`);
@@ -729,140 +757,176 @@ async function determineWinner(ctx: any, tableId: string) {
 
   const activePlayers = players.filter((p: any) => !p.isFolded);
 
-  if (activePlayers.length === 0) {
-    throw new Error("No active players");
-  }
-
-  // If only one player, they win
+  // Si un seul joueur reste actif, il gagne automatiquement
   if (activePlayers.length === 1) {
     const winner = activePlayers[0];
     const winnerUser = await ctx.db.get(winner.userId);
-    
+
+    // Donner le pot au gagnant
     await ctx.db.patch(winner._id, {
       chips: winner.chips + gameState.pot,
     });
 
-    // Add win to action feed
+    // Ajouter l'action au feed
     await addActionToFeed(ctx, tableId, {
       playerId: winner._id,
       playerName: winnerUser?.name || "Joueur",
       action: "win",
       amount: gameState.pot,
-      message: `remporte ${gameState.pot} jetons (pas d'abattage)`,
+      message: `remporte ${gameState.pot} jetons (tous les autres ont foldé)`,
       isSystem: false,
     });
-  } else {
-    // Evaluate hands and determine winner(s)
-    const communityCards = gameState.communityCards.map(stringToCard);
-    const playerHands = activePlayers.map((player: any) => {
-      const holeCards = player.cards.map(stringToCard);
-      const allCards = [...holeCards, ...communityCards];
-      const handRank = evaluateHand(allCards);
 
-      return {
-        player,
-        handRank,
-        allCards,
-      };
+    // Mettre à jour l'état du jeu
+    await ctx.db.patch(gameState._id, {
+      phase: "showdown",
+      currentPlayerPosition: -1,
+      updatedAt: Date.now(),
     });
 
-    // Sort by hand rank (highest first)
-    playerHands.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
+    // Programmer automatiquement le démarrage de la nouvelle main après 3 secondes
+    setTimeout(async () => {
+      try {
+        await prepareNextHand(ctx, tableId);
+        await startNextHandInternal(ctx, tableId);
+        console.log(`🎮 Nouvelle main démarrée automatiquement après victoire par fold`);
+      } catch (error) {
+        console.error(`❌ Erreur lors du démarrage automatique de la nouvelle main:`, error);
+      }
+    }, 3000);
 
-    // Add showdown results to action feed
-    await addActionToFeed(ctx, tableId, {
-      playerName: "Système",
-      action: "showdown",
-      message: "Abattage des cartes",
-      isSystem: true,
-    });
+    return;
+  }
 
-    // Log showdown results for each player
-    for (const hand of playerHands) {
-      const user = await ctx.db.get(hand.player.userId);
-      await addActionToFeed(ctx, tableId, {
-        playerId: hand.player._id,
-        playerName: user?.name || "Joueur",
-        action: "showdown",
-        message: `montre ${hand.handRank.name}`,
-        isSystem: false,
-      });
+  // Si aucun joueur actif, c'est une erreur
+  if (activePlayers.length === 0) {
+    throw new Error("No active players found");
+  }
+
+  // Evaluate hands and determine winner(s)
+  const communityCards = gameState.communityCards.map(stringToCard);
+  const playerHands = activePlayers.map((player: any) => {
+    const holeCards = player.cards.map(stringToCard);
+    const allCards = [...holeCards, ...communityCards];
+    const handRank = evaluateHandRobust(allCards);
+
+    return {
+      player,
+      handRank,
+      allCards,
+    };
+  });
+
+  // Sort by hand rank (highest first) and use kickers for same rank
+  playerHands.sort((a: any, b: any) => {
+    // First compare by hand rank
+    if (b.handRank.rank !== a.handRank.rank) {
+      return b.handRank.rank - a.handRank.rank;
     }
 
-    // Determine winners (players with the same highest rank)
-    const highestRank = playerHands[0].handRank.rank;
-    const winners = playerHands.filter((h: any) => h.handRank.rank === highestRank);
+    // Same rank, compare kickers using pokersolver
+    const handsForComparison = [
+      { hand: a.handRank, playerId: 'a' },
+      { hand: b.handRank, playerId: 'b' }
+    ];
+    const winners = determineWinners(handsForComparison);
 
-    // Calculate side pots
-    const sidePots = calculateSidePots(
-      players.map((p: any) => ({
-        userId: p.userId,
-        currentBet: p.currentBet,
-        isAllIn: p.isAllIn,
-        isFolded: p.isFolded,
-      }))
+    // If 'a' wins, return negative; if 'b' wins, return positive
+    if (winners.includes('a')) return -1;
+    if (winners.includes('b')) return 1;
+    return 0; // Tie
+  });
+
+  // Add showdown results to action feed
+  await addActionToFeed(ctx, tableId, {
+    playerName: "Système",
+    action: "showdown",
+    message: "Abattage des cartes",
+    isSystem: true,
+  });
+
+  // Log showdown results for each player
+  for (const hand of playerHands) {
+    const user = await ctx.db.get(hand.player.userId);
+    await addActionToFeed(ctx, tableId, {
+      playerId: hand.player._id,
+      playerName: user?.name || "Joueur",
+      action: "showdown",
+      message: `montre ${getHandDescription(hand.handRank)}`,
+      isSystem: false,
+    });
+  }
+
+  // Calculate side pots for pot distribution
+
+  // Calculate side pots
+  const sidePots = calculateSidePots(
+    players.map((p: any) => ({
+      userId: p.userId,
+      currentBet: p.currentBet,
+      isAllIn: p.isAllIn,
+      isFolded: p.isFolded,
+    }))
+  );
+
+  console.log("🎰 Side pots calculated:", sidePots);
+
+  // Distribute each side pot individually
+  for (let i = 0; i < sidePots.length; i++) {
+    const sidePot = sidePots[i];
+    // Find eligible players for this side pot
+    const eligiblePlayers = playerHands.filter((hand: { player: { userId: string } }) =>
+      sidePot.eligiblePlayers.includes(hand.player.userId)
     );
 
-    console.log("🎰 Side pots calculated:", sidePots);
+    if (eligiblePlayers.length === 0) continue;
 
-    // Distribute each side pot individually
-    for (let i = 0; i < sidePots.length; i++) {
-      const sidePot = sidePots[i];
-      
-      // Find eligible players for this side pot
-      const eligiblePlayers = playerHands.filter(hand => 
-        sidePot.eligiblePlayers.includes(hand.player.userId)
-      );
-      
-      if (eligiblePlayers.length === 0) continue;
-      
-      // Sort eligible players by hand rank (highest first)
-      eligiblePlayers.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
-      
-      // Find winners for this side pot (players with highest rank among eligible)
-      const highestRankForPot = eligiblePlayers[0].handRank.rank;
-      const potWinners = eligiblePlayers.filter((h: any) => h.handRank.rank === highestRankForPot);
-      
-      // Distribute this side pot among winners
-      const winAmountForPot = Math.floor(sidePot.amount / potWinners.length);
-      
-      console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${winAmountForPot} jetons chacun`);
-      
-      await Promise.all(
-        potWinners.map((winner: any) =>
-          ctx.db.patch(winner.player._id, {
-            chips: winner.player.chips + winAmountForPot,
-          })
-        )
+    // Sort eligible players by hand rank (highest first)
+    eligiblePlayers.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
+
+    // Find winners for this side pot (players with highest rank among eligible)
+    const highestRankForPot = eligiblePlayers[0].handRank.rank;
+    const potWinners = eligiblePlayers.filter((h: any) => h.handRank.rank === highestRankForPot);
+
+    // Distribute this side pot among winners
+    const winAmountForPot = Math.floor(sidePot.amount / potWinners.length);
+
+    console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${winAmountForPot} jetons chacun`);
+
+    await Promise.all(
+      potWinners.map((winner: any) =>
+        ctx.db.patch(winner.player._id, {
+          chips: winner.player.chips + winAmountForPot,
+        })
+      )
+    );
+
+    // Add winner announcement for this side pot
+    if (potWinners.length === 1) {
+      const winnerUser = await ctx.db.get(potWinners[0].player.userId);
+      await addActionToFeed(ctx, tableId, {
+        playerId: potWinners[0].player._id,
+        playerName: winnerUser?.name || "Joueur",
+        action: "win",
+        amount: winAmountForPot,
+        message: `remporte ${winAmountForPot} jetons (pot ${i + 1}) avec ${getHandDescription(potWinners[0].handRank)}`,
+        isSystem: false,
+      });
+    } else {
+      // Multiple winners for this side pot (tie)
+      const winnerNames = await Promise.all(
+        potWinners.map(async (winner: any) => {
+          const user = await ctx.db.get(winner.player.userId);
+          return user?.name || "Joueur";
+        })
       );
 
-      // Add winner announcement for this side pot
-      if (potWinners.length === 1) {
-        const winnerUser = await ctx.db.get(potWinners[0].player.userId);
-        await addActionToFeed(ctx, tableId, {
-          playerId: potWinners[0].player._id,
-          playerName: winnerUser?.name || "Joueur",
-          action: "win",
-          amount: winAmountForPot,
-          message: `remporte ${winAmountForPot} jetons (pot ${i + 1}) avec ${potWinners[0].handRank.name}`,
-          isSystem: false,
-        });
-      } else {
-        // Multiple winners for this side pot (tie)
-        const winnerNames = await Promise.all(
-          potWinners.map(async (winner: any) => {
-            const user = await ctx.db.get(winner.player.userId);
-            return user?.name || "Joueur";
-          })
-        );
-        
-        await addActionToFeed(ctx, tableId, {
-          playerName: "Système",
-          action: "tie",
-          message: `${winnerNames.join(", ")} se partagent le pot ${i + 1} de ${sidePot.amount} jetons`,
-          isSystem: true,
-        });
-      }
+      await addActionToFeed(ctx, tableId, {
+        playerName: "Système",
+        action: "tie",
+        message: `${winnerNames.join(", ")} se partagent le pot ${i + 1} de ${sidePot.amount} jetons`,
+        isSystem: true,
+      });
     }
   }
 
@@ -946,6 +1010,9 @@ async function prepareNextHand(ctx: any, tableId: string) {
       playersWithChips.map((p: any) => p.seatPosition)
     );
 
+    console.log(`🔄 Dealer rotation: ${gameState.dealerPosition} → ${nextDealerPosition}`);
+    console.log(`👥 Players with chips: [${playersWithChips.map((p: any) => p.seatPosition).join(', ')}]`);
+
     await ctx.db.patch(gameState._id, {
       phase: "waiting",
       communityCards: [],
@@ -978,7 +1045,7 @@ export const getShowdownResults = query({
       .collect();
 
     const activePlayers = players.filter((p) => !p.isFolded);
-    
+
     if (activePlayers.length <= 1) {
       return null; // No showdown needed
     }
@@ -990,7 +1057,7 @@ export const getShowdownResults = query({
       const user = await ctx.db.get(player.userId);
       const holeCards = player.cards.map(stringToCard);
       const allCards = [...holeCards, ...communityCards];
-      const handRank = evaluateHand(allCards);
+      const handRank = evaluateHandRobust(allCards);
 
       results.push({
         player: {
@@ -1033,7 +1100,7 @@ async function endGame(ctx: any, tableId: string) {
       // Tournament winner!
       const winner = playersWithChips[0];
       const winnerUser = await ctx.db.get(winner.userId);
-      
+
       // Add tournament winner to action feed
       await addActionToFeed(ctx, tableId, {
         playerId: winner._id,
@@ -1060,7 +1127,7 @@ async function endGame(ctx: any, tableId: string) {
             userId: player.userId,
             type: "game_end",
             title: "Tournoi terminé",
-            message: player.userId === winner.userId 
+            message: player.userId === winner.userId
               ? `Félicitations! Vous avez remporté le tournoi avec ${winner.chips} jetons!`
               : `Le tournoi est terminé. ${winnerUser?.name || "Un joueur"} a remporté avec ${winner.chips} jetons.`,
             data: {
@@ -1315,8 +1382,8 @@ export const getGameActions = query({
 
 // New state machine-based phase advancement
 async function advanceToNextPhaseWithStateMachine(
-  ctx: any, 
-  tableId: string, 
+  ctx: any,
+  tableId: string,
   nextPhaseInfo: { nextPhase: any; autoAdvance: boolean; delay: number }
 ) {
   const gameState = await ctx.db
@@ -1382,9 +1449,9 @@ async function advanceToNextPhaseWithStateMachine(
   // Find first player to act for post-flop phases
   const activePlayers = players.filter((p: any) => !p.isFolded && !p.isAllIn);
   const playerPositions = activePlayers.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
-  
+
   let currentPlayerPosition = -1;
-  
+
   // Only set currentPlayerPosition if there are players who need to act
   if (playerPositions.length > 0 && !nextPhaseInfo.autoAdvance) {
     currentPlayerPosition = getFirstPlayerToAct(
@@ -1418,7 +1485,7 @@ async function advanceToNextPhaseWithStateMachine(
     'river': 'River',
     'showdown': 'Abattage'
   };
-  
+
   await addActionToFeed(ctx, tableId, {
     playerName: "Système",
     action: "phase",

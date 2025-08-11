@@ -67,120 +67,146 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   return (
     <div className={cn(
       'bg-gray-800 rounded-2xl shadow-2xl border border-gray-700',
-      isMobile ? 'p-3' : 'p-6',
+      isMobile ? 'p-2' : 'p-6',
       className
     )}>
-      <div className={cn(isMobile ? "space-y-3" : "space-y-4")}>
-        {/* Game info */}
-        <div className={cn(
-          "flex justify-between items-center text-gray-300",
-          isMobile ? "text-xs" : "text-sm"
-        )}>
-          <div className={cn(
-            "flex",
-            isMobile ? "gap-2 flex-col" : "gap-4"
-          )}>
-            <span className="truncate">
-              {isMobile ? 'Pot:' : 'Pot:'} <span className="text-green-400 font-bold">
-                {isMobile && potSize >= 1000 
-                  ? `${Math.floor(potSize/1000)}K`
-                  : potSize.toLocaleString()
-                }
-              </span>
-            </span>
-            <span className="truncate">
-              {isMobile ? 'Chips:' : 'Your chips:'} <span className="text-blue-400 font-bold">
-                {isMobile && playerChips >= 1000
-                  ? `${Math.floor(playerChips/1000)}K`
-                  : playerChips.toLocaleString()
-                }
-              </span>
-            </span>
-            {potOdds && (
+      <div className={cn(isMobile ? "space-y-2" : "space-y-4")}>
+        {/* Game info - simplified on mobile */}
+        {!isMobile && (
+          <div className="flex justify-between items-center text-gray-300 text-sm">
+            <div className="flex gap-4">
               <span className="truncate">
-                {isMobile ? 'Odds:' : 'Odds:'} <span className="text-yellow-400 font-bold">{potOdds}</span>
+                Pot: <span className="text-green-400 font-bold">{potSize.toLocaleString()}</span>
               </span>
+              <span className="truncate">
+                Your chips: <span className="text-blue-400 font-bold">{playerChips.toLocaleString()}</span>
+              </span>
+              {potOdds && (
+                <span className="truncate">
+                  Odds: <span className="text-yellow-400 font-bold">{potOdds}</span>
+                </span>
+              )}
+            </div>
+            {handStrength && (
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-gray-400 text-sm">Hand:</span>
+                <span className={cn(
+                  'font-bold text-sm truncate',
+                  handStrength === 'Strong' && 'text-green-400',
+                  handStrength === 'Good' && 'text-blue-400',
+                  handStrength === 'Medium' && 'text-yellow-400',
+                  handStrength === 'Weak' && 'text-red-400'
+                )}>
+                  {handStrength}
+                </span>
+              </div>
             )}
           </div>
-          {handStrength && (
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="text-gray-400 text-sm">Hand:</span>
-              <span className={cn(
-                'font-bold text-sm truncate',
-                handStrength === 'Strong' && 'text-green-400',
-                handStrength === 'Good' && 'text-blue-400',
-                handStrength === 'Medium' && 'text-yellow-400',
-                handStrength === 'Weak' && 'text-red-400'
-              )}>
-                {handStrength}
+        )}
+        
+        {/* Mobile compact info */}
+        {isMobile && (
+          <div className="flex justify-between items-center text-gray-300 text-xs">
+            <span className="truncate">
+              Pot: <span className="text-green-400 font-bold">
+                {potSize >= 1000 ? `${Math.floor(potSize/1000)}K` : potSize}
               </span>
-            </div>
-          )}
-        </div>
+            </span>
+            <span className="truncate">
+              Chips: <span className="text-blue-400 font-bold">
+                {playerChips >= 1000 ? `${Math.floor(playerChips/1000)}K` : playerChips}
+              </span>
+            </span>
+          </div>
+        )}
 
         {/* Primary actions */}
-        <div className="flex gap-2">
-          {getAction('fold') && (
-            <Button
-              variant="danger"
-              onClick={() => onAction({ action: 'fold' })}
-              disabled={disabled}
-              className="flex-1"
-            >
-              Fold
-            </Button>
-          )}
+        <div className={cn(
+          "flex gap-2",
+          isMobile && "gap-1"
+        )}>
+                      {getAction('fold') && (
+              <Button
+                variant="danger"
+                onClick={() => onAction({ action: 'fold' })}
+                disabled={disabled}
+                className={cn(
+                  "flex-1",
+                  isMobile && "text-xs py-1"
+                )}
+              >
+                {isMobile ? 'Fold' : 'Fold'}
+              </Button>
+            )}
           
-          {getAction('check') && (
-            <Button
-              variant="secondary"
-              onClick={() => onAction({ action: 'check' })}
-              disabled={disabled}
-              className="flex-1"
-            >
-              Check
-            </Button>
-          )}
+                      {getAction('check') && (
+              <Button
+                variant="secondary"
+                onClick={() => onAction({ action: 'check' })}
+                disabled={disabled}
+                className={cn(
+                  "flex-1",
+                  isMobile && "text-xs py-1"
+                )}
+              >
+                {isMobile ? 'Check' : 'Check'}
+              </Button>
+            )}
           
-          {callAction && (
-            <Button
-              variant="primary"
-              onClick={() => onAction({ action: 'call', amount: callAction.amount })}
-              disabled={disabled}
-              className="flex-1"
-            >
-{isMobile ? `Call ${callAction.amount && callAction.amount >= 1000 ? `${Math.floor(callAction.amount/1000)}K` : callAction.amount?.toLocaleString()}` : `Call ${callAction.amount?.toLocaleString()}`}
-            </Button>
-          )}
+                      {callAction && (
+              <Button
+                variant="primary"
+                onClick={() => onAction({ action: 'call', amount: callAction.amount })}
+                disabled={disabled}
+                className={cn(
+                  "flex-1",
+                  isMobile && "text-xs py-1"
+                )}
+              >
+                {isMobile ? `Call ${callAction.amount && callAction.amount >= 1000 ? `${Math.floor(callAction.amount/1000)}K` : callAction.amount?.toLocaleString()}` : `Call ${callAction.amount?.toLocaleString()}`}
+              </Button>
+            )}
           
-          {raiseAction && (
-            <Button
-              variant="success"
-              onClick={() => setShowRaiseSlider(!showRaiseSlider)}
-              disabled={disabled}
-              className="flex-1"
-            >
-              Raise
-            </Button>
-          )}
+                      {raiseAction && (
+              <Button
+                variant="success"
+                onClick={() => setShowRaiseSlider(!showRaiseSlider)}
+                disabled={disabled}
+                className={cn(
+                  "flex-1",
+                  isMobile && "text-xs py-1"
+                )}
+              >
+                {isMobile ? 'Raise' : 'Raise'}
+              </Button>
+            )}
           
-          {allInAction && (
-            <Button
-              variant="danger"
-              onClick={() => onAction({ action: 'all-in', amount: allInAction.amount })}
-              disabled={disabled}
-              className="flex-1"
-            >
-{isMobile ? `All-In (${allInAction.amount && allInAction.amount >= 1000 ? `${Math.floor(allInAction.amount/1000)}K` : allInAction.amount?.toLocaleString()})` : `All-In (${allInAction.amount?.toLocaleString()})`}
-            </Button>
-          )}
+                      {allInAction && (
+              <Button
+                variant="danger"
+                onClick={() => onAction({ action: 'all-in', amount: allInAction.amount })}
+                disabled={disabled}
+                className={cn(
+                  "flex-1",
+                  isMobile && "text-xs py-1"
+                )}
+              >
+                {isMobile ? `All-In (${allInAction.amount && allInAction.amount >= 1000 ? `${Math.floor(allInAction.amount/1000)}K` : allInAction.amount?.toLocaleString()})` : `All-In (${allInAction.amount?.toLocaleString()})`}
+              </Button>
+            )}
         </div>
 
         {/* Raise controls */}
         {showRaiseSlider && !disabled && raiseAction && (
-          <div className="border-t border-gray-600 pt-4 space-y-3">
+          <div className={cn(
+            "border-t border-gray-600 pt-4 space-y-3",
+            isMobile && "pt-2 space-y-2"
+          )}>
             {/* Quick raise buttons */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className={cn(
+              "grid grid-cols-4 gap-2",
+              isMobile && "gap-1"
+            )}>
               {quickRaiseAmounts.map((amount) => (
                 <Button
                   key={amount.label}
@@ -195,7 +221,10 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
             </div>
 
             {/* Raise slider */}
-            <div className="space-y-2">
+            <div className={cn(
+              "space-y-2",
+              isMobile && "space-y-1"
+            )}>
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Min: {minRaise.toLocaleString()}</span>
                 <span>Max: {maxRaise.toLocaleString()}</span>
@@ -232,8 +261,8 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           </div>
         )}
 
-        {/* Action timeout indicator */}
-        {!disabled && (
+        {/* Action timeout indicator - hidden on mobile */}
+        {!disabled && !isMobile && (
           <div className="text-center">
             <div className="text-xs text-gray-400">
               {availableActions.length > 0 ? 'Your turn - choose an action' : 'Waiting for other players...'}

@@ -4,6 +4,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./shared/styles/poker-utilities.css";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 

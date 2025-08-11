@@ -1,0 +1,152 @@
+/* Classes utilitaires personnalisées pour l'application poker */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Safe area mobile */
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Surface de table */
+  .table-surface {
+    @apply bg-gradient-to-br from-poker-green-600 to-poker-green-800 rounded-full shadow-2xl;
+  }
+  
+  /* Styles de base pour les sièges de joueur */
+  .player-seat-base {
+    @apply relative bg-gray-800/90 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-xl;
+  }
+  
+  /* États des sièges de joueur */
+  .player-seat-active {
+    @apply ring-4 ring-poker-player-active animate-pulse-green shadow-poker-player-active/50;
+  }
+  
+  .player-seat-current {
+    @apply ring-2 ring-poker-player-current shadow-2xl;
+  }
+  
+  .player-seat-folded {
+    @apply opacity-50 grayscale;
+  }
+  
+  .player-seat-allin {
+    @apply ring-2 ring-poker-player-allin animate-pulse;
+  }
+  
+  /* Bouton dealer */
+  .dealer-button {
+    @apply absolute z-dealer-button bg-gradient-to-br from-white to-gray-100 border-2 border-gray-700 rounded-full flex items-center justify-center font-black text-gray-800 shadow-xl transition-all duration-500;
+  }
+  
+  /* Classes responsive communes */
+  .responsive-padding {
+    @apply p-2 md:p-3 lg:p-4;
+  }
+  
+  .responsive-text {
+    @apply text-xs md:text-sm lg:text-base;
+  }
+  
+  .responsive-gap {
+    @apply gap-1 md:gap-2 lg:gap-3;
+  }
+  
+  /* Cibles tactiles mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] active:scale-95 transition-transform focus:ring-2 focus:ring-poker-gold-500 focus:outline-none;
+  }
+  
+  /* Cartes */
+  .card-base {
+    @apply bg-white border border-gray-300 rounded-lg shadow-md transition-all duration-200;
+  }
+  
+  .card-hidden {
+    @apply z-card-hidden;
+    background-color: #312e81; /* poker-card-back color */
+  }
+  
+  .card-visible {
+    @apply z-card-visible animate-card-deal;
+  }
+  
+  /* Modals */
+  .modal-backdrop {
+    @apply fixed inset-0 z-modal bg-black/50 backdrop-blur-sm;
+  }
+  
+  .modal-content {
+    @apply relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200;
+  }
+  
+  /* Barres latérales mobile */
+  .mobile-sidebar {
+    @apply fixed z-mobile-sidebar bg-poker-green-800/95 backdrop-blur-sm border-poker-green-600 rounded-lg transition-transform duration-300;
+  }
+  
+  /* Animations spécifiques */
+  .pulse-red {
+    animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse-red {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .8;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+    }
+  }
+  
+  /* Tailles de sièges responsives */
+  .seat-responsive {
+    @apply w-seat-mobile h-seat-mobile lg:w-seat-desktop lg:h-seat-desktop;
+  }
+}
+
+@layer components {
+  /* Composants complexes */
+  .poker-table-container {
+    @apply fixed inset-0 bg-gray-900 flex flex-col overflow-hidden;
+  }
+  
+  .poker-table-main {
+    @apply relative w-full;
+  }
+  
+  @media (max-width: 768px) {
+    .poker-table-main {
+      @apply h-full max-w-none;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .poker-table-main {
+      @apply max-w-4xl h-[700px];
+    }
+  }
+  
+  .poker-table-felt {
+    @apply absolute inset-0 shadow-2xl;
+    border-radius: 50%;
+    transform: scaleY(0.7);
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+  
+  .sidebar-desktop {
+    @apply flex-shrink-0 border-poker-green-700 space-y-4 overflow-y-auto w-80;
+  }
+  
+  @media (max-width: 1024px) {
+    .sidebar-desktop {
+      @apply w-60;
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -18,11 +18,13 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionHistory, setActionHistory] = useState<any[]>([]);
   const [handNumber, setHandNumber] = useState(1);
+  const [timeoutIds, setTimeoutIds] = useState<Set<NodeJS.Timeout>>(new Set());
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
   const playerAction = useMutation(api.core.gameEngine.playerAction);
   const advancePhase = useMutation(api.core.gameEngine.advancePhase);
+  const advanceFromShowdown = useMutation(api.core.gameEngine.advanceFromShowdown);
 
   // Queries - always called to maintain hook order
   const table = useQuery(
@@ -53,10 +55,65 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     tableId ? { tableId } : 'skip'
   );
 
-  // Game state helpers
-  const isMyTurn = user && gameState?.currentPlayerPosition === 
-    players?.find(p => p.userId === user._id)?.seatPosition;
-  const currentPlayer = players?.find(p => p.userId === user?._id);
+  // Helper function - declared first to avoid circular dependency
+  const addActionToHistory = useCallback((actionData: {
+    id: string;
+    playerName: string;
+    action: string;
+    amount?: number;
+    message?: string;
+    timestamp: number;
+    isTimeout?: boolean;
+  }) => {
+    setActionHistory(prev => [...prev, actionData]);
+  }, []);
+
+  // Game state helpers - memoized for performance
+  const currentPlayer = useMemo(() => 
+    players?.find(p => p.userId === user?._id), 
+    [players, user?._id]
+  );
+  
+  const isMyTurn = useMemo(() => 
+    !!(user && gameState && currentPlayer && 
+       gameState.currentPlayerPosition === currentPlayer.seatPosition && 
+       gameState.phase !== 'waiting' && 
+       gameState.phase !== 'showdown' && 
+       !currentPlayer.isFolded && 
+       !isProcessing),
+    [user, gameState, currentPlayer, isProcessing]
+  );
+
+  // Handle timeout - declared early to avoid circular dependency
+  const handleTimeOut = useCallback(async () => {
+    if (!user || !tableId) return;
+    
+    // Double check it's still my turn before forcing fold
+    if (!isMyTurn) {
+      console.log('Timeout triggered but no longer my turn, ignoring');
+      return;
+    }
+    
+    try {
+      // Force fold by calling playerAction directly
+      await playerAction({
+        tableId,
+        userId: user._id,
+        action: 'fold',
+      });
+      
+      // Add timeout action to history
+      addActionToHistory({
+        id: `${Date.now()}-${user._id}-timeout`,
+        playerName: user.name || 'Joueur',
+        action: 'fold',
+        timestamp: Date.now(),
+        isTimeout: true,
+      });
+    } catch (error) {
+      console.error('Failed to force fold on timeout:', error);
+    }
+  }, [user, tableId, isMyTurn, playerAction, addActionToHistory]);
 
   // Action handlers
   const handleStartGame = async () => {
@@ -73,7 +130,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
   };
 
 
-  const handlePlayerAction = async (action: GameAction) => {
+  const handlePlayerAction = useCallback(async (action: GameAction) => {
     if (!user || !isMyTurn || !tableId) return;
     
     setIsProcessing(true);
@@ -103,7 +160,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [user, isMyTurn, tableId, playerAction, addActionToHistory]);
 
   const handleFold = () => {
     handlePlayerAction({ action: 'fold' });
@@ -163,18 +220,28 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     }
   }, [gameState?.phase, actionHistory]);
 
-  // Auto-fold on timeout (30 seconds)
+  // Auto-fold on timeout (30 seconds) - Enhanced cleanup
   useEffect(() => {
     if (!isMyTurn || !user || !tableId || gameState?.phase === 'waiting' || gameState?.phase === 'showdown') return;
 
     const timeoutId = setTimeout(() => {
       handleTimeOut();
     }, 30000); // 30 seconds timeout
+    
+    // Track timeout for cleanup
+    setTimeoutIds(prev => new Set(prev).add(timeoutId));
 
-    return () => clearTimeout(timeoutId);
-  }, [isMyTurn, user, tableId, gameState?.phase]);
+    return () => {
+      clearTimeout(timeoutId);
+      setTimeoutIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(timeoutId);
+        return newSet;
+      });
+    };
+  }, [isMyTurn, user, tableId, gameState?.phase, handleTimeOut]);
 
-  // Auto-advance phases when all players are all-in
+  // Auto-advance phases when all players are all-in - Enhanced with cleanup
   useEffect(() => {
     if (!gameState?.autoAdvanceAt || !tableId) return;
     
@@ -197,12 +264,20 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
       console.log(`🎮 Client: Timeout fired, advancing from ${gameState.phase}`);
       advancePhase({ tableId }).catch(console.error);
     }, adjustedDelay);
+    
+    // Track timeout for cleanup
+    setTimeoutIds(prev => new Set(prev).add(timeoutId));
 
     return () => {
       console.log(`🎮 Client: Clearing timeout for ${gameState.phase}`);
       clearTimeout(timeoutId);
+      setTimeoutIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(timeoutId);
+        return newSet;
+      });
     };
-  }, [gameState?.autoAdvanceAt, tableId]);
+  }, [gameState?.autoAdvanceAt, tableId, advancePhase]);
 
   // Track hand number
   useEffect(() => {
@@ -251,8 +326,8 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     };
   };
 
-  // Get pot odds
-  const getPotOdds = () => {
+  // Get pot odds - memoized
+  const getPotOdds = useMemo(() => {
     if (!gameState || !currentPlayer) return null;
 
     const callAmount = gameState.currentBet - currentPlayer.currentBet;
@@ -267,10 +342,10 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
       ratio: `${potOdds.toFixed(1)}:1`,
       percentage: `${percentage.toFixed(1)}%`,
     };
-  };
+  }, [gameState?.currentBet, gameState?.pot, currentPlayer?.currentBet]);
 
-  // Get hand strength (simplified)
-  const getHandStrength = () => {
+  // Get hand strength (simplified) - memoized
+  const getHandStrength = useMemo(() => {
     if (!currentPlayer || !gameState) return null;
 
     const holeCards = currentPlayer.cards;
@@ -290,10 +365,10 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     if (hasAce && hasKing) return 'Good';
     if (hasAce || hasKing) return 'Medium';
     return 'Weak';
-  };
+  }, [currentPlayer?.cards, gameState?.communityCards]);
 
-  // Game statistics
-  const getGameStats = () => {
+  // Game statistics - memoized
+  const getGameStats = useMemo(() => {
     if (!players || !gameState) return null;
 
     const activePlayers = players.filter(p => !p.isFolded);
@@ -308,40 +383,11 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
       potSize: gameState.pot,
       bigBlind: gameState.currentBet,
     };
-  };
+  }, [players, gameState]);
 
-  // Handle timeout
-  const handleTimeOut = async () => {
-    if (!user || !tableId) return;
-    
-    // Double check it's still my turn before forcing fold
-    if (!isMyTurn) {
-      console.log('Timeout triggered but no longer my turn, ignoring');
-      return;
-    }
-    
-    try {
-      // Force fold by calling playerAction directly
-      await playerAction({
-        tableId,
-        userId: user._id,
-        action: 'fold',
-      });
-      
-      // Add timeout action to history
-      addActionToHistory({
-        id: `${Date.now()}-${user._id}-timeout`,
-        playerName: user.name || 'Joueur',
-        action: 'fold',
-        timestamp: Date.now(),
-        isTimeout: true,
-      });
-    } catch (error) {
-      console.error('Failed to force fold on timeout:', error);
-    }
-  };
+  // handleTimeOut already declared above
 
-  const handleStartNextHand = async () => {
+  const handleStartNextHand = useCallback(async () => {
     if (!tableId) return;
     
     setIsProcessing(true);
@@ -366,19 +412,9 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [tableId, startGame, handNumber, addActionToHistory]);
 
-  const addActionToHistory = (actionData: {
-    id: string;
-    playerName: string;
-    action: string;
-    amount?: number;
-    message?: string;
-    timestamp: number;
-    isTimeout?: boolean;
-  }) => {
-    setActionHistory(prev => [...prev, actionData]);
-  };
+  // addActionToHistory already declared above
 
   return {
     // Game state
@@ -407,7 +443,13 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
       if (!tableId) return;
       try {
         setIsProcessing(true);
-        await advancePhase({ tableId });
+        
+        // Use different mutation based on current phase
+        if (gameState?.phase === 'showdown') {
+          await advanceFromShowdown({ tableId });
+        } else {
+          await advancePhase({ tableId });
+        }
       } catch (error) {
         console.error('Error advancing phase:', error);
       } finally {
@@ -417,9 +459,9 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     
     // Betting utilities
     getBettingInfo,
-    getPotOdds,
-    getHandStrength,
-    getGameStats,
+    getPotOdds: () => getPotOdds, // Wrapper function to maintain API compatibility
+    getHandStrength: () => getHandStrength,
+    getGameStats: () => getGameStats,
     
     // Game tracking
     actionHistory: serverActions || [],

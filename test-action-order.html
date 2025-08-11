@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Ordre d'Action - Poker Rules</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a5d3a 0%, #0f3322 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .rule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .rule-table th,
+        .rule-table td {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px;
+            text-align: center;
+        }
+        .rule-table th {
+            background: rgba(16, 185, 129, 0.3);
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .status-correct {
+            background: #10b981;
+            color: white;
+        }
+        .status-wrong {
+            background: #ef4444;
+            color: white;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🃏 Test Ordre d'Action - Règles Officielles</h1>
+        
+        <!-- Règles officielles -->
+        <div class="test-section">
+            <h2>📜 Règles Officielles Texas Hold'em</h2>
+            
+            <div class="correct">
+                <h3>✅ PRÉ-FLOP (Après distribution des cartes)</h3>
+                <p><strong>Premier à parler :</strong> UTG (Under The Gun) = Joueur après la Grosse Blind</p>
+                <ul>
+                    <li><strong>Heads-up (2 joueurs) :</strong> Small Blind (Dealer) parle en premier</li>
+                    <li><strong>Multi-way (3+ joueurs) :</strong> UTG (Dealer + 3) parle en premier</li>
+                </ul>
+            </div>
+
+            <div class="correct">
+                <h3>✅ POST-FLOP (Flop, Turn, River)</h3>
+                <p><strong>Premier à parler :</strong> Small Blind (ou premier joueur actif après SB)</p>
+                <ul>
+                    <li><strong>Toujours la Small Blind en premier</strong></li>
+                    <li><strong>Si SB fold :</strong> BB parle en premier</li>
+                    <li><strong>Si SB + BB fold :</strong> Premier joueur actif après eux</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Test avec 4 joueurs -->
+        <div class="test-section">
+            <h2>🎯 Test Scénario : 4 Joueurs</h2>
+
+            <div class="correct">
+                <h3>Configuration</h3>
+                <table class="rule-table">
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Rôle</th>
+                            <th>Nom</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>Small Blind</td>
+                            <td>Alice</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>Big Blind</td>
+                            <td>Bob</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>UTG</td>
+                            <td>Charlie</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Dealer</td>
+                            <td>Diana</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="correct">
+                <h3>✅ Ordre d'Action CORRECT</h3>
+                <table class="rule-table">
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Premier à parler</th>
+                            <th>Ordre complet</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pré-flop</strong></td>
+                            <td>Charlie (UTG)</td>
+                            <td>Charlie → Diana → Alice → Bob</td>
+                            <td><span class="status status-correct">✅ CORRECT</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Flop</strong></td>
+                            <td>Alice (SB)</td>
+                            <td>Alice → Bob → Charlie → Diana</td>
+                            <td><span class="status status-correct">✅ CORRECT</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Turn</strong></td>
+                            <td>Alice (SB)</td>
+                            <td>Alice → Bob → Charlie → Diana</td>
+                            <td><span class="status status-correct">✅ CORRECT</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>River</strong></td>
+                            <td>Alice (SB)</td>
+                            <td>Alice → Bob → Charlie → Diana</td>
+                            <td><span class="status status-correct">✅ CORRECT</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="incorrect">
+                <h3>❌ Ordre d'Action INCORRECT (Bug potentiel)</h3>
+                <table class="rule-table">
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Si bug présent</th>
+                            <th>Ordre incorrect</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Flop</strong></td>
+                            <td>Charlie (UTG)</td>
+                            <td>Charlie → Diana → Alice → Bob</td>
+                            <td><span class="status status-wrong">❌ INCORRECT</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Note :</strong> Si Charlie parle en premier au flop, c'est un bug ! La règle dit que SB parle en premier post-flop.</p>
+            </div>
+        </div>
+
+        <!-- Analyse du code -->
+        <div class="test-section">
+            <h2>🔍 Analyse du Code Actuel</h2>
+            
+            <div class="correct">
+                <h3>Code dans turnManager.ts</h3>
+                <div class="code">
+// Post-flop logic
+} else {
+  // Post-flop: first active player after dealer acts first
+  const dealerIndex = playerPositions.indexOf(dealerPosition);
+  const firstActorIndex = (dealerIndex + 1) % numPlayers;
+  return playerPositions[firstActorIndex];
+}
+                </div>
+
+                <h4>Analyse :</h4>
+                <ul>
+                    <li><strong>dealerIndex + 1</strong> = Position après le Dealer</li>
+                    <li><strong>Dans l'exemple :</strong> Dealer (pos 3) + 1 = pos 0 (Alice/SB)</li>
+                    <li><strong>Résultat :</strong> Alice (SB) parle en premier ✅</li>
+                    <li><strong>Verdict :</strong> <span class="status status-correct">CODE CORRECT</span></li>
+                </ul>
+
+                <p><strong>Le commentaire est trompeur mais le code est correct !</strong></p>
+            </div>
+
+            <div class="incorrect">
+                <h3>❌ Problème Potentiel : Confusion d'Affichage</h3>
+                <p>Si vous voyez Charlie parler en premier au flop, le problème peut être :</p>
+                <ul>
+                    <li><strong>Bug d'affichage de phase :</strong> L'interface montre "Flop" mais on est encore en pré-flop</li>
+                    <li><strong>Bug d'UI :</strong> Le mauvais joueur est highlighté comme "actuel"</li>
+                    <li><strong>Bug de synchronisation :</strong> L'état client/serveur n'est pas synchrone</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Instructions de debug -->
+        <div class="test-section">
+            <h2>🐛 Instructions de Debug</h2>
+            
+            <div class="correct">
+                <h3>Comment Identifier le Problème</h3>
+                <ol>
+                    <li><strong>Vérifiez la phase :</strong> L'interface montre-t-elle bien "Flop" ?</li>
+                    <li><strong>Vérifiez les cartes communes :</strong> Y a-t-il bien 3 cartes au centre ?</li>
+                    <li><strong>Vérifiez le joueur actuel :</strong> Qui a le contour lumineux ?</li>
+                    <li><strong>Vérifiez dans la console :</strong> 
+                        <div class="code">
+// Dans les DevTools (F12), tapez :
+console.log('Phase:', gameState.phase);
+console.log('Current player position:', gameState.currentPlayerPosition);  
+console.log('Dealer position:', gameState.dealerPosition);
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="incorrect">
+                <h3>Scénarios de Bug Possibles</h3>
+                <table class="rule-table">
+                    <thead>
+                        <tr>
+                            <th>Symptôme</th>
+                            <th>Cause Probable</th>
+                            <th>Solution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>UTG parle au "flop"</td>
+                            <td>Encore en pré-flop</td>
+                            <td>Bug d'affichage de phase</td>
+                        </tr>
+                        <tr>
+                            <td>Mauvais joueur highlighted</td>
+                            <td>Bug d'interface</td>
+                            <td>Vérifier gameState.currentPlayerPosition</td>
+                        </tr>
+                        <tr>
+                            <td>Ordre complètement chaotique</td>
+                            <td>Bug de logique</td>
+                            <td>Vérifier getFirstPlayerToAct</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="test-section">
+            <h2>📋 Conclusion</h2>
+            
+            <div class="correct">
+                <h3>✅ Code Serveur Correct</h3>
+                <p>La logique dans <code>turnManager.ts</code> est <strong>correcte selon les règles officielles</strong> :</p>
+                <ul>
+                    <li>Pré-flop : UTG parle en premier ✅</li>
+                    <li>Post-flop : SB parle en premier ✅</li>
+                </ul>
+            </div>
+
+            <div class="incorrect">
+                <h3>🔍 Investigation Nécessaire</h3>
+                <p>Le problème est probablement :</p>
+                <ul>
+                    <li><strong>Interface utilisateur :</strong> Bug d'affichage ou de synchronisation</li>
+                    <li><strong>Pas la logique métier :</strong> Le serveur gère correctement l'ordre</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🃏 Test Ordre d\'Action - Instructions de Debug');
+        console.log('1. Vérifiez gameState.phase dans votre partie');
+        console.log('2. Vérifiez gameState.currentPlayerPosition'); 
+        console.log('3. Comparez avec les règles affichées ici');
+
+        // Simulateur simple pour test
+        function simulateActionOrder(dealerPos, numPlayers, phase) {
+            console.log(`\n🎯 Simulation: Dealer pos ${dealerPos}, ${numPlayers} joueurs, phase ${phase}`);
+            
+            if (phase === 'preflop') {
+                if (numPlayers === 2) {
+                    console.log(`Premier à parler: Position ${dealerPos} (SB/Dealer)`);
+                } else {
+                    const utg = (dealerPos + 3) % numPlayers;
+                    console.log(`Premier à parler: Position ${utg} (UTG)`);
+                }
+            } else {
+                const sb = (dealerPos + 1) % numPlayers;
+                console.log(`Premier à parler: Position ${sb} (SB)`);
+            }
+        }
+
+        // Tests automatiques
+        simulateActionOrder(3, 4, 'preflop');  // Dealer pos 3 -> UTG pos 2
+        simulateActionOrder(3, 4, 'flop');     // Dealer pos 3 -> SB pos 0
+        simulateActionOrder(3, 4, 'turn');     // Dealer pos 3 -> SB pos 0
+        simulateActionOrder(3, 4, 'river');    // Dealer pos 3 -> SB pos 0
+    </script>
+</body>
+</html>

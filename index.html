@@ -3,8 +3,61 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
     <title>Poker Texas Hold'em</title>
+    <style>
+      /* iOS-specific fixes */
+      @supports (-webkit-touch-callout: none) {
+        /* iPhone Safari specific styles */
+        body {
+          -webkit-text-size-adjust: 100%;
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+        }
+        
+        /* Fix for iOS Safari viewport issues */
+        .ios-fix {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+        }
+        
+        /* Prevent zoom on input focus */
+        input, textarea, select {
+          font-size: 16px !important;
+        }
+        
+        /* Fix for safe area on iPhone X and newer */
+        .safe-area {
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+      
+      /* Prevent horizontal scroll on mobile */
+      html, body {
+        overflow-x: hidden;
+        position: relative;
+        width: 100%;
+      }
+      
+      /* Fix for mobile viewport height */
+      .mobile-viewport {
+        height: 100vh;
+        height: -webkit-fill-available;
+        height: fill-available;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

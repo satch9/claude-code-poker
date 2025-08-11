@@ -3,15 +3,16 @@ import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { BettingControls } from "./BettingControls";
 import { ActionFeed } from "./ActionFeed";
-import { ActionTimer } from "./ActionTimer";
+// import { ActionTimer } from "./ActionTimer"; // Unused
 import { HandStats } from "./HandStats";
 import { TurnIndicator } from "./TurnIndicator";
 import { ShowdownResults } from "./ShowdownResults";
 import { Button } from "../UI/Button";
 import { LandscapeWarning } from "../UI/LandscapeWarning";
-import { cn } from "../../../shared/utils/cn";
+import { cn } from "@/shared/utils/cn";
 import { useGameLogic } from "../../hooks/useGameLogic";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
+import { useResponsiveClasses, useSeatPositioning } from "../../hooks/useResponsiveClasses";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 interface PokerTableProps {
@@ -29,10 +30,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 }) => {
   const [showGameInfo, setShowGameInfo] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Masquée par défaut sur mobile
 
   // Use hooks
-  const { isMobile, isTablet, isDesktop } = useBreakpoint();
-  
+  const { isMobile, isTablet, isIOS } = useBreakpoint();
+  const responsiveClasses = useResponsiveClasses();
+  const seatPositioning = useSeatPositioning();
+
   // Use game logic hook
   const {
     table,
@@ -75,20 +79,27 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Calculate seat positions for oval table (optimized for different player counts)
   const getSeatPosition = (position: number, maxPlayers: number) => {
     let angle: number;
-    
+
     // Positionnement optimisé selon le nombre de joueurs
     if (maxPlayers === 2) {
-      // Pour 2 joueurs : face à face
-      const angles = [
+      // Pour 2 joueurs : face à face avec positions ajustées pour mobile
+      const angles = isMobile ? [
+        Math.PI / 2 + 0.2,      // Position 0: Bas légèrement décalé
+        -Math.PI / 2 - 0.2      // Position 1: Haut légèrement décalé
+      ] : [
         Math.PI / 2,      // Position 0: Bas
         -Math.PI / 2      // Position 1: Haut
       ];
       angle = angles[position % 2];
     } else if (maxPlayers === 3) {
-      // Pour 3 joueurs : reproduction exacte de l'image de référence
-      const angles = [
+      // Pour 3 joueurs : positions ajustées pour mobile
+      const angles = isMobile ? [
         -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 7/6,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI * 7 / 6 + 0.1, // Position 1 (SB): Bas/gauche légèrement décalé
+        Math.PI / 3 - 0.1      // Position 2 (BB): Bas/droite légèrement décalé
+      ] : [
+        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
+        Math.PI * 7 / 6,         // Position 1 (SB): Bas/gauche (8h)
         Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
       ];
       angle = angles[position % 3];
@@ -127,18 +138,20 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       // Commencer par le haut et distribuer dans le sens horaire
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
-    
-    // Radius ajusté pour positionner les seats en dehors de la table
-    const radiusX = isMobile ? 52 : 58; // Horizontal radius percentage (en dehors de la table)
-    const radiusY = isMobile ? 35 : 40; // Vertical radius percentage (en dehors de la table)
+
+    // Radius ajusté pour positionner les seats au bord de la table
+    const radiusX = seatPositioning.radius.radiusX; // Horizontal radius percentage (au bord de la table)
+    const radiusY = seatPositioning.radius.radiusY; // Vertical radius percentage (au bord de la table)
 
     // Calculer la position avec contraintes pour éviter les débordements
     const rawX = 50 + radiusX * Math.cos(angle);
     const rawY = 50 + radiusY * Math.sin(angle);
-    
-    // Contraindre dans les limites visibles (seats en dehors de la table)
-    const x = Math.max(2, Math.min(98, rawX)); // Plus large pour seats en dehors
-    const y = Math.max(5, Math.min(95, rawY)); // Plus d'espace vertical
+
+    // Contraindre dans les limites visibles (seats au bord de la table)
+    // Ajustement pour mobile pour éviter les empiètements  
+    const { constraints } = seatPositioning;
+    const x = Math.max(constraints.minX, Math.min(constraints.maxX, rawX)); // Seats au bord de la table
+    const y = Math.max(constraints.minY, Math.min(constraints.maxY, rawY)); // Espace vertical ajusté
 
     return {
       left: `${x}%`,
@@ -151,7 +164,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Calculate dealer button position (in front of player seat)
   const getDealerButtonPosition = (position: number, maxPlayers: number) => {
     let angle;
-    
+
     // Utiliser la même logique de positionnement que les seats
     if (maxPlayers === 2) {
       const angles = [
@@ -162,7 +175,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     } else if (maxPlayers === 3) {
       const angles = [
         -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 7/6,         // Position 1 (SB): Bas/gauche (8h)
+        Math.PI * 7 / 6,         // Position 1 (SB): Bas/gauche (8h)
         Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
       ];
       angle = angles[position % 3];
@@ -197,12 +210,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       // Pour 7+ joueurs : distribution circulaire équilibrée
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
-    
-    const radiusX = 38; // Entre le centre et les player seats, visible
-    const radiusY = 28; // Entre le centre et les player seats, visible
 
-    const x = 50 + radiusX * Math.cos(angle);
-    const y = 50 + radiusY * Math.sin(angle);
+    // Utiliser les hooks pour le positionnement
+    const { radiusX, radiusY } = seatPositioning.radius;
+    const { minX, maxX, minY, maxY } = seatPositioning.constraints;
+
+    const rawX = 50 + radiusX * Math.cos(angle);
+    const rawY = 50 + radiusY * Math.sin(angle);
+
+    // Contraindre dans les limites visibles
+    const x = Math.max(minX, Math.min(maxX, rawX));
+    const y = Math.max(minY, Math.min(maxY, rawY));
 
     return {
       left: `${x}%`,
@@ -232,27 +250,68 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   });
 
   function getSmallBlindPosition() {
-    if (!players || !gameState || !table) return 0;
-    if (players.length === 2) {
-      return gameState.dealerPosition; // In heads-up, dealer is small blind
+    if (!players || !gameState || !table) return -1;
+
+    // Obtenir les positions réelles des joueurs actifs avec chips
+    const playerPositions = players
+      .filter(p => p.user && p.chips > 0) // Joueurs présents avec chips
+      .map(p => p.seatPosition)
+      .sort((a, b) => a - b);
+
+    if (playerPositions.length < 2) return -1;
+
+    if (playerPositions.length === 2) {
+      // Heads-up: dealer est small blind
+      return gameState.dealerPosition;
+    } else {
+      // Multi-way: small blind est le joueur actif suivant le dealer
+      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
+      if (dealerIndex === -1) {
+        // Dealer éliminé, utiliser la logique de rotation
+        console.warn(`Dealer position ${gameState.dealerPosition} not found in active players`);
+        return playerPositions[0]; // Fallback
+      }
+      const sbIndex = (dealerIndex + 1) % playerPositions.length;
+      return playerPositions[sbIndex];
     }
-    return (gameState.dealerPosition + 1) % table.maxPlayers;
   }
 
   function getBigBlindPosition() {
-    if (!players || !gameState || !table) return 0;
-    if (players.length === 2) {
-      return (gameState.dealerPosition + 1) % table.maxPlayers;
+    if (!players || !gameState || !table) return -1;
+
+    // Obtenir les positions réelles des joueurs actifs avec chips
+    const playerPositions = players
+      .filter(p => p.user && p.chips > 0) // Joueurs présents avec chips
+      .map(p => p.seatPosition)
+      .sort((a, b) => a - b);
+
+    if (playerPositions.length < 2) return -1;
+
+    if (playerPositions.length === 2) {
+      // Heads-up: big blind est le non-dealer
+      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
+      if (dealerIndex === -1) return playerPositions[0]; // Fallback
+      const bbIndex = (dealerIndex + 1) % playerPositions.length;
+      return playerPositions[bbIndex];
+    } else {
+      // Multi-way: big blind est 2 positions après le dealer
+      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
+      if (dealerIndex === -1) {
+        console.warn(`Dealer position ${gameState.dealerPosition} not found in active players`);
+        return playerPositions[1]; // Fallback
+      }
+      const bbIndex = (dealerIndex + 2) % playerPositions.length;
+      return playerPositions[bbIndex];
     }
-    return (gameState.dealerPosition + 2) % table.maxPlayers;
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden">
+    <div className={responsiveClasses.pokerTableContainer}>
+
       {/* Landscape Warning for mobile portrait */}
       <LandscapeWarning />
       {/* Header - hidden on mobile */}
-      {!isMobile && (
+      {(!isMobile && !isIOS) && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 p-4">
           <div className="text-white">
             <h1 className="text-2xl font-bold">{appTitle} - {table.name}</h1>
@@ -276,7 +335,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   {isProcessing ? "Démarrage..." : "Démarrer la partie"}
                 </Button>
               )}
-            
+
             <Button variant="secondary" onClick={onLeaveTable}>
               Quitter la table
             </Button>
@@ -289,12 +348,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         "flex flex-1",
         isMobile ? "overflow-hidden" : "overflow-x-auto"
       )} style={!isMobile ? { minWidth: "1200px" } : {}}>
-        
+
         {/* Left sidebar - Actions (desktop/tablet only) */}
-        {!isMobile && (
+        {(!isMobile && !isIOS) && (
           <div className={cn(
-            "flex-shrink-0 p-4 border-r border-poker-green-700 space-y-4 overflow-y-auto",
-            isTablet ? "w-60" : "w-80"
+            responsiveClasses.sidebarWidth,
+            "p-4 border-r"
           )}>
             <ActionFeed actions={actionHistory} />
 
@@ -326,32 +385,20 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         {/* Center - Table */}
         <div className={cn(
           "flex-1 flex flex-col items-center",
-          isMobile ? "p-2 pb-20" : "p-4"
+          responsiveClasses.responsivePadding,
+          isIOS && "safe-area"
         )} style={!isMobile ? { maxWidth: isTablet ? "calc(100% - 480px)" : "calc(100% - 640px)" } : {}}>
-          
-          {/* Main table area - fullscreen on mobile */}
-          <div className={cn(
-            "relative w-full",
-            isMobile ? "h-full max-w-none" : "max-w-4xl h-[700px]"
-          )}>
-            {/* Table shadow */}
-            <div className="absolute inset-2 bg-black/20 blur-xl" style={{borderRadius: '50%'}}></div>
 
-            {/* Table felt - More oval shape */}
-            <div
-              className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 shadow-2xl"
-              style={{
-                borderRadius: '50%',
-                transform: 'scaleY(0.7)', // Make it more oval
-                border: "12px solid transparent",
-                backgroundImage:
-                  "linear-gradient(to bottom right, #10b981, #059669, #047857), linear-gradient(45deg, #f59e0b, #d97706, #92400e, #d97706, #f59e0b)",
-                backgroundOrigin: "padding-box, border-box",
-                backgroundClip: "padding-box, border-box",
-              }}
-            >
+          {/* Main table area - fullscreen on mobile */}
+          <div className={responsiveClasses.tableContainer}>
+            {/* Mobile table container removed - was interfering with cards display */}
+            {/* Table shadow */}
+            <div className="absolute inset-1 bg-black/50 blur-2xl" style={{ borderRadius: '50%' }}></div>
+
+            {/* Table felt - More oval shape with enhanced border */}
+            <div className={responsiveClasses.pokerTableFelt}>
               {/* Table texture overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/30 rounded-full"></div>
+              <div className="absolute inset-3 bg-gradient-to-br from-white/5 via-transparent to-black/30 rounded-full"></div>
 
               {/* Enhanced felt texture */}
               <div
@@ -367,22 +414,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
               {/* Inner decorative rings */}
               <div
-                className="absolute inset-6 border-2 rounded-full"
-                style={{ borderColor: "rgba(245, 158, 11, 0.3)" }}
+                className="absolute inset-4 border-2 rounded-full"
+                style={{ borderColor: "rgba(245, 158, 11, 0.4)" }}
               ></div>
               <div
-                className="absolute inset-8 border rounded-full"
-                style={{ borderColor: "rgba(245, 158, 11, 0.2)" }}
+                className="absolute inset-6 border rounded-full"
+                style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}
               ></div>
 
               {/* Center area with community cards */}
-              <div className={cn(
-                "absolute top-1/2 left-1/2 z-10 flex flex-col items-center",
-                isMobile && "scale-75"
-              )}
-              style={{
-                transform: isMobile ? 'translate(-50%, -50%) scaleY(1.43) scale(0.75)' : 'translate(-50%, -50%) scaleY(1.43)'
-              }}>
+              <div className={responsiveClasses.tableCenter}
+                style={{
+                  transform: isMobile ? 'translate(-50%, -50%) scaleY(1.43) scale(0.75)' : 'translate(-50%, -50%) scaleY(1.43)'
+                }}>
                 {/* Community cards */}
                 <CommunityCards
                   cards={gameState.communityCards}
@@ -394,10 +438,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {/* Dealer button */}
               {gameState.dealerPosition >= 0 && (
                 <div
-                  className={cn(
-                    "absolute z-20 bg-gradient-to-br from-white to-gray-100 border-3 border-gray-700 rounded-full flex items-center justify-center font-black text-gray-800 shadow-xl transition-all duration-500",
-                    isMobile ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"
-                  )}
+                  className={responsiveClasses.dealerButton}
                   style={{
                     ...getDealerButtonPosition(
                       gameState.dealerPosition,
@@ -419,12 +460,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   key={seat.position}
                   className={cn(
                     "absolute",
-                    isMobile ? "z-30" : "z-10"
+                    isMobile ? "z-mobile-controls" : "z-table-surface"
                   )}
                   style={{
                     left: seat.seatGeom.left,
                     top: seat.seatGeom.top,
-                    transform: `${seat.seatGeom.transform} scaleY(1.43)`
+                    transform: `${seat.seatGeom.transform} ${seatPositioning.seatTransform}`
                   }}
                 >
                   <PlayerSeat
@@ -453,7 +494,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
               {/* Side pots indicator */}
               {gameState.sidePots.length > 0 && (
-                <div 
+                <div
                   className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50"
                   style={{ transform: 'scaleY(1.43)' }}
                 >
@@ -476,32 +517,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )}
 
 
-              {/* Game info button - Mobile only */}
-              {isMobile && (
-                <div className="absolute top-4 right-4 z-50">
-                  <button
-                    onClick={() => setShowGameInfo(!showGameInfo)}
-                    className="w-12 h-12 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg border border-white/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
-                  >
-                  <svg
-                    className="w-6 h-6 text-gray-700"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
+          {/* Betting controls below table (outside of table container) */}
           {/* Betting controls below table (outside of table container) */}
           {currentPlayer &&
             isMyTurn &&
@@ -509,7 +528,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             availableActions.length > 0 && (
               <div className={cn(
                 "w-full",
-                isMobile ? "mt-2 max-w-none" : "mt-6 max-w-4xl"
+                isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl"
               )}>
                 <BettingControls
                   availableActions={availableActions as any}
@@ -528,134 +547,147 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         {/* Right sidebar - Chat and features (desktop/tablet only) */}
         {!isMobile && (
           <div className={cn(
-            "flex-shrink-0 p-4 border-l border-poker-green-700 space-y-4 overflow-y-auto",
-            isTablet ? "w-60" : "w-80"
+            responsiveClasses.sidebarWidth,
+            "p-4 border-l"
           )}>
-          {/* Chat placeholder */}
-          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12a8 8 0 018-8c4.418 0 8 3.582 8 8z"
-                />
-              </svg>
-              Chat
-            </h3>
-            <div className="text-poker-green-200 text-sm">
-              <div className="bg-poker-green-900/50 rounded p-2 mb-2">
-                Chat sera disponible prochainement
+            {/* Chat placeholder */}
+            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12a8 8 0 018-8c4.418 0 8 3.582 8 8z"
+                  />
+                </svg>
+                Chat
+              </h3>
+              <div className="text-poker-green-200 text-sm">
+                <div className="bg-poker-green-900/50 rounded p-2 mb-2">
+                  Chat sera disponible prochainement
+                </div>
+              </div>
+            </div>
+
+            {/* Table settings placeholder */}
+            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Paramètres
+              </h3>
+              <div className="space-y-2">
+                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                  Sons et notifications
+                </button>
+                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                  Animations
+                </button>
+                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
+                  Affichage
+                </button>
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Actions rapides
+              </h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowGameInfo(true)}
+                  className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Infos de la partie
+                </button>
+                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
+                  </svg>
+                  Inviter des joueurs
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Table settings placeholder */}
-          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              Paramètres
-            </h3>
-            <div className="space-y-2">
-              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                Sons et notifications
-              </button>
-              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                Animations
-              </button>
-              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                Affichage
-              </button>
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-              Actions rapides
-            </h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowGameInfo(true)}
-                className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Infos de la partie
-              </button>
-              <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-                Inviter des joueurs
-              </button>
-            </div>
-          </div>
-          </div>
         )}
 
-        {/* Mobile bottom menu - fixed navigation */}
+        {/* Mobile left sidebar - fixed navigation */}
         {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-poker-green-800/95 backdrop-blur-sm border-t border-poker-green-600">
-            <div className="flex items-center justify-around py-2 px-4">
+          <div className={cn(
+            "fixed left-0 top-1/2 transform -translate-y-1/2 z-40 bg-poker-green-800/95 backdrop-blur-sm border-r border-poker-green-600 rounded-r-lg transition-transform duration-300",
+            showMobileSidebar ? "translate-x-0" : "-translate-x-full",
+            isIOS && "safe-area"
+          )}>
+            <div className="flex flex-col items-center justify-around py-4 px-2">
+              {/* Toggle button */}
+              <button
+                onClick={() => setShowMobileSidebar(false)}
+                className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-poker-green-800/95 backdrop-blur-sm border border-poker-green-600 rounded-full flex items-center justify-center transition-colors hover:bg-poker-green-700/95"
+              >
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
               {/* Menu button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -719,6 +751,26 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </div>
         )}
 
+        {/* Mobile sidebar toggle button - only visible when sidebar is hidden */}
+        {isMobile && !showMobileSidebar && (
+          <button
+            onClick={() => setShowMobileSidebar(true)}
+            className={cn(
+              "fixed left-0 top-1/2 transform -translate-y-1/2 z-50 bg-poker-green-800/95 backdrop-blur-sm border-r border-poker-green-600 rounded-r-lg p-2 transition-all duration-300",
+              isIOS && "safe-area"
+            )}
+          >
+            <svg
+              className="w-5 h-5 text-white transition-transform duration-300 rotate-180"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
         {/* Mobile menu modal */}
         {isMobile && showMobileMenu && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -755,7 +807,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   </svg>
                   Infos de la partie
                 </button>
-                
+
                 {gameStats && (
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">Statistiques</h4>
@@ -766,7 +818,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 <button
                   onClick={() => {
                     onLeaveTable();
@@ -854,17 +906,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     className={cn(
                       "font-semibold px-3 py-1 rounded-full text-sm",
                       gameState.phase === "waiting" &&
-                        "bg-gray-200 text-gray-700",
+                      "bg-gray-200 text-gray-700",
                       gameState.phase === "preflop" &&
-                        "bg-blue-200 text-blue-700",
+                      "bg-blue-200 text-blue-700",
                       gameState.phase === "flop" &&
-                        "bg-green-200 text-green-700",
+                      "bg-green-200 text-green-700",
                       gameState.phase === "turn" &&
-                        "bg-yellow-200 text-yellow-700",
+                      "bg-yellow-200 text-yellow-700",
                       gameState.phase === "river" &&
-                        "bg-orange-200 text-orange-700",
+                      "bg-orange-200 text-orange-700",
                       gameState.phase === "showdown" &&
-                        "bg-purple-200 text-purple-700"
+                      "bg-purple-200 text-purple-700"
                     )}
                   >
                     {gameState.phase.toUpperCase()}

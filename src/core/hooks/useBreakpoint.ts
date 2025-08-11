@@ -11,12 +11,19 @@ export interface BreakpointState {
   height: number;
   isLandscape: boolean;
   isPortrait: boolean;
+  isIOS: boolean;
+  isSafari: boolean;
 }
 
 const getBreakpoint = (width: number): BreakpointType => {
-  if (width < 1024) return 'mobile';
-  if (width < 1200) return 'tablet';
+  if (width < 768) return 'mobile';
+  if (width < 1024) return 'tablet';
   return 'desktop';
+};
+
+// Force mobile detection for iOS devices regardless of width
+const forceMobileForIOS = (userAgent: string): boolean => {
+  return /iPad|iPhone|iPod/.test(userAgent);
 };
 
 export const useBreakpoint = (): BreakpointState => {
@@ -31,22 +38,31 @@ export const useBreakpoint = (): BreakpointState => {
         height: 800,
         isLandscape: true,
         isPortrait: false,
+        isIOS: false,
+        isSafari: false,
       };
     }
 
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const breakpoint = getBreakpoint(width);
+    const userAgent = window.navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+    
+    // Force mobile detection for iOS devices
+    const breakpoint = isIOS ? 'mobile' : getBreakpoint(width);
     
     return {
       breakpoint,
-      isMobile: breakpoint === 'mobile',
-      isTablet: breakpoint === 'tablet',
-      isDesktop: breakpoint === 'desktop',
+      isMobile: breakpoint === 'mobile' || isIOS,
+      isTablet: breakpoint === 'tablet' && !isIOS,
+      isDesktop: breakpoint === 'desktop' && !isIOS,
       width,
       height,
       isLandscape: width > height,
       isPortrait: height > width,
+      isIOS,
+      isSafari,
     };
   });
 
@@ -54,17 +70,24 @@ export const useBreakpoint = (): BreakpointState => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const breakpoint = getBreakpoint(width);
+      const userAgent = window.navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+      const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+      
+      // Force mobile detection for iOS devices
+      const breakpoint = isIOS ? 'mobile' : getBreakpoint(width);
       
       setBreakpointState({
         breakpoint,
-        isMobile: breakpoint === 'mobile',
-        isTablet: breakpoint === 'tablet',
-        isDesktop: breakpoint === 'desktop',
+        isMobile: breakpoint === 'mobile' || isIOS,
+        isTablet: breakpoint === 'tablet' && !isIOS,
+        isDesktop: breakpoint === 'desktop' && !isIOS,
         width,
         height,
         isLandscape: width > height,
         isPortrait: height > width,
+        isIOS,
+        isSafari,
       });
     };
 
