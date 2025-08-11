@@ -105,7 +105,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   return (
     <div
       className={cn(
-        "relative bg-gray-800/90 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-xl",
+        "relative z-0 bg-gray-800/90 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-xl",
         isMobile ? "p-2 w-40 h-12" : "p-3 w-52 h-16",
         isCurrentPlayer && "ring-2 ring-yellow-400 shadow-2xl",
         isActivePlayer &&
@@ -177,11 +177,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       {/* Cards positioned separately towards the center */}
       <div
         className={cn(
-          "absolute flex -z-[300]",
+          "absolute flex -z-10",
           // Espacement pour toutes les cartes (côte à côte)
           isMobile ? "gap-1" : "gap-1.5"
         )}
-        style={seatAngle !== undefined ? getCardsStyleFromAngle(seatAngle) : undefined}
+        style={seatAngle !== undefined ? getCardsStyleFromAngle(seatAngle, isCurrentPlayer) : undefined}
       >
         {player.cards.length > 0 ? (
           player.cards.map((cardStr, index) => {
@@ -319,10 +319,10 @@ function getActionLabel(action: string) {
   }
 }
 
-function getCardsStyleFromAngle(angleRad: number) {
+function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = false) {
   // Décale les cartes légèrement vers le centre de la table selon l'angle du siège
   // Les seats sont centrés via translate(-50%, -50%), on ajoute un offset relatif
-  const distancePx = 18; // distance depuis le siège vers le centre
+  const distancePx = isCurrentPlayer ? 24 : 16; // joueur courant un peu plus visible
   const dx = Math.cos(angleRad) * (-distancePx); // vers le centre = opposé au rayon
   const dy = Math.sin(angleRad) * (-distancePx);
   // Position de base: centré horizontalement sous le seat
