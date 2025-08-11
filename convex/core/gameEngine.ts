@@ -174,7 +174,16 @@ async function startGameInternal(ctx: any, tableId: string) {
   }
 
   // Find first player to act (after big blind in preflop)
+  console.log(`🎯 === ANALYSE ORDRE D'ACTION - PHASE: PREFLOP ===`);
+  console.log(`📍 Dealer position: ${dealerPosition}`);
+  console.log(`👥 All players: ${JSON.stringify(playerPositions)}`);
+  
   const firstPlayerPosition = getFirstPlayerToAct(dealerPosition, playerPositions, 'preflop');
+  
+  console.log(`✅ Premier joueur calculé (preflop): Pos${firstPlayerPosition}`);
+  console.log(`📜 Règle: En preflop, UTG (Dealer+3) parle en premier`);
+  console.log(`🎯 Logique: Dealer(${dealerPosition}) + 3 → Pos${firstPlayerPosition}`);
+  console.log("========================");
 
   // Update game state
   await ctx.db
@@ -250,6 +259,12 @@ export const playerAction = mutation({
     if (!player) {
       throw new Error("Player not found");
     }
+
+    // Log player action for debugging
+    console.log(`🎮 === ACTION JOUEUR - PHASE: ${gameState.phase.toUpperCase()} ===`);
+    console.log(`👤 Joueur: Pos${player.seatPosition} | Action: ${args.action}`);
+    console.log(`📊 État: Dealer=Pos${gameState.dealerPosition}, JoueurActuel=Pos${gameState.currentPlayerPosition}`);
+    console.log(`💰 Mise: ${gameState.currentBet}, Joueur payé: ${player.currentBet}`);
 
     // Validate it's player's turn
     if (gameState.currentPlayerPosition !== player.seatPosition) {
@@ -671,11 +686,20 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     return;
   }
 
+  console.log(`🎯 === ANALYSE ORDRE D'ACTION - PHASE: ${nextPhase.toUpperCase()} ===`);
+  console.log(`📍 Dealer position: ${gameState.dealerPosition}`);
+  console.log(`👥 Active players (non all-in): ${JSON.stringify(playerPositions)}`);
+  
   const firstPlayerPosition = getFirstPlayerToAct(
     gameState.dealerPosition,
     playerPositions,
     'postflop'
   );
+  
+  console.log(`✅ Premier joueur calculé: Pos${firstPlayerPosition}`);
+  console.log(`📜 Règle: En ${nextPhase}, SB (ou premier après dealer) parle en premier`);
+  console.log(`🎯 Logique: Dealer(${gameState.dealerPosition}) + 1 → Pos${firstPlayerPosition}`);
+  console.log("========================");
 
   await ctx.db.patch(gameState._id, {
     phase: nextPhase,

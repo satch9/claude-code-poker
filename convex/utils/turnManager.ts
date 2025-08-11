@@ -232,7 +232,18 @@ export function getNextDealerPosition(
   playerPositions: number[]
 ): number {
   const currentIndex = playerPositions.indexOf(currentDealerPosition);
-  if (currentIndex === -1) return playerPositions[0];
+  
+  if (currentIndex === -1) {
+    // Dealer éliminé: trouver le prochain dans l'ordre horaire logique
+    // Chercher la plus petite position > currentDealerPosition
+    const nextPositions = playerPositions.filter(pos => pos > currentDealerPosition);
+    if (nextPositions.length > 0) {
+      return Math.min(...nextPositions);
+    } else {
+      // Pas de position supérieure, prendre la plus petite (wrap around)
+      return Math.min(...playerPositions);
+    }
+  }
   
   const nextIndex = (currentIndex + 1) % playerPositions.length;
   return playerPositions[nextIndex];
