@@ -186,14 +186,14 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         {player.cards.length > 0 ? (
           player.cards.map((cardStr, index) => {
             const parsedCard = showCards ? parseCard(cardStr) : undefined;
-            console.log(`Card ${index} for player at position ${position}:`, {
+            /* console.log(`Card ${index} for player at position ${position}:`, {
               cardStr,
               showCards,
               parsedCard,
               isHidden: !showCards,
               cardRank: parsedCard?.rank,
               cardSuit: parsedCard?.suit,
-            });
+            }); */
             return (
               <Card
                 key={index}
