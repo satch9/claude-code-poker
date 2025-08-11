@@ -403,6 +403,17 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     handleRaise,
     handleAllIn,
     handleTimeOut,
+    handleAdvancePhase: async () => {
+      if (!tableId) return;
+      try {
+        setIsProcessing(true);
+        await advancePhase({ tableId });
+      } catch (error) {
+        console.error('Error advancing phase:', error);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
     
     // Betting utilities
     getBettingInfo,
