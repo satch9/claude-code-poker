@@ -173,13 +173,34 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
                   errors.maxPlayers ? 'border-red-500' : 'border-gray-300'
                 )}
               >
-                {[2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                  <option key={num} value={num}>{num} joueurs</option>
-                ))}
+                {[2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+                  const descriptions = {
+                    2: 'Heads-up',
+                    3: 'Trio', 
+                    4: 'Carré',
+                    5: 'Petit groupe',
+                    6: 'Standard',
+                    7: 'Grande table',
+                    8: 'Full ring',
+                    9: 'Max (très dynamique)'
+                  };
+                  return (
+                    <option key={num} value={num}>
+                      {num} joueurs {descriptions[num as keyof typeof descriptions] && `(${descriptions[num as keyof typeof descriptions]})`}
+                    </option>
+                  );
+                })}
               </select>
               {errors.maxPlayers && (
                 <p className="mt-1 text-sm text-red-600">{errors.maxPlayers}</p>
               )}
+              <div className="mt-2 text-xs text-gray-500">
+                <p>
+                  <strong>2-3 joueurs:</strong> Parties rapides et intenses • 
+                  <strong>4-6 joueurs:</strong> Équilibre parfait • 
+                  <strong>7-9 joueurs:</strong> Action maximale
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
