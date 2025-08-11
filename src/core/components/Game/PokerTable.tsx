@@ -73,7 +73,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Calculate seat positions for oval table (optimized for different player counts)
   const getSeatPosition = (position: number, maxPlayers: number) => {
-    let angle;
+    let angle: number;
     
     // Positionnement optimisé selon le nombre de joueurs
     if (maxPlayers === 3) {
@@ -112,7 +112,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       left: `${x}%`,
       top: `${y}%`,
       transform: "translate(-50%, -50%)",
-    };
+      angle,
+    } as const;
   };
 
   // Calculate dealer button position (in front of player seat)
@@ -154,6 +155,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const seats = Array.from({ length: table.maxPlayers }, (_, position) => {
     const player = players.find((p) => p.seatPosition === position && p.user);
     const isEmpty = !player;
+    const seatGeom = getSeatPosition(position, table.maxPlayers);
 
     return {
       position,
@@ -164,7 +166,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       isSmallBlind: getSmallBlindPosition() === position,
       isBigBlind: getBigBlindPosition() === position,
       isActivePlayer: gameState.currentPlayerPosition === position,
-    };
+      seatAngle: seatGeom.angle,
+      seatGeom,
+    } as const;
   });
 
   function getSmallBlindPosition() {
@@ -358,13 +362,15 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     isMobile ? "z-30" : "z-10"
                   )}
                   style={{
-                    ...getSeatPosition(seat.position, table.maxPlayers),
-                    transform: `${getSeatPosition(seat.position, table.maxPlayers).transform} scaleY(1.43)`
+                    left: seat.seatGeom.left,
+                    top: seat.seatGeom.top,
+                    transform: `${seat.seatGeom.transform} scaleY(1.43)`
                   }}
                 >
                   <PlayerSeat
                     player={seat.player as any}
                     position={seat.position}
+                    seatAngle={seat.seatAngle}
                     isDealer={seat.isDealer}
                     isCurrentPlayer={seat.isCurrentPlayer}
                     isActivePlayer={seat.isActivePlayer}
