@@ -272,6 +272,21 @@
   - Vérifier la chaîne `evaluateHandRobust` → score → comparaison
   - Probablement un revert partiel du mapping `rank - 1` ou correction du calcul de score qui tient compte des kickers
 
+#### B-runtime.6 — Bouton "Continuer" au showdown visible aux 2 joueurs
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 4.9 (remarque user)
+- **Localisation** : `src/core/components/Game/ShowdownResults.tsx` ou `PokerTable.tsx`
+- **Description** : Au showdown, un bouton "Continuer" s'affiche aux 2 joueurs, alors qu'il devrait être réservé au créateur (cohérent avec B-runtime.3 sur le bouton démarrer).
+- **Recommandation** : ajouter check `currentPlayer.userId === table.creatorId` (et idem côté serveur dans la mutation correspondante).
+
+#### B-runtime.7 — Pot non réparti équitablement malgré annonce de split
+- **Sévérité** : 🔴
+- **Source** : smoke checklist case 4.10
+- **Localisation** : `convex/core/gameEngine.ts:determineWinner` + distribution du pot
+- **Description** : Le système annonce un partage du pot ("split") au showdown, mais les jetons ne sont pas répartis équitablement entre les 2 joueurs. Incohérence directe entre le message affiché et la distribution effective.
+- **Reproduction** : couplé à B-runtime.5 (gagnant faux annoncé split), résultat des stacks finaux inégaux entre les 2 joueurs.
+- **Recommandation** : faire converger l'annonce et la distribution. Probable cause : `determineWinners` retourne plusieurs `playerIds` (split), mais la fonction de distribution écrase/perd le détail. À auditer ensemble avec B-runtime.5.
+
 ## Suite
 
 À la reprise de 0.B :

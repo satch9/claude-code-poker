@@ -48,16 +48,16 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 4 — Partie heads-up complète
 
-- [ ] **4.1** A (créateur) clique "démarrer" → la partie commence. Statut :
-- [ ] **4.2** Les 2 joueurs voient leurs 2 cartes privées (l'un ne voit pas celles de l'autre). Statut :
-- [ ] **4.3** Les blindes sont posées correctement (SB par dealer, BB par l'autre). Statut :
-- [ ] **4.4** Préflop : SB doit agir en premier (heads-up). Statut :
-- [ ] **4.5** A peut call/fold/raise/all-in selon les options proposées. Statut :
-- [ ] **4.6** Après que les 2 ont agi, le flop apparaît (3 cartes communautaires). Statut :
-- [ ] **4.7** Postflop : BB doit agir en premier (heads-up). Statut :
-- [ ] **4.8** Turn → river → showdown : les phases s'enchaînent correctement. Statut :
+- [x] **4.1** A (créateur) clique "démarrer" → la partie commence. Statut : ✅ ok (rappel: B-runtime.3 — bouton aussi visible à B)
+- [x] **4.2** Les 2 joueurs voient leurs 2 cartes privées (l'un ne voit pas celles de l'autre). Statut : ✅ ok
+- [ ] **4.3** Les blindes sont posées correctement (SB par dealer, BB par l'autre). Statut : à vérifier (en heads-up : dealer = SB, autre = BB)
+- [x] **4.4** Préflop : SB doit agir en premier (heads-up). Statut : ✅ ok
+- [x] **4.5** A peut call/fold/raise/all-in selon les options proposées. Statut : ✅ ok
+- [x] **4.6** Après que les 2 ont agi, le flop apparaît (3 cartes communautaires). Statut : ✅ ok (à confirmer ultérieurement : pas de doublon entre cartes privées et communautaires — cf. **B4.1 statique**)
+- [x] **4.7** Postflop : BB doit agir en premier (heads-up). Statut : ✅ ok
+- [x] **4.8** Turn → river → showdown : les phases s'enchaînent correctement. Statut : ✅ ok
 - [x] **4.9** Au showdown, les 2 mains sont révélées et le gagnant est désigné. Statut : ❌ **partage déclaré à tort** : Eliott (A 6) vs Satch9 (4 Q), board A 9 10 Q 10. Eliott a 2 paires AA+1010 kicker Q (meilleure paire haute), Satch9 a 2 paires QQ+1010 kicker A. Eliott devait gagner. **Nouveau finding B-runtime.5 🔴**.
-- [ ] **4.10** Le pot est crédité au gagnant correctement. Statut :
+- [x] **4.10** Le pot est crédité au gagnant correctement. Statut : ❌ Le système annonce "split" mais les jetons ne sont pas répartis également entre les 2 joueurs. Incohérence message UI vs distribution réelle. **Nouveau finding B-runtime.7 🔴**.
 
 ## Parcours 5 — Multi-mains et élimination
 
