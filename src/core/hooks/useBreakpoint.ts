@@ -21,11 +21,6 @@ const getBreakpoint = (width: number): BreakpointType => {
   return 'desktop';
 };
 
-// Force mobile detection for iOS devices regardless of width
-const forceMobileForIOS = (userAgent: string): boolean => {
-  return /iPad|iPhone|iPod/.test(userAgent);
-};
-
 export const useBreakpoint = (): BreakpointState => {
   const [breakpointState, setBreakpointState] = useState<BreakpointState>(() => {
     if (typeof window === 'undefined') {

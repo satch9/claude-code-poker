@@ -25,7 +25,6 @@ interface BettingControlsProps {
 export const BettingControls: React.FC<BettingControlsProps> = ({
   availableActions,
   playerChips,
-  currentBet,
   potSize,
   onAction,
   disabled = false,

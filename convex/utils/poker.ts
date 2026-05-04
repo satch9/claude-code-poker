@@ -143,7 +143,7 @@ export function calculateMinRaise(currentBet: number, bigBlind: number, lastRais
 export function getBlindPositions(
   dealerPosition: number,
   playerPositions: number[],
-  maxPlayers: number
+  _maxPlayers?: number
 ): { smallBlind: number, bigBlind: number } {
 
   if (playerPositions.length < 2) {

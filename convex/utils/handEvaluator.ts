@@ -119,7 +119,6 @@ function evaluateHandWithGame(cards: Card[], game: 'standard' | 'shortdeck' = 's
 
     // Convertir les cartes au format pokersolver
     const cardStrings = cards.map(cardToPokerSolverFormat);
-    const handString = cardStrings.join(' ');
 
     // Évaluer avec pokersolver
     const solvedHand = Hand.solve(cardStrings, game);
@@ -207,16 +206,9 @@ function evaluateHandFallback(cards: Card[]): EnhancedHandRank {
 }
 
 /**
- * Méthode de fallback pour Short Deck
- */
-function evaluateShortDeckFallback(cards: Card[]): EnhancedHandRank {
-  return evaluateHandFallbackWithGame(cards, 'shortdeck');
-}
-
-/**
  * Méthode de fallback avec type de jeu spécifique
  */
-function evaluateHandFallbackWithGame(cards: Card[], game: 'standard' | 'shortdeck'): EnhancedHandRank {
+function evaluateHandFallbackWithGame(cards: Card[], _game: 'standard' | 'shortdeck'): EnhancedHandRank {
   const sortedCards = [...cards].sort((a, b) => getRankValue(b.rank) - getRankValue(a.rank));
 
   // Logique simplifiée pour déterminer le type de main
@@ -236,9 +228,6 @@ function evaluateHandFallbackWithGame(cards: Card[], game: 'standard' | 'shortde
   const maxRankCount = Math.max(...rankCounts.values());
   const maxSuitCount = Math.max(...suitCounts.values());
   const uniqueRanks = rankCounts.size;
-
-  // Short Deck: les rangs sont différents (pas de 2-5)
-  const isShortDeck = game === 'shortdeck';
 
   if (maxRankCount === 4) {
     rank = 7;
@@ -461,7 +450,7 @@ export function compareShortDeckHands(hand1: EnhancedHandRank, hand2: EnhancedHa
 /**
  * Compare deux mains avec type de jeu spécifique
  */
-function compareHandsWithGame(hand1: EnhancedHandRank, hand2: EnhancedHandRank, game: 'standard' | 'shortdeck'): number {
+function compareHandsWithGame(hand1: EnhancedHandRank, hand2: EnhancedHandRank, _game: 'standard' | 'shortdeck'): number {
   if (hand1.rank !== hand2.rank) {
     return hand2.rank - hand1.rank; // Rang plus élevé gagne
   }

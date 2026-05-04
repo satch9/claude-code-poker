@@ -10,7 +10,7 @@ export const SignInButton: React.FC<SignInButtonProps> = ({
   provider = 'google', 
   className = '' 
 }) => {
-  const { login, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   const handleSignIn = () => {
     // Redirection vers la page d'authentification Convex
