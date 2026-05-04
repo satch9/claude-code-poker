@@ -26,3 +26,6 @@ dist-ssr
 # Convex
 .env.local
 .convex/
+
+# Audit temporaire (phase 0.A)
+.audit-tmp/
