@@ -221,6 +221,16 @@
 
 ---
 
+## Findings runtime supplémentaires (collectés pendant la checklist smoke)
+
+#### B-runtime.1 — UI table cassée sur mobile (portrait + paysage)
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 2.3
+- **Localisation** : `src/core/components/Game/PokerTable.tsx` (responsiveClasses, useSeatPositioning, useResponsiveClasses)
+- **Description** : Sur mobile (portrait et paysage), tout l'UI de la table (sièges, cartes, sidebar) est collé en haut de l'écran. Pas de tapis vert oval visible. Desktop OK.
+- **Reproduction** : ouvrir `https://home-poker.vjdev.tech` sur mobile, créer une table, cliquer sur un siège.
+- **Recommandation** : auditer les classes `pokerTableContainer`, `tableContainer`, `pokerTableFelt` dans `useResponsiveClasses` ; vérifier les positions absolutes des `PlayerSeat` calculées par `useSeatPositioning` à des largeurs <768px.
+
 ## Suite
 
 À la reprise de 0.B :
