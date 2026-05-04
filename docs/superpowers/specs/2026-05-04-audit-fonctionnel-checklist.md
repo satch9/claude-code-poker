@@ -40,8 +40,8 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 3 — Rejoindre table par code
 
-- [ ] **3.1** Joueur B : entrer le code reçu de A → arrive sur la table. Statut :
-- [ ] **3.2** B est assis à un siège libre. Statut :
+- [x] **3.1** Joueur B : entrer le code reçu de A → arrive sur la table. Statut : ❌ parcours "rejoindre par code" non implémenté (confirme **B3.1**). Contournement : B a vu la table dans la liste du lobby (alors que `isPrivate: true` côté DB — la table privée s'affiche quand même publiquement, **nouveau finding B-runtime.2**) et a cliqué dessus pour s'asseoir.
+- [x] **3.2** B est assis à un siège libre. Statut : ✅ ok (clic sur siège libre dans la table)
 - [ ] **3.3** A voit B arriver en temps réel (sans refresh). Statut :
 - [ ] **3.4** Code invalide → erreur claire. Statut :
 - [ ] **3.5** Casse de la casse (CODE en minuscules) → fonctionne ou message clair. Statut :

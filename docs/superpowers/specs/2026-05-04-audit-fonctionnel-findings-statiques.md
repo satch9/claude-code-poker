@@ -231,6 +231,20 @@
 - **Reproduction** : ouvrir `https://home-poker.vjdev.tech` sur mobile, créer une table, cliquer sur un siège.
 - **Recommandation** : auditer les classes `pokerTableContainer`, `tableContainer`, `pokerTableFelt` dans `useResponsiveClasses` ; vérifier les positions absolutes des `PlayerSeat` calculées par `useSeatPositioning` à des largeurs <768px.
 
+#### B-runtime.2 — Table privée listée dans le lobby public
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 3.1
+- **Localisation** : `convex/tables.ts:getPublicTables` (ou `getTablesWithUserInfo`)
+- **Description** : Une table créée avec `isPrivate: true` apparaît tout de même dans la liste publique du lobby, accessible à tout user. Le flag `isPrivate` n'est pas filtré.
+- **Recommandation** : filtrer côté query `q.eq("isPrivate", false)` pour les listes publiques.
+
+#### B-runtime.3 — Bouton "Démarrer la partie" visible par tous les joueurs assis
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 4.1 (avancé)
+- **Localisation** : `src/core/components/Game/PokerTable.tsx:325-337`
+- **Description** : La condition d'affichage du bouton est `phase=waiting && players.length>=2 && currentPlayer` — aucun check sur `userId === table.creatorId`. N'importe quel joueur assis peut démarrer la partie.
+- **Recommandation** : ajouter `currentPlayer.userId === table.creatorId` à la condition. Côté serveur, ajouter aussi le check dans `startGame` mutation.
+
 ## Suite
 
 À la reprise de 0.B :
