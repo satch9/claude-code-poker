@@ -245,6 +245,33 @@
 - **Description** : La condition d'affichage du bouton est `phase=waiting && players.length>=2 && currentPlayer` — aucun check sur `userId === table.creatorId`. N'importe quel joueur assis peut démarrer la partie.
 - **Recommandation** : ajouter `currentPlayer.userId === table.creatorId` à la condition. Côté serveur, ajouter aussi le check dans `startGame` mutation.
 
+#### B-runtime.4 — Message "en attente de joueurs" persiste après que la 2e place soit prise
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 4.1
+- **Localisation** : à identifier (probablement `PokerTable.tsx` ou un composant de header info)
+- **Description** : Le message d'info "en attente de joueurs" reste affiché alors que `players.length === maxPlayers === 2`. Le démarrage de la partie marche mais le message ne disparaît pas (ou ne disparaît qu'après un événement ultérieur).
+- **Recommandation** : conditionner le message sur `players.length < table.maxPlayers`.
+
+#### B-runtime.5 — Détermination du gagnant fausse (split à tort en showdown 2 paires)
+- **Sévérité** : 🔴
+- **Source** : smoke checklist case 4.9
+- **Localisation** : `convex/utils/handEvaluator.ts` (mapping rank pokersolver introduit en commit 3844844 / Task 7 du fix 1.A) et/ou `convex/core/gameEngine.ts:determineWinners`
+- **Description** : Reproduction concrète :
+  - Joueur Eliott : cartes privées A♠ 6
+  - Joueur Satch9 : cartes privées 4 Q
+  - Board (community) : A 9 10 Q 10
+  - Résultat affiché : **partage du pot**
+  - Résultat correct : **Eliott gagne** (2 paires AA + 1010, kicker Q) face à Satch9 (2 paires QQ + 1010, kicker A) — la paire haute A > Q tranche.
+  - Hypothèse forte : le mapping `rank - 1` ajouté pour le bug Royal Flush (commit 3844844) a peut-être cassé la comparaison entre 2 mains de même `rank` mais avec kickers différents. Ou `determineWinners` ne compare pas correctement les kickers en cas d'égalité de rank.
+- **Reproduction** :
+  - Lancer `home-poker.vjdev.tech` avec 2 comptes
+  - Provoquer un showdown avec ces cartes (difficile à reproduire sans deck contrôlé — voir si harness peut forcer un scénario)
+  - OU : test unitaire ciblé sur `evaluateHandRobust` + `determineWinners` avec ces 2 mains
+- **Recommandation** :
+  - Reproduire en test unitaire d'abord (ajouter dans `tests/poker-integrity.test.js` ou nouveau fichier)
+  - Vérifier la chaîne `evaluateHandRobust` → score → comparaison
+  - Probablement un revert partiel du mapping `rank - 1` ou correction du calcul de score qui tient compte des kickers
+
 ## Suite
 
 À la reprise de 0.B :

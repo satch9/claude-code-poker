@@ -42,7 +42,7 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 - [x] **3.1** Joueur B : entrer le code reçu de A → arrive sur la table. Statut : ❌ parcours "rejoindre par code" non implémenté (confirme **B3.1**). Contournement : B a vu la table dans la liste du lobby (alors que `isPrivate: true` côté DB — la table privée s'affiche quand même publiquement, **nouveau finding B-runtime.2**) et a cliqué dessus pour s'asseoir.
 - [x] **3.2** B est assis à un siège libre. Statut : ✅ ok (clic sur siège libre dans la table)
-- [ ] **3.3** A voit B arriver en temps réel (sans refresh). Statut :
+- [x] **3.3** A voit B arriver en temps réel (sans refresh). Statut : ✅ ok
 - [ ] **3.4** Code invalide → erreur claire. Statut :
 - [ ] **3.5** Casse de la casse (CODE en minuscules) → fonctionne ou message clair. Statut :
 
@@ -56,7 +56,7 @@ Pour chaque case, mets un statut + note courte si anomalie :
 - [ ] **4.6** Après que les 2 ont agi, le flop apparaît (3 cartes communautaires). Statut :
 - [ ] **4.7** Postflop : BB doit agir en premier (heads-up). Statut :
 - [ ] **4.8** Turn → river → showdown : les phases s'enchaînent correctement. Statut :
-- [ ] **4.9** Au showdown, les 2 mains sont révélées et le gagnant est désigné. Statut :
+- [x] **4.9** Au showdown, les 2 mains sont révélées et le gagnant est désigné. Statut : ❌ **partage déclaré à tort** : Eliott (A 6) vs Satch9 (4 Q), board A 9 10 Q 10. Eliott a 2 paires AA+1010 kicker Q (meilleure paire haute), Satch9 a 2 paires QQ+1010 kicker A. Eliott devait gagner. **Nouveau finding B-runtime.5 🔴**.
 - [ ] **4.10** Le pot est crédité au gagnant correctement. Statut :
 
 ## Parcours 5 — Multi-mains et élimination
