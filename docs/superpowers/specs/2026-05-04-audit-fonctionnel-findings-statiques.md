@@ -297,6 +297,14 @@
   - Côté UI, afficher un bouton "Recharger N jetons" pour le joueur fauché tant que `table.gameType === "cash"`.
   - Distinguer `gameType` cash vs tournament dans la logique de fin de main : tournament → élimination définitive ; cash → rebuy possible.
 
+#### B-runtime.9 — Départ d'un joueur non répercuté dans l'UI du joueur restant
+- **Sévérité** : 🟡
+- **Source** : smoke checklist case 6.2
+- **Localisation** : `src/core/components/Game/PokerTable.tsx` + `convex/players.ts:leaveTable`
+- **Description** : Quand B quitte la table, son document `players` est supprimé côté DB (le message "en attente de joueurs" apparaît côté A, ce qui prouve que `players.length` a baissé). Mais le siège de B reste visuellement affiché dans l'UI de A. Désynchronisation entre l'état serveur et le rendu local.
+- **Reproduction** : 2 joueurs assis, l'un quitte → l'autre voit toujours son siège.
+- **Recommandation** : vérifier que `useQuery(api.players.getTablePlayers)` se ré-exécute bien au retrait du document. Possiblement un cache local React qui ne se rafraîchit pas, ou un état `seats` mémoïsé qui ne dépend pas de `players`. Ajouter aussi un événement `addActionToFeed("left")` pour la traçabilité (cf. **B6.3**).
+
 ## Suite
 
 À la reprise de 0.B :

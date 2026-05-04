@@ -70,11 +70,11 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 6 — Sortir de la table
 
-- [ ] **6.1** Joueur B clique "Quitter" entre 2 mains → quitte proprement. Statut :
-- [ ] **6.2** Joueur A voit le départ de B en temps réel. Statut :
-- [ ] **6.3** A se retrouve seul → la table revient à un état "waiting" ou message ? Statut :
-- [ ] **6.4** Joueur B se déconnecte au milieu d'une main (clic Quitter pendant un tour) → fold auto ? Statut :
-- [ ] **6.5** Le créateur de la table quitte → table supprimée ? Conservée ? Joueur restant éjecté ? Statut :
+- [ ] **6.1** Joueur B clique "Quitter" entre 2 mains → quitte proprement. Statut : non testé (cas non reproductible dans le parcours mené)
+- [x] **6.2** Joueur A voit le départ de B en temps réel. Statut : ❌ B est parti côté serveur (et le message "en attente de joueurs" apparaît, cf. 6.3) mais le siège de B reste affiché dans l'UI de A. Désynchro UI ↔ DB. Confirme **B6.3** statique. **Nouveau finding B-runtime.9 🟡**.
+- [x] **6.3** A se retrouve seul → la table revient à un état "waiting" ou message ? Statut : ✅ message "en attente de joueurs" affiché.
+- [ ] **6.4** Joueur B se déconnecte au milieu d'une main (clic Quitter pendant un tour) → fold auto ? Statut : non testé.
+- [x] **6.5** Le créateur de la table quitte → table supprimée ? Conservée ? Joueur restant éjecté ? Statut : ✅ table conservée, le créateur peut revenir sans problème (à confirmer : retrouve-t-il le même siège ? est-il toujours créateur ?)
 
 ---
 
