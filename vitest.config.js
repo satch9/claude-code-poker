@@ -7,7 +7,6 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.js'],
     timeout: 10000, // 10 seconds pour les tests
-    bail: 1, // Arrêter aux premiers échecs critiques
   },
   resolve: {
     alias: {
