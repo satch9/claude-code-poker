@@ -196,5 +196,3 @@ export const getAvatarImageUrl = query({
   },
 });
 
-// Re-export stats functions
-export { getUserStats, getUserRanking } from "./users/stats";

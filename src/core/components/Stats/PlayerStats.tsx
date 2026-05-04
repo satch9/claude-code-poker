@@ -20,11 +20,11 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
   const userIdValid = isValidUserId(userId);
 
   const userStats = useQuery(
-    api.users.getUserStats, 
+    api.users.stats.getUserStats,
     userIdValid ? { userId } : "skip"
   );
   const userRanking = useQuery(
-    api.users.getUserRanking, 
+    api.users.stats.getUserRanking,
     userIdValid ? { userId } : "skip"
   );
 

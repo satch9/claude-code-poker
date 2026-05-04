@@ -47,13 +47,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   // Query for user statistics
   const userStats = useQuery(
-    api.users.getUserStats,
+    api.users.stats.getUserStats,
     userIdValid ? { userId: user._id } : "skip"
   );
 
   // Query for user ranking
   const userRanking = useQuery(
-    api.users.getUserRanking,
+    api.users.stats.getUserRanking,
     userIdValid ? { userId: user._id } : "skip"
   );
 
