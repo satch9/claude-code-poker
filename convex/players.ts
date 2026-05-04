@@ -207,33 +207,6 @@ export const updatePlayerAction = mutation({
   },
 });
 
-// Reset players for new hand
-export const resetPlayersForNewHand = mutation({
-  args: {
-    tableId: v.id("tables"),
-  },
-  handler: async (ctx, args) => {
-    const players = await ctx.db
-      .query("players")
-      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-      .collect();
-
-    // Reset each player's hand state
-    await Promise.all(
-      players.map(async (player) => {
-        await ctx.db.patch(player._id, {
-          cards: [],
-          currentBet: 0,
-          hasActed: false,
-          isAllIn: false,
-          isFolded: false,
-          lastAction: undefined,
-        });
-      })
-    );
-  },
-});
-
 // Get active players (not folded)
 export const getActivePlayers = query({
   args: { tableId: v.id("tables") },

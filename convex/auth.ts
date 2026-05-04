@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 
 // Sign up with email and password
@@ -21,7 +21,7 @@ export const signUpWithPassword = mutation({
 
     // Pour simplifier, on stocke le mot de passe en hash simple (en production, utiliser bcrypt)
     const hashedPassword = await hashPassword(args.password);
-    
+
     const userId = await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
@@ -53,7 +53,7 @@ export const signInWithPassword = mutation({
 
     // Verify password
     const isValidPassword = await verifyPassword(args.password, user.password);
-    
+
     if (!isValidPassword) {
       throw new ConvexError("Invalid email or password");
     }
@@ -64,8 +64,8 @@ export const signInWithPassword = mutation({
     });
 
     // Return user data without password
-    const { password, ...userWithoutPassword } = user;
-    return { 
+    const { password: _password, ...userWithoutPassword } = user;
+    return {
       userId: user._id,
       user: userWithoutPassword
     };
@@ -85,12 +85,3 @@ async function verifyPassword(password: string, hashedPassword: string): Promise
   const passwordHash = await hashPassword(password);
   return passwordHash === hashedPassword;
 }
-
-// Get current authenticated user
-export const getCurrentSession = query({
-  handler: async (ctx) => {
-    // Pour l'instant, pas d'authentification session-based
-    // TODO: Implémenter la session après configuration OAuth
-    return null;
-  },
-});

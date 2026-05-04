@@ -124,17 +124,6 @@ export const getTable = query({
   },
 });
 
-// Get table by invite code
-export const getTableByInviteCode = query({
-  args: { inviteCode: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("tables")
-      .withIndex("by_invite_code", (q) => q.eq("inviteCode", args.inviteCode))
-      .first();
-  },
-});
-
 // Mutations pour les players sont maintenant dans convex/players.ts
 
 // Get game state
