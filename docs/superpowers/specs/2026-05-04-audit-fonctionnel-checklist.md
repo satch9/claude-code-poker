@@ -23,7 +23,7 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 1 — Auth
 
-- [ ] **1.1** Joueur A : signup avec un email neuf et un nom → arrive sur l'app loggé. Statut :
+- [x] **1.1** Joueur A : signup avec un email neuf et un nom → arrive sur l'app loggé. Statut : ✅ ok (testé sur https://home-poker.vjdev.tech avec viny1976@gmail.com après suppression du compte préexistant)
 - [ ] **1.2** Joueur A : refresh la page (F5) → la session persiste. Statut :
 - [ ] **1.3** Joueur A : signout → retour à l'écran de connexion. Statut :
 - [ ] **1.4** Joueur A : signin avec les credentials créés en 1.1 → loggé. Statut :
