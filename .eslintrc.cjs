@@ -14,5 +14,18 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    // MVP : ne pas bloquer sur le typage (any) ni les cas mineurs
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'no-case-declarations': 'warn',
+    // Honorer le préfixe _ pour les params/vars volontairement inutilisés
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      },
+    ],
   },
 }

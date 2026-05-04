@@ -187,7 +187,7 @@ const GameAnimations: React.FC<GameAnimationsProps> = ({ className }) => {
                 "transition-all duration-300",
                 animationState.isDealing && "card-slide"
               )}
-              style={{ animationDelay: "200ms" }}
+              animationDelay={200}
             />
           </div>
         </div>

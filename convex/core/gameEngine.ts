@@ -119,7 +119,7 @@ async function startGameInternal(ctx: any, tableId: string) {
 
   // Post blinds
   let pot = 0;
-  let currentBet = table.bigBlind;
+  const currentBet = table.bigBlind;
 
   // Reset all players and post blinds
   await Promise.all(

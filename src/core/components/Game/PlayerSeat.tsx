@@ -330,7 +330,7 @@ function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = fal
   const dy = Math.sin(angleRad) * (-baseDist);
 
   // Ajustement additionnel pour les cartes du joueur courant selon la position
-  let extraOffsetX = 0;
+  const extraOffsetX = 0;
   let extraOffsetY = 0;
 
   if (showCards) {
