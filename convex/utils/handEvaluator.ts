@@ -134,9 +134,18 @@ function evaluateHandWithGame(cards: Card[], game: 'standard' | 'shortdeck' = 's
 
     const score = calculateHandScore(handCards);
 
+    // pokersolver retourne name="Straight Flush" même pour A-K-Q-J-T mono-suit,
+    // mais descr="Royal Flush". On promeut le nom pour correspondre à l'API attendue.
+    const isRoyalFlush = solvedHand.name === 'Straight Flush' && solvedHand.descr === 'Royal Flush';
+    const finalName = isRoyalFlush ? 'Royal Flush' : solvedHand.name;
+
+    // Mapper le rank pokersolver (HighCard=1..StraightFlush=9) vers le rank interne
+    // (HighCard=0..StraightFlush=8, RoyalFlush=9).
+    const mappedRank = isRoyalFlush ? 9 : Math.max(0, solvedHand.rank - 1);
+
     return {
-      rank: solvedHand.rank,
-      name: solvedHand.name,
+      rank: mappedRank,
+      name: finalName,
       cards: handCards,
       description: solvedHand.descr,
       rawRank: solvedHand.rank,
