@@ -33,10 +33,10 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 2 — Création table
 
-- [ ] **2.1** Joueur A : créer une table cash, 2 joueurs max, blindes 5/10, stack 1000, privée → table créée. Statut :
-- [ ] **2.2** Le code d'invitation est affiché clairement et copiable. Statut :
-- [ ] **2.3** A est automatiquement assis à un siège (ou doit cliquer pour s'asseoir ?). Statut :
-- [ ] **2.4** Champs invalides (smallBlind=0, maxPlayers=1) → bloqués ou message clair. Statut :
+- [x] **2.1** Joueur A : créer une table cash, 2 joueurs max, blindes 5/10, stack 1000, privée → table créée. Statut : ✅ ok
+- [x] **2.2** Le code d'invitation est affiché clairement et copiable. Statut : ❌ code non affiché ou non copiable. Couplé avec **B3.1** (parcours rejoindre par code non implémenté), le code est inutile actuellement.
+- [x] **2.3** A est automatiquement assis à un siège (ou doit cliquer pour s'asseoir ?). Statut : ⚠️ A semble auto-assis, mais **l'UI de la table n'est pas visible** après création. À investiguer : routing post-création, rendu du composant `PokerTable`, ou état `gameStates.phase === "waiting"` non géré par l'UI.
+- [x] **2.4** Champs invalides (smallBlind=0, maxPlayers=1) → bloqués ou message clair. Statut : ✅ ok (validation côté UI ; rappel **B2.1** : pas de validation serveur — le UI peut être contourné).
 
 ## Parcours 3 — Rejoindre table par code
 
