@@ -287,6 +287,16 @@
 - **Reproduction** : couplé à B-runtime.5 (gagnant faux annoncé split), résultat des stacks finaux inégaux entre les 2 joueurs.
 - **Recommandation** : faire converger l'annonce et la distribution. Probable cause : `determineWinners` retourne plusieurs `playerIds` (split), mais la fonction de distribution écrase/perd le détail. À auditer ensemble avec B-runtime.5.
 
+#### B-runtime.8 — Pas de rebuy en cash game après élimination
+- **Sévérité** : 🟡
+- **Source** : smoke checklist cases 5.5 et 5.6
+- **Localisation** : `convex/core/gameEngine.ts` (logique fin de main + endGame) + UI post-showdown
+- **Description** : Quand un joueur tombe à 0 jetons en cash game, il reste assis (cf. **B5.2**) et l'UI propose seulement "Démarrer la partie" ou "Quitter la table". Aucune option de **rebuy** (remettre des jetons pour continuer) n'est proposée. Ce comportement est correct pour un tournoi mais pas pour du cash game, où la règle est qu'un joueur peut toujours recharger sa stack.
+- **Recommandation** :
+  - Ajouter une mutation `rebuy(tableId, userId, amount)` qui remet le joueur à `startingStack` (ou montant choisi entre 0 et `startingStack`).
+  - Côté UI, afficher un bouton "Recharger N jetons" pour le joueur fauché tant que `table.gameType === "cash"`.
+  - Distinguer `gameType` cash vs tournament dans la logique de fin de main : tournament → élimination définitive ; cash → rebuy possible.
+
 ## Suite
 
 À la reprise de 0.B :

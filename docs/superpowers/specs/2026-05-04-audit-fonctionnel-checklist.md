@@ -61,12 +61,12 @@ Pour chaque case, mets un statut + note courte si anomalie :
 
 ## Parcours 5 — Multi-mains et élimination
 
-- [ ] **5.1** Une fois la main 1 finie, la main 2 démarre (auto ou bouton). Statut :
-- [ ] **5.2** Le dealer button a tourné (rotation correcte heads-up). Statut :
-- [ ] **5.3** Les blindes sont posées par les bons joueurs cette fois. Statut :
-- [ ] **5.4** Les cartes sont redistribuées (différentes des précédentes). Statut :
-- [ ] **5.5** Faire une main avec un all-in : le perdant est éliminé ou reste à 0 ? (noter le comportement). Statut :
-- [ ] **5.6** Si élimination : message de fin / retour vers l'écran d'accueil ? Statut :
+- [x] **5.1** Une fois la main 1 finie, la main 2 démarre (auto ou bouton). Statut : ✅ ok
+- [x] **5.2** Le dealer button a tourné (rotation correcte heads-up). Statut : ✅ probable (à reconfirmer si possible)
+- [x] **5.3** Les blindes sont posées par les bons joueurs cette fois. Statut : ✅ ok
+- [x] **5.4** Les cartes sont redistribuées (différentes des précédentes). Statut : ✅ ok
+- [x] **5.5** Faire une main avec un all-in : le perdant est éliminé ou reste à 0 ? Statut : ⚠️ le perdant reste à 0 jetons (confirme **B5.2**), et l'UI propose "Démarrer la partie" ou "Quitter la table". En cash game, aucune proposition de **rebuy** n'est faite. **Nouveau finding B-runtime.8 🟡**.
+- [x] **5.6** Si élimination : message de fin / retour vers l'écran d'accueil ? Statut : ⚠️ comportement de tournoi appliqué à du cash. En cash game, on devrait proposer au joueur fauché de remettre des jetons (rebuy) plutôt que d'arrêter la partie. Couvert par B-runtime.8.
 
 ## Parcours 6 — Sortir de la table
 
