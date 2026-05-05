@@ -127,14 +127,14 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
                 key={index}
                 card={parsedCard}
                 isHidden={!showCards}
-                size={isMobile ? "sm" : "md"}
+                size="md"
               />
             );
           })
         ) : (
           <>
-            <Card size={isMobile ? "sm" : "md"} />
-            <Card size={isMobile ? "sm" : "md"} />
+            <Card size="md" />
+            <Card size="md" />
           </>
         )}
       </div>

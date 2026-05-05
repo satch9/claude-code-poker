@@ -409,17 +409,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           )}
         </section>
 
-        {/* Centre: pot + community cards */}
+        {/* Centre: pot + community cards (affichées seulement après preflop) */}
         <section className="flex flex-col items-center justify-center py-3 gap-2 border-y border-poker-green-700/50 flex-shrink-0">
-          <div className="text-xs text-poker-green-200">Pot</div>
-          <div className="text-2xl font-bold">{gameState.pot}</div>
-          <CommunityCards
-            cards={gameState.communityCards}
-            phase={gameState.phase}
-            pot={gameState.pot}
-            playersCount={players.length}
-            maxPlayers={table.maxPlayers}
-          />
+          <div className="text-xs text-poker-green-200 uppercase tracking-wider">
+            {gameState.phase === "waiting" ? "En attente" : gameState.phase}
+          </div>
+          <div className="text-2xl font-bold">Pot {gameState.pot}</div>
+          {gameState.communityCards.length > 0 && (
+            <div className="flex gap-1 mt-1">
+              {gameState.communityCards.map((cardStr: string, i: number) => (
+                <Card key={i} card={parseCardStr(cardStr)} size="sm" />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Joueur courant */}
