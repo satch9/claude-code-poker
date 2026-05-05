@@ -7,6 +7,8 @@ interface CommunityCardsProps {
   cards: string[];
   phase: 'waiting' | 'preflop' | 'flop' | 'turn' | 'river' | 'showdown';
   pot: number;
+  playersCount?: number;
+  maxPlayers?: number;
   className?: string;
 }
 
@@ -14,6 +16,8 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   cards,
   phase,
   pot,
+  playersCount,
+  maxPlayers,
   className,
 }) => {
   const { isMobile } = useBreakpoint();
@@ -40,6 +44,13 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   const getPhaseLabel = () => {
     switch (phase) {
       case 'waiting':
+        if (
+          typeof playersCount === 'number' &&
+          typeof maxPlayers === 'number' &&
+          playersCount < maxPlayers
+        ) {
+          return `En attente de joueurs (${playersCount}/${maxPlayers})`;
+        }
         return 'En attente de joueurs';
       case 'preflop':
         return 'Pre-flop';

@@ -432,6 +432,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   cards={gameState.communityCards}
                   phase={gameState.phase}
                   pot={gameState.pot}
+                  playersCount={players.length}
+                  maxPlayers={table.maxPlayers}
                 />
               </div>
 
