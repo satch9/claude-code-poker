@@ -152,6 +152,13 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  // Password reset tokens (C1.3)
+  passwordResetTokens: defineTable({
+    token: v.string(),
+    userId: v.id("users"),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
+
   // Game actions feed
   gameActions: defineTable({
     tableId: v.id("tables"),

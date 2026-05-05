@@ -1,16 +1,36 @@
 // Schémas Zod pour la validation des entrées des mutations Convex.
 import { z } from "zod";
+import { ConvexError } from "convex/values";
 
+// Email — RFC-ish regex (suffisamment strict pour bloquer les inputs absurdes
+// tout en restant pragmatique).
 export const emailSchema = z
   .string()
-  .min(3)
+  .min(5)
   .max(255)
-  .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email invalide");
+  .regex(
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    "Email invalide",
+  )
+  .refine((s) => {
+    const tld = s.split(".").pop() ?? "";
+    return tld.length >= 2;
+  }, "TLD trop court");
 
+// Password — entropie minimale.
+// Accepte soit ≥12 caractères, soit ≥8 caractères avec maj + chiffre + spécial.
 export const passwordSchema = z
   .string()
-  .min(8, "Le mot de passe doit faire au moins 8 caractères")
-  .max(200);
+  .max(200)
+  .refine(
+    (p) =>
+      p.length >= 12 ||
+      (p.length >= 8 &&
+        /[A-Z]/.test(p) &&
+        /[0-9]/.test(p) &&
+        /[^A-Za-z0-9]/.test(p)),
+    "Mot de passe : ≥12 caractères OU ≥8 avec majuscule + chiffre + spécial",
+  );
 
 export const userNameSchema = z
   .string()
@@ -46,7 +66,7 @@ export function validateOrThrow<T>(schema: z.ZodSchema<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success) {
     const msg = result.error.errors.map((e) => e.message).join("; ");
-    throw new Error(`Validation: ${msg}`);
+    throw new ConvexError(`Validation: ${msg}`);
   }
   return result.data;
 }

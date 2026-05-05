@@ -8,11 +8,11 @@
  * @module
  */
 
-import type * as admin_wipeAccounts from "../admin/wipeAccounts.js";
 import type * as auth from "../auth.js";
 import type * as core_gameEngine from "../core/gameEngine.js";
 import type * as http from "../http.js";
 import type * as internal_gameEngine from "../internal/gameEngine.js";
+import type * as passwordReset from "../passwordReset.js";
 import type * as players from "../players.js";
 import type * as shared_auth from "../shared/auth.js";
 import type * as shared_rateLimit from "../shared/rateLimit.js";
@@ -41,11 +41,11 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "admin/wipeAccounts": typeof admin_wipeAccounts;
   auth: typeof auth;
   "core/gameEngine": typeof core_gameEngine;
   http: typeof http;
   "internal/gameEngine": typeof internal_gameEngine;
+  passwordReset: typeof passwordReset;
   players: typeof players;
   "shared/auth": typeof shared_auth;
   "shared/rateLimit": typeof shared_rateLimit;

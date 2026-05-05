@@ -1,5 +1,6 @@
 import { mutation, query, internalMutation } from "../_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
+import { rateLimiter } from "../shared/rateLimit";
 import {
   createDeck,
   shuffleDeck,
@@ -251,6 +252,10 @@ export const playerAction = mutation({
   },
   handler: async (ctx, args) => {
     await requireSelf(ctx, args.userId);
+    {
+      const status = await rateLimiter.limit(ctx, "playerAction", { key: args.userId });
+      if (!status.ok) throw new ConvexError("RateLimited: playerAction");
+    }
     const table = await ctx.db.get(args.tableId);
     if (!table) {
       throw new Error("Table not found");

@@ -1,9 +1,10 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
 import { requireSelf } from "./shared/auth";
 import { sanitizePlayer } from "./shared/sanitize";
+import { rateLimiter } from "./shared/rateLimit";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -15,6 +16,10 @@ export const joinTable = mutation({
   },
   handler: async (ctx, args) => {
     await requireSelf(ctx, args.userId);
+    {
+      const status = await rateLimiter.limit(ctx, "joinTable", { key: args.userId });
+      if (!status.ok) throw new ConvexError("RateLimited: joinTable");
+    }
     const table = await ctx.db.get(args.tableId);
     if (!table) {
       throw new Error("Table not found");
@@ -250,6 +255,10 @@ export const rebuy = mutation({
   },
   handler: async (ctx, args) => {
     await requireSelf(ctx, args.userId);
+    {
+      const status = await rateLimiter.limit(ctx, "rebuy", { key: args.userId });
+      if (!status.ok) throw new ConvexError("RateLimited: rebuy");
+    }
     validateOrThrow(rebuyAmountSchema, args.amount);
 
     const table = await ctx.db.get(args.tableId);

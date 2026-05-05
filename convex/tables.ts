@@ -31,6 +31,10 @@ export const createTable = mutation({
   },
   handler: async (ctx, args) => {
     const creatorId = await requireUserId(ctx);
+    {
+      const status = await rateLimiter.limit(ctx, "createTable", { key: creatorId });
+      if (!status.ok) throw new ConvexError("RateLimited: createTable");
+    }
     validateOrThrow(createTableSchema, {
       name: args.name,
       maxPlayers: args.maxPlayers,

@@ -5,6 +5,12 @@ import { action, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 import { rateLimiter } from "./shared/rateLimit";
+import {
+  emailSchema,
+  passwordSchema,
+  userNameSchema,
+  validateOrThrow,
+} from "./shared/validation";
 
 /**
  * Convex Auth configuration using the Password provider.
@@ -23,8 +29,20 @@ export const {
   providers: [
     Password<DataModel>({
       profile(params: Record<string, unknown>) {
-        const email = (params.email as string)?.trim().toLowerCase();
-        const name = (params.name as string | undefined)?.trim() || email;
+        const rawEmail = (params.email as string | undefined)?.trim().toLowerCase() ?? "";
+        const rawPassword = (params.password as string | undefined) ?? "";
+        const rawName = (params.name as string | undefined)?.trim();
+
+        // Validation server-side : email RFC + password entropie.
+        const email = validateOrThrow(emailSchema, rawEmail);
+        // Le password est validé uniquement au signUp (le signIn ne le re-valide
+        // pas, sinon les comptes anciens seraient bloqués).
+        if (params.flow === "signUp") {
+          validateOrThrow(passwordSchema, rawPassword);
+        }
+        const name = rawName
+          ? validateOrThrow(userNameSchema, rawName)
+          : email;
         const now = Date.now();
         return {
           email,
@@ -71,6 +89,18 @@ export const signIn = action({
       if (!status.ok) {
         throw new ConvexError(
           "Locked: too many sign-in attempts, retry later",
+        );
+      }
+    }
+
+    if (flow === "signUp" && email) {
+      // Limite par email (5/h) — empêche le spam d'inscription depuis une
+      // même adresse. Limitation connue : un attaquant peut tourner les
+      // emails ; pas de rate limit par IP côté mutation Convex.
+      const status = await rateLimiter.limit(ctx, "signUp", { key: email });
+      if (!status.ok) {
+        throw new ConvexError(
+          "RateLimited: too many signup attempts, retry later",
         );
       }
     }

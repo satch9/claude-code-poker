@@ -228,7 +228,9 @@ describe('C3 — Rate limit invitation', () => {
     for (let i = 0; i < 10; i++) {
       try {
         await c.query(api.tables.getTableByInviteCode, { code: 'ZZZ999' } as any);
-      } catch {}
+      } catch {
+        // Expected to fail or pass — we just want to consume the rate budget
+      }
     }
     await expectThrowsUnauthorized(
       c.query(api.tables.getTableByInviteCode, { code: 'ZZZ999' } as any),

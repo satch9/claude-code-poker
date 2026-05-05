@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useMutation } from 'convex/react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../UI/Button';
+import { api } from '../../../../convex/_generated/api';
 
 interface EmailPasswordFormProps {
   onSuccess?: () => void;
@@ -14,7 +16,25 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const requestPasswordReset = useMutation(api.passwordReset.requestPasswordReset);
+
   const { signUp, signIn } = useAuth();
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await requestPasswordReset({ email: forgotEmail.trim().toLowerCase() });
+      setForgotSent(true);
+    } catch (_err) {
+      // Anti-enumeration : on signale toujours "envoyé" même en cas d'échec
+      // (côté serveur on retourne ok pour les emails inconnus, ici fallback
+      // pour erreurs réseau).
+      setForgotSent(true);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +141,46 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
           >
             {isSignUp ? 'Déjà un compte ? Se connecter' : 'Pas de compte ? Créer un compte'}
           </button>
-          
+
+          {!isSignUp && (
+            <div>
+              <button
+                type="button"
+                onClick={() => { setShowForgot(!showForgot); setForgotSent(false); }}
+                className="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
+
+          {showForgot && !isSignUp && (
+            <div className="mt-2 p-3 bg-gray-50 rounded">
+              {forgotSent ? (
+                <p className="text-sm text-gray-700">
+                  Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.
+                </p>
+              ) : (
+                <form onSubmit={handleForgot} className="space-y-2">
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="Votre email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-sm"
+                  >
+                    Envoyer le lien
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-gray-500">
             Les chips sont gérées par table, pas par utilisateur
           </p>

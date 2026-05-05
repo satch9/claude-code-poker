@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
+import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
 import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
 import { PokerTable } from "../Game/PokerTable";
@@ -247,6 +248,10 @@ const AppContent: React.FC = () => {
 };
 
 export const AppMain: React.FC = () => {
+  // Route /reset?token=… : autonome (n'a pas besoin de l'AuthProvider).
+  if (typeof window !== "undefined" && window.location.pathname === "/reset") {
+    return <PasswordResetForm />;
+  }
   return (
     <AuthProvider>
       <AppContent />
