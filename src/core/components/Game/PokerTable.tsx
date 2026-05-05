@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { BettingControls } from "./BettingControls";
@@ -38,6 +38,21 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
   const { user: authUser } = useAuth();
+
+  // Détection portrait pour layout mobile heads-up
+  const [isPortrait, setIsPortrait] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight > window.innerWidth : false
+  );
+  useEffect(() => {
+    const onResize = () =>
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
 
   // Use hooks
   const { isMobile, isTablet, isIOS } = useBreakpoint();
@@ -309,6 +324,172 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       const bbIndex = (dealerIndex + 2) % playerPositions.length;
       return playerPositions[bbIndex];
     }
+  }
+
+  // Mobile portrait heads-up : layout vertical simplifié
+  if (isMobile && table.maxPlayers === 2 && isPortrait) {
+    const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
+        {/* Header */}
+        <header className="px-3 py-2 border-b border-poker-green-700 flex justify-between items-center flex-shrink-0">
+          <div className="text-sm">
+            <div className="font-bold truncate max-w-[160px]">{table.name}</div>
+            <div className="text-xs text-poker-green-200">
+              {table.smallBlind}/{table.bigBlind}
+              {" • "}
+              {table.gameType === "tournament" ? "Tournoi" : "Cash"}
+            </div>
+          </div>
+          <Button variant="secondary" size="sm" onClick={onLeaveTable}>
+            Quitter
+          </Button>
+        </header>
+
+        {/* Adversaire */}
+        <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
+          {opponent ? (
+            <div className="flex flex-col items-center">
+              <div className="text-sm font-medium">
+                {opponent.user?.name ?? "Adversaire"}
+                {opponent.isFolded && (
+                  <span className="ml-2 text-xs text-red-300">(couché)</span>
+                )}
+              </div>
+              <div className="text-xs text-poker-green-200">
+                {opponent.chips} jetons
+                {opponent.currentBet > 0 && ` • mise ${opponent.currentBet}`}
+              </div>
+              <div className="flex gap-1 mt-2">
+                <div className="w-12 h-16 bg-indigo-900 border border-indigo-700 rounded-lg" />
+                <div className="w-12 h-16 bg-indigo-900 border border-indigo-700 rounded-lg" />
+              </div>
+            </div>
+          ) : (
+            <div className="text-poker-green-200 text-sm">
+              En attente d'un joueur…
+            </div>
+          )}
+        </section>
+
+        {/* Centre: pot + community cards */}
+        <section className="flex flex-col items-center justify-center py-3 gap-2 border-y border-poker-green-700/50 flex-shrink-0">
+          <div className="text-xs text-poker-green-200">Pot</div>
+          <div className="text-2xl font-bold">{gameState.pot}</div>
+          <CommunityCards
+            cards={gameState.communityCards}
+            phase={gameState.phase}
+            pot={gameState.pot}
+            playersCount={players.length}
+            maxPlayers={table.maxPlayers}
+          />
+        </section>
+
+        {/* Joueur courant */}
+        <section className="flex-1 flex flex-col items-center justify-end py-4 gap-2 min-h-0">
+          {currentPlayer && (
+            <>
+              <div className="text-sm font-medium">
+                {currentPlayer.user?.name ?? "Vous"}
+                {currentPlayer.isFolded && (
+                  <span className="ml-2 text-xs text-red-300">(couché)</span>
+                )}
+              </div>
+              <div className="text-xs text-poker-green-200">
+                {currentPlayer.chips} jetons
+                {currentPlayer.currentBet > 0 &&
+                  ` • mise ${currentPlayer.currentBet}`}
+              </div>
+              <div className="flex gap-1 mt-2">
+                {(currentPlayer.cards ?? []).map((cardStr: string, i: number) => (
+                  <div
+                    key={i}
+                    className="w-14 h-20 bg-white text-black border border-gray-300 rounded-lg flex items-center justify-center font-bold text-base"
+                  >
+                    {cardStr}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* Actions en bas */}
+        <footer className="border-t border-poker-green-700 p-3 flex-shrink-0">
+          {gameState.phase === "waiting" &&
+            players.length >= 2 &&
+            currentPlayer &&
+            currentPlayer.userId === table.creatorId && (
+              <Button
+                onClick={handleStartGame}
+                variant="primary"
+                disabled={isProcessing}
+                className="w-full"
+              >
+                {isProcessing ? "Démarrage..." : "Démarrer la partie"}
+              </Button>
+            )}
+
+          {currentPlayer &&
+            isMyTurn &&
+            gameState.phase !== "waiting" &&
+            (availableActions?.length ?? 0) > 0 && (
+              <BettingControls
+                availableActions={(availableActions ?? []) as any}
+                playerChips={currentPlayer.chips}
+                currentBet={gameState.currentBet}
+                potSize={gameState.pot}
+                onAction={handlePlayerAction}
+                disabled={isProcessing}
+                potOdds={getPotOdds()?.ratio || undefined}
+                handStrength={getHandStrength() || undefined}
+              />
+            )}
+
+          {/* Bouton Recharger en mobile */}
+          {table.gameType === "cash" &&
+            currentPlayer &&
+            currentPlayer.chips < table.bigBlind &&
+            (gameState.phase === "waiting" ||
+              gameState.phase === "showdown" ||
+              currentPlayer.isFolded) && (
+              <Button
+                variant="primary"
+                onClick={() => setShowRebuyDialog(true)}
+                className="w-full mt-2"
+              >
+                Recharger
+              </Button>
+            )}
+        </footer>
+
+        {/* Showdown Results Modal */}
+        {showdownResults && (
+          <ShowdownResults
+            results={showdownResults.results}
+            pot={showdownResults.pot}
+            communityCards={showdownResults.communityCards}
+          />
+        )}
+
+        {/* Modale Rebuy */}
+        {showRebuyDialog && currentPlayer && authUser && (
+          <RebuyDialog
+            isOpen={showRebuyDialog}
+            onClose={() => setShowRebuyDialog(false)}
+            startingStack={table.startingStack}
+            currentChips={currentPlayer.chips}
+            onConfirm={async (amount) => {
+              await rebuyMutation({
+                tableId: table._id,
+                userId: authUser._id,
+                amount,
+              });
+            }}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
