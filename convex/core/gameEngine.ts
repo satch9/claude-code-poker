@@ -808,7 +808,7 @@ async function determineWinner(ctx: any, tableId: string) {
     // Schedule next hand 3s later (showdown stays visible during this delay)
     await ctx.scheduler.runAfter(
       3000,
-      internal.core.gameEngine.scheduleStartNextHand,
+      (internal as any)["core/gameEngine"].scheduleStartNextHand,
       { tableId }
     );
 
@@ -1009,7 +1009,7 @@ async function endHand(ctx: any, tableId: string) {
     // Schedule next hand 3s later — showdown phase stays visible to clients
     await ctx.scheduler.runAfter(
       3000,
-      internal.core.gameEngine.scheduleStartNextHand,
+      (internal as any)["core/gameEngine"].scheduleStartNextHand,
       { tableId }
     );
   } else {
