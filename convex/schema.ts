@@ -94,6 +94,7 @@ export default defineSchema({
       v.literal("showdown")
     ),
     communityCards: v.array(v.string()),
+    remainingDeck: v.optional(v.array(v.string())),
     pot: v.number(),
     currentBet: v.number(),
     dealerPosition: v.number(),

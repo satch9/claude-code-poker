@@ -197,6 +197,7 @@ async function startGameInternal(ctx: any, tableId: string) {
         await ctx.db.patch(gameState._id, {
           phase: "preflop",
           communityCards: [],
+          remainingDeck: remainingDeck.map(cardToString),
           pot,
           currentBet,
           dealerPosition,
@@ -631,31 +632,41 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
   const nextPhase = getNextPhase(gameState.phase);
   let communityCards = [...gameState.communityCards];
 
+  // Use the deck stored from startGameInternal, ensuring no duplicate cards.
+  // Fallback: if remainingDeck is missing (old gameStates), reshuffle (legacy).
+  let remainingDeckCards: Card[] = (gameState.remainingDeck && gameState.remainingDeck.length > 0)
+    ? gameState.remainingDeck.map(stringToCard)
+    : shuffleDeck(createDeck());
+
   // Deal community cards for new phase
   if (nextPhase !== 'showdown') {
-    // Create deck for community cards (simplified - in real game, use remaining deck)
-    const deck = shuffleDeck(createDeck());
+    // Burn 1 card before each new street (poker convention)
+    if (remainingDeckCards.length > 0) {
+      remainingDeckCards = remainingDeckCards.slice(1);
+    }
 
     switch (nextPhase) {
-      case "flop":
-        // Deal 3 community cards
-        const flopCards = dealCards(deck, 3);
+      case "flop": {
+        const flopCards = dealCards(remainingDeckCards, 3);
         communityCards = flopCards.dealtCards.map(cardToString);
+        remainingDeckCards = flopCards.remainingDeck;
         break;
-
-      case "turn":
-        // Deal 1 community card
-        const turnCard = dealCards(deck, 1);
+      }
+      case "turn": {
+        const turnCard = dealCards(remainingDeckCards, 1);
         communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
+        remainingDeckCards = turnCard.remainingDeck;
         break;
-
-      case "river":
-        // Deal 1 community card
-        const riverCard = dealCards(deck, 1);
+      }
+      case "river": {
+        const riverCard = dealCards(remainingDeckCards, 1);
         communityCards = [...gameState.communityCards, ...riverCard.dealtCards.map(cardToString)];
+        remainingDeckCards = riverCard.remainingDeck;
         break;
+      }
     }
   }
+  const remainingDeckStrings = remainingDeckCards.map(cardToString);
 
   // Check if we should go to showdown, but handle it after allPlayersAllIn logic
 
@@ -684,6 +695,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     await ctx.db.patch(gameState._id, {
       phase: nextPhase,
       communityCards,
+      remainingDeck: remainingDeckStrings,
       currentBet: 0,
       currentPlayerPosition: -1, // No player to act
       lastRaiserPosition: undefined,
@@ -732,6 +744,7 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
   await ctx.db.patch(gameState._id, {
     phase: nextPhase,
     communityCards,
+    remainingDeck: remainingDeckStrings,
     currentBet: 0,
     currentPlayerPosition: firstPlayerPosition,
     lastRaiserPosition: undefined, // Reset last raiser for new betting round
@@ -1448,26 +1461,39 @@ async function advanceToNextPhaseWithStateMachine(
     )
   );
 
-  // Deal community cards for new phase
+  // Deal community cards for new phase using the persistent deck
   let communityCards = [...gameState.communityCards];
-  if (nextPhaseInfo.nextPhase !== 'showdown') {
-    const deck = shuffleDeck(createDeck());
+  let remainingDeckCards: Card[] = (gameState.remainingDeck && gameState.remainingDeck.length > 0)
+    ? gameState.remainingDeck.map(stringToCard)
+    : shuffleDeck(createDeck());
 
+  if (nextPhaseInfo.nextPhase !== 'showdown') {
+    // Burn 1 card before each new street
+    if (remainingDeckCards.length > 0) {
+      remainingDeckCards = remainingDeckCards.slice(1);
+    }
     switch (nextPhaseInfo.nextPhase) {
-      case "flop":
-        const flopCards = dealCards(deck, 3);
+      case "flop": {
+        const flopCards = dealCards(remainingDeckCards, 3);
         communityCards = flopCards.dealtCards.map(cardToString);
+        remainingDeckCards = flopCards.remainingDeck;
         break;
-      case "turn":
-        const turnCard = dealCards(deck, 1);
+      }
+      case "turn": {
+        const turnCard = dealCards(remainingDeckCards, 1);
         communityCards = [...gameState.communityCards, ...turnCard.dealtCards.map(cardToString)];
+        remainingDeckCards = turnCard.remainingDeck;
         break;
-      case "river":
-        const riverCard = dealCards(deck, 1);
+      }
+      case "river": {
+        const riverCard = dealCards(remainingDeckCards, 1);
         communityCards = [...gameState.communityCards, ...riverCard.dealtCards.map(cardToString)];
+        remainingDeckCards = riverCard.remainingDeck;
         break;
+      }
     }
   }
+  const remainingDeckStrings = remainingDeckCards.map(cardToString);
 
   // Find first player to act for post-flop phases
   const activePlayers = players.filter((p: any) => !p.isFolded && !p.isAllIn);
@@ -1489,6 +1515,7 @@ async function advanceToNextPhaseWithStateMachine(
   await ctx.db.patch(gameState._id, {
     phase: nextPhaseInfo.nextPhase,
     communityCards,
+    remainingDeck: remainingDeckStrings,
     currentBet: 0,
     currentPlayerPosition,
     lastRaiserPosition: undefined,
