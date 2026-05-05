@@ -51,7 +51,21 @@ const AppContent: React.FC = () => {
         creatorId: user._id,
       });
 
-      // Automatically join the created table
+      // Auto-seat le créateur sur le siège 0 (B2.4)
+      try {
+        await joinTableMutation({
+          tableId,
+          userId: user._id,
+          seatPosition: 0,
+        });
+      } catch (joinError) {
+        console.warn(
+          "Auto-seat échoué, l'utilisateur devra cliquer manuellement",
+          joinError,
+        );
+      }
+
+      // Automatically open the created table
       setSelectedTableId(tableId);
       setCurrentView("table");
     } catch (error) {
