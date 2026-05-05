@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card } from "../UI/Card";
 import { Player } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
@@ -45,6 +45,34 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 }) => {
   const { isMobile } = useBreakpoint();
   const responsiveClasses = useResponsiveClasses();
+
+  // Push-to-pot animation: déclenchée quand currentBet repasse à 0 après avoir été > 0
+  const prevBetRef = useRef<number>(0);
+  const [pushingToPot, setPushingToPot] = useState(false);
+  const [pushAmount, setPushAmount] = useState(0);
+  // Vecteur de push : depuis la position du seat vers le centre.
+  // seatAngle pointe du centre vers le seat ; on inverse pour aller vers le centre.
+  const pushVector = React.useMemo(() => {
+    if (seatAngle === undefined) return { dx: "0px", dy: "-60px" };
+    const dist = isMobile ? 70 : 110;
+    return {
+      dx: `${-Math.cos(seatAngle) * dist}px`,
+      dy: `${-Math.sin(seatAngle) * dist}px`,
+    };
+  }, [seatAngle, isMobile]);
+
+  useEffect(() => {
+    const currentBet = player?.currentBet ?? 0;
+    const prev = prevBetRef.current;
+    if (prev > 0 && currentBet === 0) {
+      setPushAmount(prev);
+      setPushingToPot(true);
+      const t = setTimeout(() => setPushingToPot(false), 700);
+      return () => clearTimeout(t);
+    }
+    prevBetRef.current = currentBet;
+  }, [player?.currentBet]);
+
   if (isEmpty) {
     return (
       <div
@@ -212,6 +240,29 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
             )}
           </div>
         </div>
+
+        {/* Animation push-to-pot: jetons partent vers le centre quand currentBet repasse à 0 */}
+        {pushingToPot && (
+          <div
+            className={cn(
+              "absolute left-1/2 transform -translate-x-1/2 flex items-center gap-1 chips-push-to-pot pointer-events-none",
+              isMobile ? "-bottom-2" : "-bottom-3"
+            )}
+            style={{
+              ["--push-dx" as any]: pushVector.dx,
+              ["--push-dy" as any]: pushVector.dy,
+            }}
+          >
+            <div className="relative" style={{ width: isMobile ? 14 : 18, height: isMobile ? 14 : 18 }}>
+              <div className="absolute inset-0 rounded-full border border-black/40" style={{ background: "radial-gradient(circle at 30% 30%, #fca5a5 0%, #dc2626 50%, #7f1d1d 100%)", transform: "translateY(-3px)" }} />
+              <div className="absolute inset-0 rounded-full border border-black/40" style={{ background: "radial-gradient(circle at 30% 30%, #93c5fd 0%, #2563eb 50%, #1e3a8a 100%)", transform: "translateY(-1px)" }} />
+              <div className="absolute inset-0 rounded-full border border-black/40" style={{ background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #f59e0b 50%, #92400e 100%)" }} />
+            </div>
+            <div className={cn("bg-black/70 text-white rounded-full font-bold whitespace-nowrap", isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs")}>
+              {pushAmount.toLocaleString()}
+            </div>
+          </div>
+        )}
 
         {/* Current bet indicator — pile de jetons style PokerStars */}
         {player.currentBet > 0 && (
