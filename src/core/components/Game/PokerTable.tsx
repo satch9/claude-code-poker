@@ -330,6 +330,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Mobile portrait heads-up : layout vertical simplifié
   if (isMobile && table.maxPlayers === 2 && isPortrait) {
     const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
+    // En heads-up : dealer = small blind, l'autre = big blind
+    const dealerPos = gameState.dealerPosition;
+    const sbPos = getSmallBlindPosition();
+    const bbPos = getBigBlindPosition();
+    const renderBadges = (seatPosition: number) => (
+      <span className="inline-flex gap-1 ml-2">
+        {seatPosition === dealerPos && (
+          <span className="px-1.5 py-0.5 bg-yellow-500 text-black rounded-full text-[10px] font-bold" title="Dealer">D</span>
+        )}
+        {seatPosition === sbPos && (
+          <span className="px-1.5 py-0.5 bg-blue-500 text-white rounded-full text-[10px] font-bold" title="Small Blind">SB</span>
+        )}
+        {seatPosition === bbPos && (
+          <span className="px-1.5 py-0.5 bg-purple-500 text-white rounded-full text-[10px] font-bold" title="Big Blind">BB</span>
+        )}
+      </span>
+    );
     const parseCardStr = (cardStr: string) => {
       if (!cardStr || cardStr.length < 2) return undefined;
       const rank = cardStr.slice(0, -1) as any;
@@ -369,8 +386,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
           {opponent ? (
             <div className="flex flex-col items-center">
-              <div className="text-sm font-medium">
-                {opponent.user?.name ?? "Adversaire"}
+              <div className="text-sm font-medium flex items-center">
+                <span>{opponent.user?.name ?? "Adversaire"}</span>
+                {renderBadges(opponent.seatPosition)}
                 {opponent.isFolded && (
                   <span className="ml-2 text-xs text-red-300">(couché)</span>
                 )}
@@ -408,8 +426,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         <section className="flex-1 flex flex-col items-center justify-end py-4 gap-2 min-h-0">
           {currentPlayer && (
             <>
-              <div className="text-sm font-medium">
-                {currentPlayer.user?.name ?? "Vous"}
+              <div className="text-sm font-medium flex items-center">
+                <span>{currentPlayer.user?.name ?? "Vous"}</span>
+                {renderBadges(currentPlayer.seatPosition)}
                 {currentPlayer.isFolded && (
                   <span className="ml-2 text-xs text-red-300">(couché)</span>
                 )}
