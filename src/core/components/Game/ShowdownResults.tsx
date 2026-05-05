@@ -15,6 +15,7 @@ interface ShowdownResult {
     rank: number;
   };
   cards: string[];
+  isWinner?: boolean;
 }
 
 interface ShowdownResultsProps {
@@ -49,9 +50,13 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
     };
   };
 
-  const winners = results.filter(r => r.handRank.rank === results[0].handRank.rank);
+  // Use the isWinner flag computed server-side via determineWinners (kickers-aware).
+  // Fallback on rank match only if isWinner is undefined (older payloads).
+  const winners = results.some(r => r.isWinner !== undefined)
+    ? results.filter(r => r.isWinner)
+    : results.filter(r => r.handRank.rank === results[0].handRank.rank);
   const winnerNames = winners.map(w => w.player.user?.name || 'Joueur').join(', ');
-  const winningsPerPlayer = Math.floor(pot / winners.length);
+  const winningsPerPlayer = winners.length > 0 ? Math.floor(pot / winners.length) : 0;
 
   return (
     <div className={cn(
@@ -91,7 +96,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
         {/* Player Results */}
         <div className="space-y-4 mb-6">
           {results.map((result, index) => {
-            const isWinner = result.handRank.rank === results[0].handRank.rank;
+            const isWinner = result.isWinner ?? (result.handRank.rank === results[0].handRank.rank);
 
             return (
               <div
