@@ -894,17 +894,34 @@ async function determineWinner(ctx: any, tableId: string) {
       winnerIds.includes(String(h.player.userId))
     );
 
-    // Distribute this side pot among winners
-    const winAmountForPot = Math.floor(sidePot.amount / potWinners.length);
+    // Distribute this side pot among winners.
+    // Convention poker: part entière à chaque gagnant, le reste (remainder) va
+    // au premier gagnant après le dealer (sens horaire).
+    const sharePerWinner = Math.floor(sidePot.amount / potWinners.length);
+    const remainder = sidePot.amount - sharePerWinner * potWinners.length;
 
-    console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${winAmountForPot} jetons chacun`);
+    // Récupérer la table pour maxPlayers (pour calcul distance dealer)
+    const tableDoc = await ctx.db.get(tableId);
+    const maxPlayers = tableDoc?.maxPlayers ?? 9;
+    const dealerPos = gameState.dealerPosition ?? 0;
+
+    const sortedPotWinners = [...potWinners].sort((a: any, b: any) => {
+      const distA = (a.player.seatPosition - dealerPos + maxPlayers) % maxPlayers;
+      const distB = (b.player.seatPosition - dealerPos + maxPlayers) % maxPlayers;
+      return distA - distB;
+    });
+
+    const winAmountForPot = sharePerWinner; // pour le log et le message
+
+    console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${sharePerWinner} jetons chacun (reste ${remainder} au 1er après dealer)`);
 
     await Promise.all(
-      potWinners.map((winner: any) =>
-        ctx.db.patch(winner.player._id, {
-          chips: winner.player.chips + winAmountForPot,
-        })
-      )
+      sortedPotWinners.map((winner: any, idx: number) => {
+        const extra = idx === 0 ? remainder : 0;
+        return ctx.db.patch(winner.player._id, {
+          chips: winner.player.chips + sharePerWinner + extra,
+        });
+      })
     );
 
     // Add winner announcement for this side pot
