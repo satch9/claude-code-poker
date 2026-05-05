@@ -45,7 +45,7 @@ export const JoinByCodeForm: React.FC<JoinByCodeFormProps> = ({ onJoinTable }) =
       <h3 className="text-base font-semibold text-gray-900 mb-2">
         Rejoindre par code
       </h3>
-      <div className="flex gap-2 items-stretch">
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
         <input
           type="text"
           inputMode="text"
@@ -57,10 +57,15 @@ export const JoinByCodeForm: React.FC<JoinByCodeFormProps> = ({ onJoinTable }) =
             setCode(e.target.value);
             setSubmitted(false);
           }}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg uppercase tracking-widest font-mono text-lg focus:outline-none focus:ring-2 focus:ring-poker-green-500"
+          className="w-full sm:flex-1 sm:min-w-0 px-3 py-2 border border-gray-300 rounded-lg uppercase tracking-widest font-mono text-lg focus:outline-none focus:ring-2 focus:ring-poker-green-500"
           maxLength={6}
         />
-        <Button type="submit" variant="primary" disabled={!ready}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!ready}
+          className="w-full sm:w-auto"
+        >
           Rejoindre
         </Button>
       </div>
