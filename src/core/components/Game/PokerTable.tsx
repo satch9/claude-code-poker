@@ -16,6 +16,7 @@ import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses, useSeatPositioning } from "../../hooks/useResponsiveClasses";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { RebuyDialog } from "./RebuyDialog";
+import { InviteDialog } from "./InviteDialog";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
@@ -37,6 +38,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Masquée par défaut sur mobile
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
   const { user: authUser } = useAuth();
 
@@ -328,13 +330,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </div>
           {table.inviteCode && (
             <button
-              onClick={() => {
-                navigator.clipboard?.writeText(table.inviteCode!);
-              }}
-              title="Cliquer pour copier le code d'invitation"
+              onClick={() => setShowInviteDialog(true)}
+              title="Inviter des joueurs"
               className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-xs font-mono tracking-widest"
             >
-              📋 {table.inviteCode}
+              📤 {table.inviteCode}
             </button>
           )}
           <Button variant="secondary" size="sm" onClick={onLeaveTable}>
@@ -483,6 +483,15 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             }}
           />
         )}
+
+        {/* Modale Invitation */}
+        {showInviteDialog && table.inviteCode && (
+          <InviteDialog
+            isOpen={showInviteDialog}
+            onClose={() => setShowInviteDialog(false)}
+            inviteCode={table.inviteCode}
+          />
+        )}
       </div>
     );
   }
@@ -503,13 +512,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             </p>
             {table.inviteCode && (
               <button
-                onClick={() => {
-                  navigator.clipboard?.writeText(table.inviteCode!);
-                }}
-                title="Cliquer pour copier le code d'invitation"
+                onClick={() => setShowInviteDialog(true)}
+                title="Inviter des joueurs"
                 className="mt-1 inline-flex items-center gap-1 px-3 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-sm font-mono tracking-widest text-white transition-colors"
               >
-                📋 Code: {table.inviteCode}
+                📤 Inviter ({table.inviteCode})
               </button>
             )}
           </div>
@@ -1185,6 +1192,15 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 amount,
               });
             }}
+          />
+        )}
+
+        {/* Invite Dialog */}
+        {showInviteDialog && table.inviteCode && (
+          <InviteDialog
+            isOpen={showInviteDialog}
+            onClose={() => setShowInviteDialog(false)}
+            inviteCode={table.inviteCode}
           />
         )}
       </div>
