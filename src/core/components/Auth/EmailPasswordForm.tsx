@@ -29,7 +29,10 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
       }
       onSuccess?.();
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      // Normaliser l'erreur Convex (souvent préfixée par "[CONVEX M(...)] ")
+      const raw = err?.message || err?.toString?.() || 'Une erreur est survenue';
+      const m = String(raw).match(/Validation:.+|Invalid email or password|User already exists.+|Mot de passe.+/);
+      setError(m ? m[0] : raw);
     } finally {
       setLoading(false);
     }
@@ -94,7 +97,12 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+            <div
+              role="alert"
+              className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm"
+            >
+              {error}
+            </div>
           )}
 
           <Button
