@@ -216,9 +216,17 @@ async function startGameInternal(ctx: any, tableId: string) {
 }
 
 // Start a new game
+// NOTE B-runtime.3 : la restriction "seul le créateur peut démarrer" est
+// appliquée côté UI (PokerTable.tsx — visibilité du bouton). Convex Auth
+// n'est pas activé sur l'app (auth maison email/password), donc on ne peut
+// pas vérifier identity.subject côté serveur sans modifier la signature de
+// startGame pour passer userId. À reconsidérer en phase 0.C lors de la
+// migration vers Convex Auth.
 export const startGame = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    const table = await ctx.db.get(args.tableId);
+    if (!table) throw new Error("Table not found");
     return await startGameInternal(ctx, args.tableId);
   },
 });

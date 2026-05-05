@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card } from '../UI/Card';
-import { Button } from '../UI/Button';
 import { cn } from '../../../shared/utils/cn';
 
 interface ShowdownResult {
@@ -22,7 +21,6 @@ interface ShowdownResultsProps {
   results: ShowdownResult[];
   pot: number;
   communityCards: string[];
-  onContinue: () => void;
   className?: string;
 }
 
@@ -30,7 +28,6 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
   results,
   pot,
   communityCards,
-  onContinue,
   className,
 }) => {
   const parseCard = (cardStr: string) => {
@@ -155,16 +152,9 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
           })}
         </div>
 
-        {/* Continue Button */}
-        <div className="text-center">
-          <Button
-            onClick={onContinue}
-            variant="primary"
-            size="lg"
-            className="px-8"
-          >
-            Continuer
-          </Button>
+        {/* Auto-continue : la main suivante démarre via scheduler 3s (B5.1) */}
+        <div className="text-center text-sm text-gray-500">
+          Prochaine main dans quelques secondes…
         </div>
       </div>
     </div>

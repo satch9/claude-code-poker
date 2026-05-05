@@ -55,7 +55,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     handNumber,
     handleTimeOut,
     showdownResults,
-    handleAdvancePhase,
   } = useGameLogic(tableId, onLeaveTable);
 
   // Early return if no tableId or no data
@@ -325,7 +324,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             {gameState.phase === "waiting" &&
               table.status === "waiting" &&
               players.length >= 2 &&
-              currentPlayer && (
+              currentPlayer &&
+              currentPlayer.userId === table.creatorId && (
                 <Button
                   onClick={handleStartGame}
                   disabled={isProcessing}
@@ -725,7 +725,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </div>
 
               {/* Start game or leave button */}
-              {gameState.phase === "waiting" && table.status === "waiting" && players.length >= 2 && currentPlayer ? (
+              {gameState.phase === "waiting" && table.status === "waiting" && players.length >= 2 && currentPlayer && currentPlayer.userId === table.creatorId ? (
                 <button
                   onClick={handleStartGame}
                   disabled={isProcessing}
@@ -842,12 +842,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             results={showdownResults.results}
             pot={showdownResults.pot}
             communityCards={showdownResults.communityCards}
-            onContinue={async () => {
-              // Force server to advance from showdown and handle end of hand
-              if (gameState?.phase === 'showdown') {
-                await handleAdvancePhase();
-              }
-            }}
           />
         )}
 
