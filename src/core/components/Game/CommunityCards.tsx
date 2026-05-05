@@ -86,7 +86,6 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   };
 
   const cardsToShow = getCardsToShow();
-  const emptySlots = 5 - cardsToShow.length;
 
   return (
     <div className={cn('text-center flex flex-col items-center', className)}>

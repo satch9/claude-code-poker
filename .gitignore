@@ -29,4 +29,7 @@ dist-ssr
 .convex/
 
 # Audit temporaire (phase 0.A)
-.audit-tmp/captures/
+.audit-tmp/
+
+# Screenshots locaux
+captures/
