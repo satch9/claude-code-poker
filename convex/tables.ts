@@ -69,10 +69,15 @@ export const createTable = mutation({
 // Get all tables (public and private for lobby filtering)
 export const getPublicTables = query({
   handler: async (ctx) => {
-    // Get all tables that are not finished
+    // Get all tables that are not finished and not private (B-runtime.2)
     const tables = await ctx.db
       .query("tables")
-      .filter((q) => q.neq(q.field("status"), "finished"))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("status"), "finished"),
+          q.eq(q.field("isPrivate"), false),
+        ),
+      )
       .collect();
 
     // Get player count for each table
@@ -99,10 +104,15 @@ export const getPublicTables = query({
 export const getTablesWithUserInfo = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    // Get all tables that are not finished
+    // Get all tables that are not finished and not private (B-runtime.2)
     const tables = await ctx.db
       .query("tables")
-      .filter((q) => q.neq(q.field("status"), "finished"))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("status"), "finished"),
+          q.eq(q.field("isPrivate"), false),
+        ),
+      )
       .collect();
 
     // Get player count and user seating info for each table
