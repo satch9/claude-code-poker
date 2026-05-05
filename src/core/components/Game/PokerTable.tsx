@@ -14,6 +14,10 @@ import { useGameLogic } from "../../hooks/useGameLogic";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses, useSeatPositioning } from "../../hooks/useResponsiveClasses";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { RebuyDialog } from "./RebuyDialog";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useAuth } from "../../hooks/useAuth";
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -31,6 +35,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const [showGameInfo, setShowGameInfo] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Masquée par défaut sur mobile
+  const [showRebuyDialog, setShowRebuyDialog] = useState(false);
+  const rebuyMutation = useMutation(api.players.rebuy);
+  const { user: authUser } = useAuth();
 
   // Use hooks
   const { isMobile, isTablet, isIOS } = useBreakpoint();
@@ -339,6 +346,17 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             <Button variant="secondary" onClick={onLeaveTable}>
               Quitter la table
             </Button>
+
+            {table.gameType === "cash" &&
+              currentPlayer &&
+              currentPlayer.chips < table.bigBlind &&
+              (gameState.phase === "waiting" ||
+                gameState.phase === "showdown" ||
+                currentPlayer.isFolded) && (
+                <Button variant="primary" onClick={() => setShowRebuyDialog(true)}>
+                  Recharger
+                </Button>
+              )}
           </div>
         </div>
       )}
@@ -966,6 +984,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Rebuy Dialog */}
+        {showRebuyDialog && currentPlayer && authUser && (
+          <RebuyDialog
+            isOpen={showRebuyDialog}
+            onClose={() => setShowRebuyDialog(false)}
+            startingStack={table.startingStack}
+            currentChips={currentPlayer.chips}
+            onConfirm={async (amount) => {
+              await rebuyMutation({
+                tableId: table._id,
+                userId: authUser._id,
+                amount,
+              });
+            }}
+          />
         )}
       </div>
     </div>
