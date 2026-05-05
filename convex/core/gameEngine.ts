@@ -758,6 +758,14 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     lastRaiserPosition: undefined, // Reset last raiser for new betting round
     updatedAt: Date.now(),
   });
+
+  // Si on entre en showdown (cas check-down sans all-in), déclencher
+  // determineWinner directement. Sans ça, la phase reste bloquée car le
+  // bouton "Continuer" UI a été retiré (le scheduler runAfter de endHand
+  // se charge ensuite du délai 3s avant la main suivante).
+  if (nextPhase === "showdown") {
+    await determineWinner(ctx, tableId);
+  }
 }
 
 // Determine winner and distribute pot
