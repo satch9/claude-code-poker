@@ -1,5 +1,11 @@
 import { mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import {
+  emailSchema,
+  passwordSchema,
+  userNameSchema,
+  validateOrThrow,
+} from "./shared/validation";
 
 // Sign up with email and password
 export const signUpWithPassword = mutation({
@@ -9,6 +15,10 @@ export const signUpWithPassword = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
+    validateOrThrow(emailSchema, args.email);
+    validateOrThrow(passwordSchema, args.password);
+    validateOrThrow(userNameSchema, args.name);
+
     // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
@@ -41,6 +51,9 @@ export const signInWithPassword = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
+    validateOrThrow(emailSchema, args.email);
+    if (!args.password) throw new ConvexError("Mot de passe requis");
+
     // Find user by email
     const user = await ctx.db
       .query("users")

@@ -63,8 +63,11 @@ export const joinTable = mutation({
       }
     }
 
-    // Determine starting chips amount
-    const startingChips = args.buyInAmount || table.startingStack;
+    // Determine starting chips amount, clamped between 1 and table.startingStack
+    const startingChips =
+      args.buyInAmount !== undefined
+        ? Math.min(Math.max(1, Math.floor(args.buyInAmount)), table.startingStack)
+        : table.startingStack;
 
     // Add player to table with starting chips
     const playerId = await ctx.db.insert("players", {

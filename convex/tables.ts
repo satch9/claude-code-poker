@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { createTableSchema, validateOrThrow } from "./shared/validation";
 
 // Create a new table
 export const createTable = mutation({
@@ -15,8 +16,19 @@ export const createTable = mutation({
     creatorId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    validateOrThrow(createTableSchema, {
+      name: args.name,
+      maxPlayers: args.maxPlayers,
+      gameType: args.gameType,
+      buyIn: args.buyIn,
+      startingStack: args.startingStack,
+      smallBlind: args.smallBlind,
+      bigBlind: args.bigBlind,
+      isPrivate: args.isPrivate,
+    });
+
     let inviteCode: string | undefined;
-    
+
     if (args.isPrivate) {
       // Generate a 6-character invite code
       inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
