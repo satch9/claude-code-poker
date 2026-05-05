@@ -158,9 +158,11 @@ describe('🃏 Régression 1.B — Tests TDD pour fix handEvaluator/determineWin
     expect(r.rank).toBe(4);
   });
 
-  it('3. Reproduction B-runtime.5 — Eliott (A♠ 6) bat Satch9 (4 Q) sur board A 9 10 Q 10', () => {
+  it('3. Reproduction B-runtime.5 — Eliott (A♥ 6) bat Satch9 (4 Q) sur board A♠ 9 10 Q 10', () => {
+    // Note: l'audit décrit "Eliott: A♠ 6" en hole et "board A 9 10 Q 10" — ambigu sur la
+    // suit du A en board. Pour éviter collision, on prend Eliott hole = A♥ et A♠ sur board.
     const board = [spade('A'), heart('9'), diamond('10'), club('Q'), spade('10')];
-    const eliott = [...board, spade('A'), diamond('6')];
+    const eliott = [...board, heart('A'), diamond('6')];
     const satch = [...board, heart('4'), heart('Q')];
     const winners = determineWinners([
       { hand: evaluateHandRobust(eliott), playerId: 'eliott' },

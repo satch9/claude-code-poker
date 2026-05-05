@@ -881,12 +881,18 @@ async function determineWinner(ctx: any, tableId: string) {
 
     if (eligiblePlayers.length === 0) continue;
 
-    // Sort eligible players by hand rank (highest first)
-    eligiblePlayers.sort((a: any, b: any) => b.handRank.rank - a.handRank.rank);
-
-    // Find winners for this side pot (players with highest rank among eligible)
-    const highestRankForPot = eligiblePlayers[0].handRank.rank;
-    const potWinners = eligiblePlayers.filter((h: any) => h.handRank.rank === highestRankForPot);
+    // Use determineWinners (pokersolver-based) to correctly handle kickers and ties.
+    // Previously, only ranks were compared, which incorrectly split pots between
+    // hands of same rank but different kickers (B-runtime.5).
+    const winnerIds = determineWinners(
+      eligiblePlayers.map((h: any) => ({
+        hand: h.handRank,
+        playerId: String(h.player.userId),
+      }))
+    );
+    const potWinners = eligiblePlayers.filter((h: any) =>
+      winnerIds.includes(String(h.player.userId))
+    );
 
     // Distribute this side pot among winners
     const winAmountForPot = Math.floor(sidePot.amount / potWinners.length);
