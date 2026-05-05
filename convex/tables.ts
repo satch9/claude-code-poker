@@ -27,12 +27,9 @@ export const createTable = mutation({
       isPrivate: args.isPrivate,
     });
 
-    let inviteCode: string | undefined;
-
-    if (args.isPrivate) {
-      // Generate a 6-character invite code
-      inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
+    // Génération inconditionnelle d'un code (6 chars A-Z0-9) pour permettre
+    // le partage par code même pour les tables publiques.
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const tableId = await ctx.db.insert("tables", {
       name: args.name,
