@@ -214,46 +214,6 @@ export const getPlayerByUserAndTable = query({
   },
 });
 
-// Update player chips
-export const updatePlayerChips = mutation({
-  args: {
-    playerId: v.id("players"),
-    chips: v.number(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.playerId, {
-      chips: args.chips,
-    });
-  },
-});
-
-// Update player action
-export const updatePlayerAction = mutation({
-  args: {
-    playerId: v.id("players"),
-    action: v.union(
-      v.literal("fold"),
-      v.literal("check"),
-      v.literal("call"),
-      v.literal("raise"),
-      v.literal("all-in")
-    ),
-    currentBet: v.number(),
-    hasActed: v.boolean(),
-    isAllIn: v.optional(v.boolean()),
-    isFolded: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.playerId, {
-      lastAction: args.action,
-      currentBet: args.currentBet,
-      hasActed: args.hasActed,
-      isAllIn: args.isAllIn || false,
-      isFolded: args.isFolded || false,
-    });
-  },
-});
-
 // Get active players (not folded)
 export const getActivePlayers = query({
   args: { tableId: v.id("tables") },

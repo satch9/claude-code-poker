@@ -25,12 +25,10 @@ export function usePlayers(tableId?: Id<"tables">) {
 export function usePlayerActions() {
   const joinTable = useMutation(api.players.joinTable);
   const leaveTable = useMutation(api.players.leaveTable);
-  const updatePlayerChips = useMutation(api.players.updatePlayerChips);
-  const updatePlayerAction = useMutation(api.players.updatePlayerAction);
 
   const handleJoinTable = async (
-    tableId: Id<"tables">, 
-    userId: Id<"users">, 
+    tableId: Id<"tables">,
+    userId: Id<"users">,
     buyInAmount?: number
   ) => {
     try {
@@ -52,43 +50,9 @@ export function usePlayerActions() {
     }
   };
 
-  const handleUpdateChips = async (playerId: Id<"players">, chips: number) => {
-    try {
-      await updatePlayerChips({ playerId, chips });
-    } catch (error) {
-      console.error("Error updating chips:", error);
-      throw error;
-    }
-  };
-
-  const handlePlayerAction = async (
-    playerId: Id<"players">,
-    action: "fold" | "check" | "call" | "raise" | "all-in",
-    currentBet: number,
-    hasActed: boolean,
-    isAllIn?: boolean,
-    isFolded?: boolean
-  ) => {
-    try {
-      await updatePlayerAction({
-        playerId,
-        action,
-        currentBet,
-        hasActed,
-        isAllIn,
-        isFolded,
-      });
-    } catch (error) {
-      console.error("Error updating player action:", error);
-      throw error;
-    }
-  };
-
   return {
     joinTable: handleJoinTable,
     leaveTable: handleLeaveTable,
-    updateChips: handleUpdateChips,
-    updateAction: handlePlayerAction,
   };
 }
 
