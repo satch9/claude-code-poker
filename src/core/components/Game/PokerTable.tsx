@@ -98,68 +98,73 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const gameStats = getGameStats();
   const currentBet = gameState?.currentBet || 0;
 
-  // Calculate seat positions for oval table (optimized for different player counts)
-  const getSeatPosition = (position: number, maxPlayers: number) => {
+  // Calculate the BASE angle for a seat position (before viewer rotation)
+  const getBaseAngle = (position: number, maxPlayers: number): number => {
     let angle: number;
 
-    // Positionnement optimisé selon le nombre de joueurs
     if (maxPlayers === 2) {
-      // Pour 2 joueurs : face à face avec positions ajustées pour mobile
       const angles = isMobile ? [
-        Math.PI / 2 + 0.2,      // Position 0: Bas légèrement décalé
-        -Math.PI / 2 - 0.2      // Position 1: Haut légèrement décalé
+        Math.PI / 2 + 0.2,
+        -Math.PI / 2 - 0.2
       ] : [
-        Math.PI / 2,      // Position 0: Bas
-        -Math.PI / 2      // Position 1: Haut
+        Math.PI / 2,
+        -Math.PI / 2
       ];
       angle = angles[position % 2];
     } else if (maxPlayers === 3) {
-      // Pour 3 joueurs : positions ajustées pour mobile
       const angles = isMobile ? [
-        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 7 / 6 + 0.1, // Position 1 (SB): Bas/gauche légèrement décalé
-        Math.PI / 3 - 0.1      // Position 2 (BB): Bas/droite légèrement décalé
+        -Math.PI / 2,
+        Math.PI * 7 / 6 + 0.1,
+        Math.PI / 3 - 0.1
       ] : [
-        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 7 / 6,         // Position 1 (SB): Bas/gauche (8h)
-        Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
+        -Math.PI / 2,
+        Math.PI * 7 / 6,
+        Math.PI / 3
       ];
       angle = angles[position % 3];
     } else if (maxPlayers === 4) {
-      // Pour 4 joueurs : positionnement carré
       const angles = [
-        -Math.PI / 2,      // Position 0: Haut (12h)
-        0,                 // Position 1: Droite (3h)
-        Math.PI / 2,       // Position 2: Bas (6h)
-        Math.PI            // Position 3: Gauche (9h)
+        -Math.PI / 2,
+        0,
+        Math.PI / 2,
+        Math.PI
       ];
       angle = angles[position % 4];
     } else if (maxPlayers === 5) {
-      // Pour 5 joueurs : pentagone
       const angles = [
-        -Math.PI / 2,                    // Position 0: Haut
-        -Math.PI / 2 + (2 * Math.PI / 5), // Position 1
-        -Math.PI / 2 + (4 * Math.PI / 5), // Position 2
-        -Math.PI / 2 + (6 * Math.PI / 5), // Position 3
-        -Math.PI / 2 + (8 * Math.PI / 5)  // Position 4
+        -Math.PI / 2,
+        -Math.PI / 2 + (2 * Math.PI / 5),
+        -Math.PI / 2 + (4 * Math.PI / 5),
+        -Math.PI / 2 + (6 * Math.PI / 5),
+        -Math.PI / 2 + (8 * Math.PI / 5)
       ];
       angle = angles[position % 5];
     } else if (maxPlayers === 6) {
-      // Pour 6 joueurs : hexagone
       const angles = [
-        -Math.PI / 2,      // Position 0: Haut (12h)
-        -Math.PI / 6,      // Position 1: Haut-droite (2h)
-        Math.PI / 6,       // Position 2: Bas-droite (4h)
-        Math.PI / 2,       // Position 3: Bas (6h)
-        5 * Math.PI / 6,   // Position 4: Bas-gauche (8h)
-        -5 * Math.PI / 6   // Position 5: Haut-gauche (10h)
+        -Math.PI / 2,
+        -Math.PI / 6,
+        Math.PI / 6,
+        Math.PI / 2,
+        5 * Math.PI / 6,
+        -5 * Math.PI / 6
       ];
       angle = angles[position % 6];
     } else {
-      // Pour 7+ joueurs : distribution circulaire équilibrée
-      // Commencer par le haut et distribuer dans le sens horaire
       angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
     }
+    return angle;
+  };
+
+  // Rotation à appliquer pour que le viewer (currentPlayer) soit toujours en bas
+  // (angle = Math.PI / 2). Si pas de currentPlayer, pas de rotation.
+  const viewerRotation = currentPlayer
+    ? Math.PI / 2 - getBaseAngle(currentPlayer.seatPosition, table.maxPlayers)
+    : 0;
+
+  // Calculate seat positions for oval table (avec rotation viewer-relative).
+  // Le joueur courant (viewer) est toujours placé au sud (Math.PI / 2).
+  const getSeatPosition = (position: number, _maxPlayers: number) => {
+    const angle = getBaseAngle(position, _maxPlayers) + viewerRotation;
 
     // Radius ajusté pour positionner les seats au bord de la table
     const radiusX = seatPositioning.radius.radiusX; // Horizontal radius percentage (au bord de la table)
@@ -183,55 +188,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     } as const;
   };
 
-  // Calculate dealer button position (in front of player seat)
+  // Calculate dealer button position (in front of player seat).
+  // Utilise getBaseAngle + viewerRotation pour suivre la rotation du viewer.
   const getDealerButtonPosition = (position: number, maxPlayers: number) => {
-    let angle;
-
-    // Utiliser la même logique de positionnement que les seats
-    if (maxPlayers === 2) {
-      const angles = [
-        Math.PI / 2,      // Position 0: Bas
-        -Math.PI / 2      // Position 1: Haut
-      ];
-      angle = angles[position % 2];
-    } else if (maxPlayers === 3) {
-      const angles = [
-        -Math.PI / 2,          // Position 0 (Dealer): Haut/centre (12h)
-        Math.PI * 7 / 6,         // Position 1 (SB): Bas/gauche (8h)
-        Math.PI / 3           // Position 2 (BB): Bas/droite (4h)
-      ];
-      angle = angles[position % 3];
-    } else if (maxPlayers === 4) {
-      const angles = [
-        -Math.PI / 2,      // Position 0: Haut (12h)
-        0,                 // Position 1: Droite (3h)
-        Math.PI / 2,       // Position 2: Bas (6h)
-        Math.PI            // Position 3: Gauche (9h)
-      ];
-      angle = angles[position % 4];
-    } else if (maxPlayers === 5) {
-      const angles = [
-        -Math.PI / 2,                    // Position 0: Haut
-        -Math.PI / 2 + (2 * Math.PI / 5), // Position 1
-        -Math.PI / 2 + (4 * Math.PI / 5), // Position 2
-        -Math.PI / 2 + (6 * Math.PI / 5), // Position 3
-        -Math.PI / 2 + (8 * Math.PI / 5)  // Position 4
-      ];
-      angle = angles[position % 5];
-    } else if (maxPlayers === 6) {
-      const angles = [
-        -Math.PI / 2,      // Position 0: Haut (12h)
-        -Math.PI / 6,      // Position 1: Haut-droite (2h)
-        Math.PI / 6,       // Position 2: Bas-droite (4h)
-        Math.PI / 2,       // Position 3: Bas (6h)
-        5 * Math.PI / 6,   // Position 4: Bas-gauche (8h)
-        -5 * Math.PI / 6   // Position 5: Haut-gauche (10h)
-      ];
-      angle = angles[position % 6];
-    } else {
-      // Pour 7+ joueurs : distribution circulaire équilibrée
-      angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
-    }
+    const angle = getBaseAngle(position, maxPlayers) + viewerRotation;
 
     // Utiliser les hooks pour le positionnement
     const { radiusX, radiusY } = seatPositioning.radius;
