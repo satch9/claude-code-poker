@@ -883,9 +883,11 @@ async function determineWinner(ctx: any, tableId: string) {
   }
 
   // Calculate side pots for pot distribution
-
-  // Calculate side pots
-  const sidePots = calculateSidePots(
+  // Note: calculateSidePots filtre par currentBet > 0. Si tous les joueurs
+  // ont check-down (sans all-in), currentBet=0 → sidePots=[]. Dans ce cas
+  // on fabrique un pot unique avec gameState.pot et tous les joueurs actifs
+  // comme éligibles.
+  let sidePots = calculateSidePots(
     players.map((p: any) => ({
       userId: p.userId,
       currentBet: p.currentBet,
@@ -894,7 +896,17 @@ async function determineWinner(ctx: any, tableId: string) {
     }))
   );
 
-  console.log("🎰 Side pots calculated:", sidePots);
+  if (sidePots.length === 0 && gameState.pot > 0) {
+    sidePots = [
+      {
+        amount: gameState.pot,
+        eligiblePlayers: activePlayers.map((p: any) => p.userId),
+      },
+    ];
+    console.log("🎰 Fallback main pot (pas d'all-in) :", sidePots);
+  } else {
+    console.log("🎰 Side pots calculated:", sidePots);
+  }
 
   // Distribute each side pot individually
   for (let i = 0; i < sidePots.length; i++) {
