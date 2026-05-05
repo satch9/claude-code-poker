@@ -1328,7 +1328,7 @@ export const getAvailableActions = query({
 export const forcePlayerFold: any = mutation({
   args: { tableId: v.id("tables"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.runMutation((internal as any)["internal/gameEngine"].playerAction, {
+    return await ctx.runMutation(internal.internal.gameEngine.playerAction, {
       tableId: args.tableId,
       userId: args.userId,
       action: "fold",
