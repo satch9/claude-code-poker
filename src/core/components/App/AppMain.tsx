@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { Lobby } from "../Lobby/Lobby";
@@ -6,7 +6,8 @@ import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
 import { PokerTable } from "../Game/PokerTable";
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
-import { useMutation } from "convex/react";
+import { usePendingJoin } from "../../hooks/usePendingJoin";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 // Table, Player, GameState plus nécessaires ici
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -22,6 +23,54 @@ const AppContent: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(
     null
   );
+
+  const { pendingCode, clearPending } = usePendingJoin();
+
+  // Lookup de la table associée au code en attente
+  const pendingTable = useQuery(
+    api.tables.getTableByInviteCode,
+    pendingCode ? { code: pendingCode } : "skip"
+  );
+
+  // Auto-join quand user authentifié + table résolue
+  useEffect(() => {
+    if (!user || !pendingCode || pendingTable === undefined) return;
+
+    if (pendingTable === null) {
+      // Code invalide (ou table supprimée) — clear et continue
+      console.warn("Invalid invite code:", pendingCode);
+      clearPending();
+      return;
+    }
+
+    // Table trouvée. Naviguer + tenter l'auto-join (idempotent).
+    setSelectedTableId(pendingTable._id);
+    setCurrentView("table");
+
+    // Tenter de s'asseoir sur un siège libre. Si déjà assis,
+    // joinTable jettera "User already in table" → on l'ignore silencieusement.
+    joinTableMutation({
+      tableId: pendingTable._id,
+      userId: user._id,
+    })
+      .catch((err) => {
+        const msg = err?.message ?? String(err);
+        if (msg.includes("User already in table")) {
+          // OK, l'utilisateur est déjà à la table — on garde la navigation
+          return;
+        }
+        if (msg.includes("Table is full")) {
+          alert("La table est complète, impossible de rejoindre.");
+          setCurrentView("lobby");
+          setSelectedTableId(null);
+          return;
+        }
+        console.error("Auto-join failed:", err);
+      })
+      .finally(() => {
+        clearPending();
+      });
+  }, [user, pendingCode, pendingTable, joinTableMutation, clearPending]);
 
   const title = "Poker Famille !";
 
