@@ -42,8 +42,7 @@ export async function signupAndSignIn(
   // API attendue après Task 2 (migration @convex-dev/auth Password provider)
   await (client as any).action(api.auth.signIn, {
     provider: 'password',
-    flow: 'signUp',
-    params: { email, password, name },
+    params: { email, password, name, flow: 'signUp' },
   });
   const session: any = await (client as any).query(api.auth.loggedInUser, {});
   if (!session?._id) {

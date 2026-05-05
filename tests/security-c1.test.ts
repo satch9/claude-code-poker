@@ -163,8 +163,7 @@ describe('C1 — Rate limit signin', () => {
       try {
         await (c as any).action(api.auth.signIn, {
           provider: 'password',
-          flow: 'signIn',
-          params: { email, password: 'wrong' },
+          params: { email, password: 'wrong', flow: 'signIn' },
         });
       } catch {
         /* expected */
@@ -174,8 +173,7 @@ describe('C1 — Rate limit signin', () => {
     await expectThrowsUnauthorized(
       (c as any).action(api.auth.signIn, {
         provider: 'password',
-        flow: 'signIn',
-        params: { email, password: 'wrong' },
+        params: { email, password: 'wrong', flow: 'signIn' },
       }),
     );
   });
