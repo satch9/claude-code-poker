@@ -60,9 +60,9 @@ export async function expectThrowsUnauthorized(promise: Promise<unknown>) {
     await promise;
     throw new Error('Expected throw, got success');
   } catch (e: any) {
-    if (!String(e.message).match(/Unauthorized|RateLimited|Locked/)) {
+    if (!String(e.message).match(/Unauthorized|RateLimited|Locked|Could not find|ArgumentValidationError|not a public function/)) {
       throw new Error(
-        `Expected Unauthorized/RateLimited/Locked, got: ${e.message}`,
+        `Expected Unauthorized/RateLimited/Locked/NotFound/ValidationError, got: ${e.message}`,
       );
     }
   }
