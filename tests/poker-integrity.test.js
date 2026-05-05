@@ -136,6 +136,111 @@ describe('🚀 Performance - Tests de Charge', () => {
   });
 });
 
+describe('🃏 Régression 1.B — Tests TDD pour fix handEvaluator/determineWinners', () => {
+  // Helper: une "main" en Texas Hold'em est 7 cartes (2 hole + 5 community).
+  // evaluateHandRobust prend ces 7 cartes et retourne la meilleure main de 5.
+  const heart = (r) => ({ rank: r, suit: 'hearts' });
+  const diamond = (r) => ({ rank: r, suit: 'diamonds' });
+  const club = (r) => ({ rank: r, suit: 'clubs' });
+  const spade = (r) => ({ rank: r, suit: 'spades' });
+
+  it('1. Royal Flush A♠K♠Q♠J♠T♠ → name=Royal Flush, rank=9', () => {
+    const cards = [spade('A'), spade('K'), spade('Q'), spade('J'), spade('10')];
+    const r = evaluateHandRobust(cards);
+    expect(r.name).toBe('Royal Flush');
+    expect(r.rank).toBe(9);
+  });
+
+  it('2. Wheel straight A-2-3-4-5 → name=Straight, rank=4', () => {
+    const cards = [heart('A'), club('2'), spade('3'), heart('4'), diamond('5')];
+    const r = evaluateHandRobust(cards);
+    expect(r.name).toBe('Straight');
+    expect(r.rank).toBe(4);
+  });
+
+  it('3. Reproduction B-runtime.5 — Eliott (A♠ 6) bat Satch9 (4 Q) sur board A 9 10 Q 10', () => {
+    const board = [spade('A'), heart('9'), diamond('10'), club('Q'), spade('10')];
+    const eliott = [...board, spade('A'), diamond('6')];
+    const satch = [...board, heart('4'), heart('Q')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(eliott), playerId: 'eliott' },
+      { hand: evaluateHandRobust(satch), playerId: 'satch9' },
+    ]);
+    expect(winners).toEqual(['eliott']);
+  });
+
+  it('4. Two pair AA-1010 (kicker Q) bat QQ-1010 (kicker A)', () => {
+    const eliott = [spade('A'), heart('A'), club('10'), diamond('10'), spade('Q')];
+    const satch = [club('Q'), heart('Q'), club('10'), diamond('10'), heart('A')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(eliott), playerId: 'eliott' },
+      { hand: evaluateHandRobust(satch), playerId: 'satch9' },
+    ]);
+    expect(winners).toEqual(['eliott']);
+  });
+
+  it('5. One pair AA + KQJ bat AA + KQ9', () => {
+    const a = [spade('A'), heart('A'), club('K'), diamond('Q'), spade('J')];
+    const b = [diamond('A'), club('A'), heart('K'), spade('Q'), heart('9')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(a), playerId: 'a' },
+      { hand: evaluateHandRobust(b), playerId: 'b' },
+    ]);
+    expect(winners).toEqual(['a']);
+  });
+
+  it('6. Flush bat Straight', () => {
+    const flush = [heart('K'), heart('9'), heart('7'), heart('5'), heart('3')];
+    const straight = [club('9'), diamond('10'), spade('J'), heart('Q'), club('K')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(flush), playerId: 'flush' },
+      { hand: evaluateHandRobust(straight), playerId: 'straight' },
+    ]);
+    expect(winners).toEqual(['flush']);
+  });
+
+  it('7. Full house Ks over 3s bat Js over 5s', () => {
+    const a = [spade('K'), heart('K'), club('K'), diamond('3'), spade('3')];
+    const b = [spade('J'), heart('J'), club('J'), diamond('5'), heart('5')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(a), playerId: 'a' },
+      { hand: evaluateHandRobust(b), playerId: 'b' },
+    ]);
+    expect(winners).toEqual(['a']);
+  });
+
+  it('8. Vrai split — 2 mains identiques sur board complet', () => {
+    const board = [spade('A'), heart('A'), club('A'), diamond('A'), spade('K')];
+    const a = [...board, club('2'), heart('3')];
+    const b = [...board, diamond('4'), spade('5')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(a), playerId: 'a' },
+      { hand: evaluateHandRobust(b), playerId: 'b' },
+    ]);
+    expect(winners.sort()).toEqual(['a', 'b']);
+  });
+
+  it('9. Trips A bat Trips K (mêmes kickers QJ)', () => {
+    const a = [spade('A'), heart('A'), club('A'), diamond('Q'), spade('J')];
+    const b = [spade('K'), heart('K'), club('K'), diamond('Q'), heart('J')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(a), playerId: 'a' },
+      { hand: evaluateHandRobust(b), playerId: 'b' },
+    ]);
+    expect(winners).toEqual(['a']);
+  });
+
+  it('10. High card AKQJ9 bat AKQJ8 (last kicker tranche)', () => {
+    const a = [spade('A'), heart('K'), club('Q'), diamond('J'), spade('9')];
+    const b = [diamond('A'), club('K'), heart('Q'), spade('J'), heart('8')];
+    const winners = determineWinners([
+      { hand: evaluateHandRobust(a), playerId: 'a' },
+      { hand: evaluateHandRobust(b), playerId: 'b' },
+    ]);
+    expect(winners).toEqual(['a']);
+  });
+});
+
 // Utilitaires de test
 function generateRandomHand(numCards) {
   const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
