@@ -17,6 +17,8 @@ beforeAll(async () => {
   bob = await signupAndSignIn(`bob-c1-${Date.now()}@test.local`, 'BobPass123!', 'Bob');
   alice = await signupAndSignIn(`alice-c1-${Date.now()}@test.local`, 'AlicePass123!', 'Alice');
   // Bob crée une table heads-up
+  // NOTE: creatorId/userId args still required pre-Task 10. Task 10 will remove them
+  // (helper requireUserId derives identity from auth context). Adapt this setup then.
   const t: any = await bob.client.mutation(api.tables.createTable, {
     name: 'sec-test',
     maxPlayers: 2,
@@ -25,15 +27,18 @@ beforeAll(async () => {
     startingStack: 1000,
     isPrivate: true,
     gameType: 'cash',
+    creatorId: bob.userId,
   } as any);
   tableId = t.tableId || t;
   await bob.client.mutation(api.players.joinTable, {
     tableId,
+    userId: bob.userId,
     seatPosition: 0,
     buyInAmount: 1000,
   } as any);
   await alice.client.mutation(api.players.joinTable, {
     tableId,
+    userId: alice.userId,
     seatPosition: 1,
     buyInAmount: 1000,
   } as any);

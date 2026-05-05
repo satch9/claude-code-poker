@@ -39,16 +39,20 @@ export async function signupAndSignIn(
   name: string,
 ): Promise<AuthedClient> {
   const client = makeClient();
-  // API attendue après Task 2 (migration @convex-dev/auth Password provider)
-  await (client as any).action(api.auth.signIn, {
+  const result: any = await (client as any).action(api.auth.signIn, {
     provider: 'password',
     params: { email, password, name, flow: 'signUp' },
   });
-  const session: any = await (client as any).query(api.auth.loggedInUser, {});
-  if (!session?._id) {
-    throw new Error('signupAndSignIn: no session returned (auth not wired yet?)');
+  const token: string | undefined = result?.tokens?.token;
+  if (!token) {
+    throw new Error(`signupAndSignIn: no token in signIn result: ${JSON.stringify(result)}`);
   }
-  return { client, userId: session._id as string, email };
+  client.setAuth(token);
+  const session: any = await client.query(api.auth.loggedInUser, {});
+  if (!session?._id) {
+    throw new Error('signupAndSignIn: loggedInUser returned null after setAuth');
+  }
+  return { client, userId: session._id as string, email, sessionToken: token };
 }
 
 export async function expectThrowsUnauthorized(promise: Promise<unknown>) {
