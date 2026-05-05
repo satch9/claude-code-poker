@@ -17,8 +17,7 @@ beforeAll(async () => {
   bob = await signupAndSignIn(`bob-c1-${Date.now()}@test.local`, 'BobPass123!', 'Bob');
   alice = await signupAndSignIn(`alice-c1-${Date.now()}@test.local`, 'AlicePass123!', 'Alice');
   // Bob crée une table heads-up
-  // NOTE: creatorId/userId args still required pre-Task 10. Task 10 will remove them
-  // (helper requireUserId derives identity from auth context). Adapt this setup then.
+  // Post-Task 10 : creatorId arg n'est plus accepté (identité dérivée de l'auth context).
   const t: any = await bob.client.mutation(api.tables.createTable, {
     name: 'sec-test',
     maxPlayers: 2,
@@ -27,7 +26,6 @@ beforeAll(async () => {
     startingStack: 1000,
     isPrivate: true,
     gameType: 'cash',
-    creatorId: bob.userId,
   } as any);
   tableId = t.tableId || t;
   await bob.client.mutation(api.players.joinTable, {
@@ -205,8 +203,11 @@ describe('C3 — Mutations 🟡 protégées', () => {
     );
   });
 
-  it('14. createTable with forged creatorId throws', async () => {
-    await expectThrowsUnauthorized(
+  it('14. createTable does not accept creatorId arg (post-Task 10)', async () => {
+    // Post-Task 10 : creatorId n'est plus dans le validator. Convex rejette les
+    // arguments superflus avec ArgumentValidationError. La menace originelle
+    // (forger creatorId) devient impossible by design.
+    await expect(
       bob.client.mutation(api.tables.createTable, {
         name: 'x',
         maxPlayers: 2,
@@ -217,7 +218,7 @@ describe('C3 — Mutations 🟡 protégées', () => {
         gameType: 'cash',
         creatorId: alice.userId,
       } as any),
-    );
+    ).rejects.toThrow();
   });
 });
 

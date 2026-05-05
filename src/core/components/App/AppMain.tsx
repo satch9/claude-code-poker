@@ -98,7 +98,6 @@ const AppContent: React.FC = () => {
     try {
       const tableId = await createTable({
         ...tableData,
-        creatorId: user._id,
       });
 
       // Auto-seat le créateur sur le siège 0 (B2.4)

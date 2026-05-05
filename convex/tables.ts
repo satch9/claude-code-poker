@@ -1,7 +1,10 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { createTableSchema, validateOrThrow } from "./shared/validation";
 import { sanitizeGameState } from "./shared/sanitize";
+import { requireUserId } from "./shared/auth";
+import { rateLimiter } from "./shared/rateLimit";
 
 // Invite code generation : crypto-secure 6 chars [0-9A-Z]
 const INVITE_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -25,9 +28,9 @@ export const createTable = mutation({
     smallBlind: v.number(),
     bigBlind: v.number(),
     isPrivate: v.boolean(),
-    creatorId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const creatorId = await requireUserId(ctx);
     validateOrThrow(createTableSchema, {
       name: args.name,
       maxPlayers: args.maxPlayers,
@@ -64,7 +67,7 @@ export const createTable = mutation({
       bigBlind: args.bigBlind,
       isPrivate: args.isPrivate,
       inviteCode,
-      creatorId: args.creatorId,
+      creatorId,
       status: "waiting",
       createdAt: Date.now(),
     });
@@ -196,6 +199,8 @@ export const getTableByInviteCode = query({
     const code = args.code.toUpperCase().trim();
     if (code.length !== 6) return null;
 
+    const callerId = await getAuthUserId(ctx);
+
     const table = await ctx.db
       .query("tables")
       .withIndex("by_invite_code", (q) => q.eq("inviteCode", code))
@@ -203,7 +208,81 @@ export const getTableByInviteCode = query({
 
     if (!table) return null;
 
+    // Privacy filter (C2.20): pour les tables privées, on ne révèle l'existence
+    // qu'aux callers déjà membres (creator ou joueur assis).
+    if (table.isPrivate) {
+      if (!callerId) return null;
+      const isCreator = table.creatorId === callerId;
+      let isMember = isCreator;
+      if (!isMember) {
+        const seated = await ctx.db
+          .query("players")
+          .withIndex("by_table", (q) => q.eq("tableId", table._id))
+          .filter((q) => q.eq(q.field("userId"), callerId))
+          .first();
+        isMember = !!seated;
+      }
+      if (!isMember) return null;
+    }
+
     // Compter les joueurs pour donner du contexte au frontend
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", table._id))
+      .collect();
+
+    return {
+      _id: table._id,
+      name: table.name,
+      status: table.status,
+      maxPlayers: table.maxPlayers,
+      gameType: table.gameType,
+      smallBlind: table.smallBlind,
+      bigBlind: table.bigBlind,
+      currentPlayers: players.length,
+    };
+  },
+});
+
+// Wrapper mutation pour rate-limiter le lookup invite code (10/min/caller).
+// À utiliser pour les flows "join by code" en remplacement direct de la query.
+// La query reste publique pour la lecture passive (useQuery réactif), avec
+// privacy filter appliqué.
+export const lookupInviteCode = mutation({
+  args: { code: v.string() },
+  handler: async (ctx, args) => {
+    const callerId = await getAuthUserId(ctx);
+    const status = await rateLimiter.limit(ctx, "inviteLookup", {
+      key: callerId ?? "anonymous",
+    });
+    if (!status.ok) {
+      throw new ConvexError("RateLimited: too many invite lookups");
+    }
+
+    const code = args.code.toUpperCase().trim();
+    if (code.length !== 6) return null;
+
+    const table = await ctx.db
+      .query("tables")
+      .withIndex("by_invite_code", (q) => q.eq("inviteCode", code))
+      .first();
+    if (!table) return null;
+
+    if (table.isPrivate) {
+      if (!callerId) return null;
+      const isCreator = table.creatorId === callerId;
+      let isMember = isCreator;
+      if (!isMember) {
+        const seated = await ctx.db
+          .query("players")
+          .withIndex("by_table", (q) => q.eq("tableId", table._id))
+          .filter((q) => q.eq(q.field("userId"), callerId))
+          .first();
+        isMember = !!seated;
+      }
+      if (!isMember) return null;
+    }
+
     const players = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", table._id))

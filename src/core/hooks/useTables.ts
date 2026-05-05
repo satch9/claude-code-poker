@@ -41,7 +41,6 @@ export function useTableActions() {
     smallBlind: number;
     bigBlind: number;
     isPrivate: boolean;
-    creatorId: Id<"users">;
   }) => {
     try {
       const tableId = await createTable(tableData);

@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireSelf } from "./shared/auth";
 
 // Get user by ID
 export const getUser = query({
@@ -16,6 +17,7 @@ export const generateAvatarUploadUrl = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     // Verify user exists
     const user = await ctx.db.get(args.userId);
     if (!user) {
@@ -36,6 +38,7 @@ export const updateUserProfile = mutation({
     removeAvatarImage: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     // Get current user by ID
     const user = await ctx.db.get(args.userId);
 

@@ -249,6 +249,7 @@ export const rebuy = mutation({
     amount: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     validateOrThrow(rebuyAmountSchema, args.amount);
 
     const table = await ctx.db.get(args.tableId);

@@ -1401,6 +1401,7 @@ export const forcePlayerFold: any = internalMutation({
 export const startNextHand: any = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    await requireTableCreator(ctx, args.tableId);
     const gameState = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
