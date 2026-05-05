@@ -8,8 +8,10 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
+  clearError: () => void;
   login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   signUp: (email: string, password: string, name: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
@@ -28,8 +30,12 @@ export function useAuth() {
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const signUpMutation = useMutation(api.auth.signUpWithPassword);
   const signInMutation = useMutation(api.auth.signInWithPassword);
+  const signOutMutation = useMutation(api.auth.signOut);
+
+  const clearError = () => setError(null);
   
   // Query to get full user data from database
   // Only call if we have a valid user ID that doesn't come from notifications table
@@ -94,6 +100,7 @@ export function useAuthState() {
 
   const signUp = async (email: string, password: string, name: string) => {
     setIsLoading(true);
+    setError(null);
     try {
       const result = await signUpMutation({ email, password, name });
       const newUser: User = {
@@ -113,6 +120,10 @@ export function useAuthState() {
         throw new Error('Invalid user ID received from server');
       }
       return result;
+    } catch (e) {
+      const msg = extractErrorMessage(e);
+      setError(msg);
+      throw e;
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +131,7 @@ export function useAuthState() {
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
+    setError(null);
     try {
       const result = await signInMutation({ email, password });
       // Use the full user data returned from the backend
@@ -136,6 +148,10 @@ export function useAuthState() {
         }
       }
       return result;
+    } catch (e) {
+      const msg = extractErrorMessage(e);
+      setError(msg);
+      throw e;
     } finally {
       setIsLoading(false);
     }
@@ -145,8 +161,16 @@ export function useAuthState() {
     console.log('Login called - handled by form components');
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (user?._id) {
+      try {
+        await signOutMutation({ userId: user._id });
+      } catch (e) {
+        console.warn('signOut server failed', e);
+      }
+    }
     setUser(null);
+    setError(null);
     localStorage.removeItem('poker-user');
   };
 
@@ -162,12 +186,26 @@ export function useAuthState() {
     user,
     isLoading,
     isAuthenticated,
+    error,
+    clearError,
     login,
     logout,
     updateUser,
     signUp,
     signIn,
   };
+}
+
+// Convex/ConvexError messages can be strings or objects. Extract a readable string.
+function extractErrorMessage(e: unknown): string {
+  if (!e) return 'Erreur inconnue';
+  if (typeof e === 'string') return e;
+  if (e instanceof Error) {
+    // Strip Convex internal prefix if present (e.g. "[CONVEX M(auth:signIn)] ...")
+    const m = e.message.match(/Validation:.+|Invalid email or password|User already exists.+|Mot de passe.+/);
+    return m ? m[0] : e.message;
+  }
+  return String(e);
 }
 
 export { AuthContext };

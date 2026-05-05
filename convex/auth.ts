@@ -100,6 +100,17 @@ export const signInWithPassword = mutation({
   },
 });
 
+// Sign out — patch lastSeen on the server (no real session token yet, see 0.C)
+export const signOut = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return { success: false };
+    await ctx.db.patch(args.userId, { lastSeen: Date.now() });
+    return { success: true };
+  },
+});
+
 // Generate a cryptographically random salt (16 bytes, hex-encoded)
 function generateSalt(): string {
   const arr = new Uint8Array(16);
