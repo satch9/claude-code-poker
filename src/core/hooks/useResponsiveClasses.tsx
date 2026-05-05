@@ -43,10 +43,11 @@ export const useResponsiveClasses = () => {
       'poker-table-main'
     ),
     
-    // Table felt
+    // Table felt — perspective 3D PokerStars-like (tilt arrière vers le bas)
     pokerTableFelt: cn(
       "absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-600 to-emerald-800 shadow-2xl",
-      "rounded-full border-12 border-transparent"
+      "rounded-full border-12 border-transparent",
+      "table-felt-3d"
     ),
     
     // Espacement center table
