@@ -10,6 +10,7 @@ export default defineSchema({
     avatarColor: v.optional(v.string()), // Avatar background color
     avatarImageId: v.optional(v.id("_storage")), // File ID for uploaded avatar
     password: v.optional(v.string()), // For email/password auth
+    passwordSalt: v.optional(v.string()), // Per-user random salt (16 bytes hex)
     createdAt: v.number(),
     lastSeen: v.optional(v.number()),
   }).index("by_email", ["email"]),

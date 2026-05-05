@@ -29,13 +29,14 @@ export const signUpWithPassword = mutation({
       throw new ConvexError("User already exists with this email");
     }
 
-    // Pour simplifier, on stocke le mot de passe en hash simple (en production, utiliser bcrypt)
-    const hashedPassword = await hashPassword(args.password);
+    const salt = generateSalt();
+    const hashedPassword = await hashWithSalt(args.password, salt);
 
     const userId = await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
       password: hashedPassword,
+      passwordSalt: salt,
       createdAt: Date.now(),
       lastSeen: Date.now(),
     });
@@ -64,20 +65,34 @@ export const signInWithPassword = mutation({
       throw new ConvexError("Invalid email or password");
     }
 
-    // Verify password
-    const isValidPassword = await verifyPassword(args.password, user.password);
+    // Verify password (backward compat: legacy accounts used the literal "salt")
+    const isValidPassword = await verifyPassword(
+      args.password,
+      user.password,
+      user.passwordSalt
+    );
 
     if (!isValidPassword) {
       throw new ConvexError("Invalid email or password");
     }
 
-    // Update last seen
-    await ctx.db.patch(user._id, {
-      lastSeen: Date.now(),
-    });
+    // Migration: if no salt stored, generate one and re-hash
+    if (!user.passwordSalt) {
+      const newSalt = generateSalt();
+      const newHash = await hashWithSalt(args.password, newSalt);
+      await ctx.db.patch(user._id, {
+        password: newHash,
+        passwordSalt: newSalt,
+        lastSeen: Date.now(),
+      });
+    } else {
+      await ctx.db.patch(user._id, {
+        lastSeen: Date.now(),
+      });
+    }
 
     // Return user data without password
-    const { password: _password, ...userWithoutPassword } = user;
+    const { password: _password, passwordSalt: _passwordSalt, ...userWithoutPassword } = user;
     return {
       userId: user._id,
       user: userWithoutPassword
@@ -85,16 +100,30 @@ export const signInWithPassword = mutation({
   },
 });
 
-// Simple password hashing (en production, utiliser bcrypt)
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + "salt"); // Ajouter un vrai salt en production
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// Generate a cryptographically random salt (16 bytes, hex-encoded)
+function generateSalt(): string {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password);
-  return passwordHash === hashedPassword;
+async function hashWithSalt(password: string, salt: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + salt);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function verifyPassword(
+  password: string,
+  hashedPassword: string,
+  salt: string | undefined
+): Promise<boolean> {
+  // Backward compat: old accounts used the literal "salt" string
+  const effectiveSalt = salt ?? "salt";
+  const candidate = await hashWithSalt(password, effectiveSalt);
+  return candidate === hashedPassword;
 }
