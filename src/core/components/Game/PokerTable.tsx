@@ -642,7 +642,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 />
               </div>
 
-              {/* Dealer button */}
+              {/* Dealer button (pastille DEALER style PokerStars) */}
               {gameState.dealerPosition >= 0 && (
                 <div
                   className={responsiveClasses.dealerButton}
@@ -651,12 +651,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       gameState.dealerPosition,
                       table.maxPlayers
                     ),
-                    boxShadow:
-                      "0 8px 25px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)",
                     transform: `${getDealerButtonPosition(gameState.dealerPosition, table.maxPlayers).transform} scaleY(1.43)`
                   }}
                 >
-                  <span className="drop-shadow-sm">D</span>
+                  DEALER
                 </div>
               )}
 

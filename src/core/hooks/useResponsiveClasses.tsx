@@ -32,10 +32,10 @@ export const useResponsiveClasses = () => {
       isTablet ? 'w-60' : 'w-80'
     ),
     
-    // Bouton dealer
+    // Bouton dealer style PokerStars (plus large pour afficher "DEALER")
     dealerButton: cn(
-      'dealer-button',
-      isMobile ? 'w-6 h-6 text-xs' : 'w-10 h-10 text-sm'
+      'dealer-button absolute',
+      isMobile ? 'w-10 h-5 text-[8px]' : 'w-14 h-6 text-[10px]'
     ),
     
     // Container principal de table

@@ -174,7 +174,6 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           responsiveClasses.playerSeat,
           isCurrentPlayer && responsiveClasses.playerStates.current,
           isActivePlayer && responsiveClasses.playerStates.active,
-          isActivePlayer && !player.isFolded && "player-active-glow",
           player.isFolded && responsiveClasses.playerStates.folded,
           player.isAllIn && responsiveClasses.playerStates.allIn,
           className
@@ -206,8 +205,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         >
           <div
             className={cn(
-              "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold",
-              isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm"
+              "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold ring-2 transition-all",
+              isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm",
+              isActivePlayer && !player.isFolded
+                ? "ring-red-500 avatar-active-pulse"
+                : "ring-blue-300/40"
             )}
           >
             {(player.user?.name || "Player").charAt(0).toUpperCase()}
