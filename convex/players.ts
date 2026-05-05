@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
+import { requireSelf } from "./shared/auth";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -11,6 +12,7 @@ export const joinTable = mutation({
     seatPosition: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     const table = await ctx.db.get(args.tableId);
     if (!table) {
       throw new Error("Table not found");
@@ -95,6 +97,7 @@ export const leaveTable = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     const player = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))

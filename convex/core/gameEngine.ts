@@ -31,6 +31,7 @@ import {
   type PlayerState
 } from "../utils/gameStateMachine";
 import { internal } from "../_generated/api";
+import { requireSelf, requireTableCreator } from "../shared/auth";
 
 // Helper function to add action to server-side feed
 async function addActionToFeed(ctx: any, tableId: string, data: {
@@ -225,6 +226,7 @@ async function startGameInternal(ctx: any, tableId: string) {
 export const startGame = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    await requireTableCreator(ctx, args.tableId);
     const table = await ctx.db.get(args.tableId);
     if (!table) throw new Error("Table not found");
     return await startGameInternal(ctx, args.tableId);
@@ -246,6 +248,7 @@ export const playerAction = mutation({
     amount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireSelf(ctx, args.userId);
     const table = await ctx.db.get(args.tableId);
     if (!table) {
       throw new Error("Table not found");
@@ -510,6 +513,7 @@ export const playerAction = mutation({
 export const advancePhase = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    await requireTableCreator(ctx, args.tableId);
     const gameState = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
@@ -581,6 +585,7 @@ export const advancePhase = mutation({
 export const advanceFromShowdown = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    await requireTableCreator(ctx, args.tableId);
     const gameState = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
@@ -1376,7 +1381,9 @@ export const getAvailableActions = query({
 });
 
 // Force player to fold if they timeout
-export const forcePlayerFold: any = mutation({
+// Internal-only: appelable uniquement via ctx.scheduler ou ctx.runMutation
+// (pas exposé publiquement). Empêche un client malveillant de fold un autre joueur.
+export const forcePlayerFold: any = internalMutation({
   args: { tableId: v.id("tables"), userId: v.id("users") },
   handler: async (ctx, args) => {
     return await ctx.runMutation(internal.internal.gameEngine.playerAction, {

@@ -19,6 +19,7 @@ import type * as core_gameEngine from "../core/gameEngine.js";
 import type * as http from "../http.js";
 import type * as internal_gameEngine from "../internal/gameEngine.js";
 import type * as players from "../players.js";
+import type * as shared_auth from "../shared/auth.js";
 import type * as shared_validation from "../shared/validation.js";
 import type * as tables from "../tables.js";
 import type * as users_stats from "../users/stats.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "internal/gameEngine": typeof internal_gameEngine;
   players: typeof players;
+  "shared/auth": typeof shared_auth;
   "shared/validation": typeof shared_validation;
   tables: typeof tables;
   "users/stats": typeof users_stats;
