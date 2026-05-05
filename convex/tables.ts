@@ -97,41 +97,51 @@ export const getPublicTables = query({
   },
 });
 
-// Get all tables with current user seating info
+// Get tables groupées en 2 catégories pour le lobby :
+//   - myTables: tables où l'utilisateur est créateur ou joueur assis
+//                (incluant les tables privées) → visible uniquement à lui
+//   - publicTables: tables publiques où l'utilisateur n'est PAS lié
+//                    (les tables privées d'autres users sont exclues, B-runtime.2)
 export const getTablesWithUserInfo = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    // Get all tables that are not finished and not private (B-runtime.2)
-    const tables = await ctx.db
+    const allTables = await ctx.db
       .query("tables")
-      .filter((q) =>
-        q.and(
-          q.neq(q.field("status"), "finished"),
-          q.eq(q.field("isPrivate"), false),
-        ),
-      )
+      .filter((q) => q.neq(q.field("status"), "finished"))
       .collect();
 
-    // Get player count and user seating info for each table
     const tablesWithInfo = await Promise.all(
-      tables.map(async (table) => {
+      allTables.map(async (table) => {
         const players = await ctx.db
           .query("players")
           .withIndex("by_table", (q) => q.eq("tableId", table._id))
           .collect();
 
         const playerCount = players.length;
-        const isUserSeated = args.userId ? players.some(p => p.userId === args.userId) : false;
+        const isUserSeated = args.userId
+          ? players.some((p) => p.userId === args.userId)
+          : false;
+        const isUserCreator = args.userId
+          ? table.creatorId === args.userId
+          : false;
 
         return {
           ...table,
           playerCount,
           isUserSeated,
+          isUserCreator,
         };
       })
     );
 
-    return tablesWithInfo;
+    const myTables = tablesWithInfo.filter(
+      (t) => t.isUserCreator || t.isUserSeated
+    );
+    const publicTables = tablesWithInfo.filter(
+      (t) => !t.isPrivate && !t.isUserCreator && !t.isUserSeated
+    );
+
+    return { myTables, publicTables };
   },
 });
 

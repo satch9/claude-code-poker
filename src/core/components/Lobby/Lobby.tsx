@@ -1,5 +1,6 @@
 import React from "react";
 import { TableList } from "./TableList";
+import { MyTablesSection } from "./MyTablesSection";
 import { JoinByCodeForm } from "./JoinByCodeForm";
 import { UserProfile } from "../Auth/UserProfile";
 import { useAuth } from "../../hooks/useAuth";
@@ -19,12 +20,13 @@ export const Lobby: React.FC<LobbyProps> = ({
   onCreateTable,
 }) => {
   const { user } = useAuth();
-  // Appel Convex pour récupérer les tables avec info utilisateur
-  const tables = useQuery(
+  const data = useQuery(
     api.tables.getTablesWithUserInfo,
     user ? { userId: user._id } : "skip"
   );
-  const loading = tables === undefined;
+  const loading = data === undefined;
+  const myTables = data?.myTables ?? [];
+  const publicTables = data?.publicTables ?? [];
 
   if (!user) return null;
 
@@ -37,8 +39,6 @@ export const Lobby: React.FC<LobbyProps> = ({
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0">
               🃏 {title}
             </h1>
-
-            {/* Profil utilisateur compact avec dialog */}
             <UserProfile compact />
           </div>
         </div>
@@ -46,11 +46,17 @@ export const Lobby: React.FC<LobbyProps> = ({
 
       {/* Contenu principal */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
           <JoinByCodeForm onJoinTable={onJoinTable} />
-          {/* Liste des tables */}
+
+          {/* Section "Mes tables" — visible seulement si non-vide */}
+          {!loading && myTables.length > 0 && (
+            <MyTablesSection tables={myTables} onJoinTable={onJoinTable} />
+          )}
+
+          {/* Section "Tables publiques" — toujours affichée */}
           <TableList
-            tables={tables || []}
+            tables={publicTables}
             onJoinTable={onJoinTable}
             onCreateTable={onCreateTable}
             loading={loading}
