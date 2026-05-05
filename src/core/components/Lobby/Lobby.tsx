@@ -1,5 +1,6 @@
 import React from "react";
 import { TableList } from "./TableList";
+import { JoinByCodeForm } from "./JoinByCodeForm";
 import { UserProfile } from "../Auth/UserProfile";
 import { useAuth } from "../../hooks/useAuth";
 import { useQuery } from "convex/react";
@@ -46,6 +47,7 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Contenu principal avec plus d'espace */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
+          <JoinByCodeForm onJoinTable={onJoinTable} />
           {/* Liste des tables */}
           <TableList
             tables={tables || []}
