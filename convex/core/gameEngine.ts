@@ -1112,11 +1112,35 @@ export const getShowdownResults = query({
       });
     }
 
-    // Sort by hand rank (highest first)
-    results.sort((a, b) => b.handRank.rank - a.handRank.rank);
+    // Sort by hand rank (highest first), tie-breaking via pokersolver kickers
+    results.sort((a, b) => {
+      if (b.handRank.rank !== a.handRank.rank) {
+        return b.handRank.rank - a.handRank.rank;
+      }
+      const winners = determineWinners([
+        { hand: a.handRank, playerId: 'a' },
+        { hand: b.handRank, playerId: 'b' },
+      ]);
+      if (winners.length === 1) {
+        return winners[0] === 'a' ? -1 : 1;
+      }
+      return 0; // True tie
+    });
+
+    // Mark the actual winner(s) for UI consumption (same logic as endHand)
+    const winnerIds = determineWinners(
+      results.map((r) => ({
+        hand: r.handRank,
+        playerId: String(r.player.userId),
+      }))
+    );
+    const resultsWithWinnerFlag = results.map((r) => ({
+      ...r,
+      isWinner: winnerIds.includes(String(r.player.userId)),
+    }));
 
     return {
-      results,
+      results: resultsWithWinnerFlag,
       pot: gameState.pot,
       communityCards: gameState.communityCards,
     };
