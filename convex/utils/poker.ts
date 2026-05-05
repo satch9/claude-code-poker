@@ -26,12 +26,20 @@ export function createDeck(): Card[] {
   return deck;
 }
 
-// Shuffle a deck
+// Cryptographically-secure random integer in [0, maxExclusive).
+// Modulo bias is negligible for small ranges (e.g. 52 cards, 36-char alphabet).
+function cryptoRandomInt(maxExclusive: number): number {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] % maxExclusive;
+}
+
+// Shuffle a deck (Fisher-Yates, crypto-secure RNG)
 export function shuffleDeck(deck: Card[]): Card[] {
   const shuffled = [...deck];
 
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = cryptoRandomInt(i + 1);
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 

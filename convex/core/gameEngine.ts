@@ -110,8 +110,10 @@ async function startGameInternal(ctx: any, tableId: string) {
     const playerPositions = players.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
     dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
   } else {
-    // Random dealer for first game
-    dealerPosition = players[Math.floor(Math.random() * players.length)].seatPosition;
+    // Random dealer for first game (crypto-secure RNG)
+    const rngArr = new Uint32Array(1);
+    crypto.getRandomValues(rngArr);
+    dealerPosition = players[rngArr[0] % players.length].seatPosition;
   }
 
   const playerPositions = players.map((p: any) => p.seatPosition);

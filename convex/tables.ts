@@ -3,6 +3,17 @@ import { v } from "convex/values";
 import { createTableSchema, validateOrThrow } from "./shared/validation";
 import { sanitizeGameState } from "./shared/sanitize";
 
+// Invite code generation : crypto-secure 6 chars [0-9A-Z]
+const INVITE_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function generateInviteCode(): string {
+  const arr = new Uint32Array(6);
+  crypto.getRandomValues(arr);
+  return Array.from(arr)
+    .map((n) => INVITE_ALPHABET[n % INVITE_ALPHABET.length])
+    .join("");
+}
+
 // Create a new table
 export const createTable = mutation({
   args: {
@@ -30,7 +41,18 @@ export const createTable = mutation({
 
     // Génération inconditionnelle d'un code (6 chars A-Z0-9) pour permettre
     // le partage par code même pour les tables publiques.
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Crypto-secure RNG + check unicité avec retry max 5x.
+    let inviteCode = generateInviteCode();
+    let attempts = 0;
+    while (attempts < 5) {
+      const existing = await ctx.db
+        .query("tables")
+        .withIndex("by_invite_code", (q) => q.eq("inviteCode", inviteCode))
+        .first();
+      if (!existing) break;
+      inviteCode = generateInviteCode();
+      attempts++;
+    }
 
     const tableId = await ctx.db.insert("tables", {
       name: args.name,
