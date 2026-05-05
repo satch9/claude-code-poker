@@ -1,4 +1,4 @@
-import { mutation, query } from "../_generated/server";
+import { mutation, query, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
 import {
   createDeck,
@@ -797,16 +797,12 @@ async function determineWinner(ctx: any, tableId: string) {
       updatedAt: Date.now(),
     });
 
-    // Programmer automatiquement le démarrage de la nouvelle main après 3 secondes
-    setTimeout(async () => {
-      try {
-        await prepareNextHand(ctx, tableId);
-        await startNextHandInternal(ctx, tableId);
-        console.log(`🎮 Nouvelle main démarrée automatiquement après victoire par fold`);
-      } catch (error) {
-        console.error(`❌ Erreur lors du démarrage automatique de la nouvelle main:`, error);
-      }
-    }, 3000);
+    // Schedule next hand 3s later (showdown stays visible during this delay)
+    await ctx.scheduler.runAfter(
+      3000,
+      internal.core.gameEngine.scheduleStartNextHand,
+      { tableId }
+    );
 
     return;
   }
@@ -1002,9 +998,12 @@ async function endHand(ctx: any, tableId: string) {
   const playersWithChips = players.filter((p: any) => p.chips > 0);
 
   if (playersWithChips.length >= 2) {
-    // According to poker rules, automatically start next hand
-    await prepareNextHand(ctx, tableId);
-    await startNextHandInternal(ctx, tableId);
+    // Schedule next hand 3s later — showdown phase stays visible to clients
+    await ctx.scheduler.runAfter(
+      3000,
+      internal.core.gameEngine.scheduleStartNextHand,
+      { tableId }
+    );
   } else {
     // End game - not enough players with chips
     await endGame(ctx, tableId);
@@ -1401,6 +1400,32 @@ async function startNextHandInternal(ctx: any, tableId: string) {
   // Start the next hand by calling the startGame logic directly
   return await startGameInternal(ctx, tableId);
 }
+
+// Internal mutation invoked by ctx.scheduler.runAfter to start the next hand
+// after the showdown delay. Wraps prepareNextHand + startNextHandInternal.
+export const scheduleStartNextHand = internalMutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    try {
+      // Reset gameState phase to waiting first so startNextHandInternal accepts to start
+      const gameState = await ctx.db
+        .query("gameStates")
+        .withIndex("by_table", (q: any) => q.eq("tableId", args.tableId))
+        .unique();
+      if (gameState && gameState.phase === "showdown") {
+        await ctx.db.patch(gameState._id, {
+          phase: "waiting",
+          autoAdvanceAt: undefined,
+          updatedAt: Date.now(),
+        });
+      }
+      await prepareNextHand(ctx, args.tableId);
+      await startNextHandInternal(ctx, args.tableId);
+    } catch (e) {
+      console.error("scheduleStartNextHand error", e);
+    }
+  },
+});
 
 // Get game actions feed
 export const getGameActions = query({
