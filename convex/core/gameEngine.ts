@@ -1521,6 +1521,12 @@ async function advanceToNextPhaseWithStateMachine(
       autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
       updatedAt: Date.now(),
     });
+    // Si pas d'all-in (autoAdvance=false), déclencher determineWinner.
+    // determineWinner enchaîne sur endHand qui schedule la main suivante via runAfter(3000).
+    // Le path all-in garde son scheduler client-side via autoAdvanceAt.
+    if (!nextPhaseInfo.autoAdvance) {
+      await determineWinner(ctx, tableId);
+    }
     return;
   }
 
@@ -1621,12 +1627,6 @@ async function advanceToNextPhaseWithStateMachine(
     isSystem: true,
   });
 
-  // Si on entre en showdown sans all-in, déclencher determineWinner
-  // directement (sinon la phase reste bloquée — bouton 'Continuer' UI retiré).
-  // Le path all-in (autoAdvance=true) garde son scheduler client-side via autoAdvanceAt.
-  if (nextPhaseInfo.nextPhase === "showdown" && !nextPhaseInfo.autoAdvance) {
-    await determineWinner(ctx, tableId);
-  }
 }
 
 export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine };
