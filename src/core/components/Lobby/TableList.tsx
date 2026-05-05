@@ -3,7 +3,6 @@ import { TableCard } from "./TableCard";
 import { Button } from "../UI/Button";
 import { Table } from "../../../shared/types";
 import { Id } from "../../../../convex/_generated/dataModel";
-import { useBreakpoint } from "../../hooks/useBreakpoint";
 
 interface TableListProps {
   tables: Table[];
@@ -18,14 +17,13 @@ export const TableList: React.FC<TableListProps> = ({
   onCreateTable,
   loading = false,
 }) => {
-  const { isMobile } = useBreakpoint();
   const [filter, setFilter] = useState<"all" | "cash" | "tournament">("all");
-  const [showPrivate, setShowPrivate] = useState(false);
 
+  // Note: la checkbox "Tables privées" a été retirée — depuis le fix
+  // B-runtime.2 (1.B), getPublicTables filtre déjà isPrivate=false côté
+  // serveur, donc la liste ne contient plus que des tables publiques.
   const filteredTables = tables.filter((table) => {
-    const typeMatch = filter === "all" || table.gameType === filter;
-    const privateMatch = showPrivate || !table.isPrivate;
-    return typeMatch && privateMatch;
+    return filter === "all" || table.gameType === filter;
   });
 
   if (loading) {
@@ -46,14 +44,26 @@ export const TableList: React.FC<TableListProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with filters and create button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Tables disponibles</h2>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header — titre + CTA "Créer" sur mobile, tout aligné sur desktop */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Tables disponibles
+          </h2>
+          {/* CTA "Créer" inline avec le titre sur mobile */}
+          <Button
+            variant="success"
+            className="text-sm font-medium sm:hidden"
+            onClick={onCreateTable}
+          >
+            + Créer
+          </Button>
+        </div>
 
-        <div className="flex items-center gap-4">
-          {/* Filters */}
-          <div className="flex gap-2">
+        {/* Filtres — scrollable horizontalement si nécessaire sur mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 sm:overflow-visible sm:gap-4">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant={filter === "all" ? "primary" : "ghost"}
               size="sm"
@@ -77,24 +87,13 @@ export const TableList: React.FC<TableListProps> = ({
             </Button>
           </div>
 
-          {/* Show private toggle */}
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={showPrivate}
-              onChange={(e) => setShowPrivate(e.target.checked)}
-              className="rounded border-gray-300 focus:ring-poker-green-500"
-            />
-            Tables privées
-          </label>
-
-          {/* Create table button */}
+          {/* CTA "Créer" version desktop, à droite des filtres */}
           <Button
             variant="success"
-            className="text-sm font-medium"
+            className="text-sm font-medium hidden sm:inline-flex flex-shrink-0"
             onClick={onCreateTable}
           >
-            {isMobile ? "+ Créer" : "+ Créer une table"}
+            + Créer une table
           </Button>
         </div>
       </div>
@@ -120,25 +119,25 @@ export const TableList: React.FC<TableListProps> = ({
       )}
 
       {/* Quick stats */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <div className="grid grid-cols-3 gap-4 text-center">
+      <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-lg sm:text-2xl font-bold text-gray-900">
               {tables.length}
             </div>
-            <div className="text-sm text-gray-500">Tables totales</div>
+            <div className="text-xs sm:text-sm text-gray-500">Tables</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-poker-green-600">
+            <div className="text-lg sm:text-2xl font-bold text-poker-green-600">
               {tables.filter((t) => t.gameType === "cash").length}
             </div>
-            <div className="text-sm text-gray-500">Cash games</div>
+            <div className="text-xs sm:text-sm text-gray-500">Cash</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-lg sm:text-2xl font-bold text-purple-600">
               {tables.filter((t) => t.gameType === "tournament").length}
             </div>
-            <div className="text-sm text-gray-500">Tournois</div>
+            <div className="text-xs sm:text-sm text-gray-500">Tournois</div>
           </div>
         </div>
       </div>
