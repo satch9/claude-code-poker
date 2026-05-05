@@ -142,10 +142,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       {/* Player seat box */}
       <div
         className={cn(
-          "relative z-player-seat",
+          "relative z-player-seat rounded-2xl",
           responsiveClasses.playerSeat,
           isCurrentPlayer && responsiveClasses.playerStates.current,
           isActivePlayer && responsiveClasses.playerStates.active,
+          isActivePlayer && !player.isFolded && "player-active-glow",
           player.isFolded && responsiveClasses.playerStates.folded,
           player.isAllIn && responsiveClasses.playerStates.allIn,
           className
@@ -212,17 +213,43 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           </div>
         </div>
 
-        {/* Current bet indicator */}
+        {/* Current bet indicator — pile de jetons style PokerStars */}
         {player.currentBet > 0 && (
           <div
             className={cn(
-              "absolute left-1/2 transform -translate-x-1/2",
-              isMobile ? "-bottom-1" : "-bottom-2"
+              "absolute left-1/2 transform -translate-x-1/2 flex items-center gap-1",
+              isMobile ? "-bottom-2" : "-bottom-3"
             )}
           >
+            {/* Pile de jetons graphique */}
+            <div className="relative" style={{ width: isMobile ? 14 : 18, height: isMobile ? 14 : 18 }}>
+              <div
+                className="absolute inset-0 rounded-full border border-black/40"
+                style={{
+                  background: "radial-gradient(circle at 30% 30%, #fca5a5 0%, #dc2626 50%, #7f1d1d 100%)",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                  transform: "translateY(-3px)",
+                }}
+              />
+              <div
+                className="absolute inset-0 rounded-full border border-black/40"
+                style={{
+                  background: "radial-gradient(circle at 30% 30%, #93c5fd 0%, #2563eb 50%, #1e3a8a 100%)",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                  transform: "translateY(-1px)",
+                }}
+              />
+              <div
+                className="absolute inset-0 rounded-full border border-black/40"
+                style={{
+                  background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #f59e0b 50%, #92400e 100%)",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                }}
+              />
+            </div>
             <div
               className={cn(
-                "bg-red-500 text-white rounded-full font-bold shadow-lg whitespace-nowrap",
+                "bg-black/70 text-white rounded-full font-bold shadow-lg whitespace-nowrap",
                 isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
               )}
             >
