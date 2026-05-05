@@ -155,3 +155,35 @@ export const getGameState = query({
       .first();
   },
 });
+// Lookup d'une table par son inviteCode (6 chars uppercase)
+export const getTableByInviteCode = query({
+  args: { code: v.string() },
+  handler: async (ctx, args) => {
+    const code = args.code.toUpperCase().trim();
+    if (code.length !== 6) return null;
+
+    const table = await ctx.db
+      .query("tables")
+      .withIndex("by_invite_code", (q) => q.eq("inviteCode", code))
+      .first();
+
+    if (!table) return null;
+
+    // Compter les joueurs pour donner du contexte au frontend
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", table._id))
+      .collect();
+
+    return {
+      _id: table._id,
+      name: table.name,
+      status: table.status,
+      maxPlayers: table.maxPlayers,
+      gameType: table.gameType,
+      smallBlind: table.smallBlind,
+      bigBlind: table.bigBlind,
+      currentPlayers: players.length,
+    };
+  },
+});
