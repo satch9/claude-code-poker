@@ -1,140 +1,44 @@
-import { mutation } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
-import {
-  emailSchema,
-  passwordSchema,
-  userNameSchema,
-  validateOrThrow,
-} from "./shared/validation";
+import { Password } from "@convex-dev/auth/providers/Password";
+import { convexAuth, getAuthUserId } from "@convex-dev/auth/server";
+import { query } from "./_generated/server";
+import { DataModel } from "./_generated/dataModel";
 
-// Sign up with email and password
-export const signUpWithPassword = mutation({
-  args: {
-    email: v.string(),
-    password: v.string(),
-    name: v.string(),
-  },
-  handler: async (ctx, args) => {
-    validateOrThrow(emailSchema, args.email);
-    validateOrThrow(passwordSchema, args.password);
-    validateOrThrow(userNameSchema, args.name);
-
-    // Check if user already exists
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .first();
-
-    if (existingUser) {
-      throw new ConvexError("User already exists with this email");
-    }
-
-    const salt = generateSalt();
-    const hashedPassword = await hashWithSalt(args.password, salt);
-
-    const userId = await ctx.db.insert("users", {
-      email: args.email,
-      name: args.name,
-      password: hashedPassword,
-      passwordSalt: salt,
-      createdAt: Date.now(),
-      lastSeen: Date.now(),
-    });
-
-    return { userId };
-  },
+/**
+ * Convex Auth configuration using the Password provider.
+ *
+ * The `profile` callback maps the params received from `signIn("password", ...)`
+ * to fields stored in the `users` table. We capture the optional `name` here
+ * (used during signup) and add `createdAt`/`lastSeen` timestamps.
+ */
+export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+  providers: [
+    Password<DataModel>({
+      profile(params: Record<string, unknown>) {
+        const email = (params.email as string)?.trim().toLowerCase();
+        const name = (params.name as string | undefined)?.trim() || email;
+        const now = Date.now();
+        return {
+          email,
+          name,
+          createdAt: now,
+          lastSeen: now,
+        };
+      },
+    }),
+  ],
 });
 
-// Sign in with email and password
-export const signInWithPassword = mutation({
-  args: {
-    email: v.string(),
-    password: v.string(),
-  },
-  handler: async (ctx, args) => {
-    validateOrThrow(emailSchema, args.email);
-    if (!args.password) throw new ConvexError("Mot de passe requis");
-
-    // Find user by email
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .first();
-
-    if (!user || !user.password) {
-      throw new ConvexError("Invalid email or password");
-    }
-
-    // Verify password (backward compat: legacy accounts used the literal "salt")
-    const isValidPassword = await verifyPassword(
-      args.password,
-      user.password,
-      user.passwordSalt
-    );
-
-    if (!isValidPassword) {
-      throw new ConvexError("Invalid email or password");
-    }
-
-    // Migration: if no salt stored, generate one and re-hash
-    if (!user.passwordSalt) {
-      const newSalt = generateSalt();
-      const newHash = await hashWithSalt(args.password, newSalt);
-      await ctx.db.patch(user._id, {
-        password: newHash,
-        passwordSalt: newSalt,
-        lastSeen: Date.now(),
-      });
-    } else {
-      await ctx.db.patch(user._id, {
-        lastSeen: Date.now(),
-      });
-    }
-
-    // Return user data without password
-    const { password: _password, passwordSalt: _passwordSalt, ...userWithoutPassword } = user;
-    return {
-      userId: user._id,
-      user: userWithoutPassword
-    };
+/**
+ * Returns the currently authenticated user's full document, or `null`
+ * if the request is unauthenticated.
+ *
+ * Used by `useAuth()` on the frontend to populate the user state.
+ */
+export const loggedInUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.get(userId);
   },
 });
-
-// Sign out — patch lastSeen on the server (no real session token yet, see 0.C)
-export const signOut = mutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) return { success: false };
-    await ctx.db.patch(args.userId, { lastSeen: Date.now() });
-    return { success: true };
-  },
-});
-
-// Generate a cryptographically random salt (16 bytes, hex-encoded)
-function generateSalt(): string {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function hashWithSalt(password: string, salt: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + salt);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function verifyPassword(
-  password: string,
-  hashedPassword: string,
-  salt: string | undefined
-): Promise<boolean> {
-  // Backward compat: old accounts used the literal "salt" string
-  const effectiveSalt = salt ?? "salt";
-  const candidate = await hashWithSalt(password, effectiveSalt);
-  return candidate === hashedPassword;
-}

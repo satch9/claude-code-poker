@@ -13,8 +13,10 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin_wipeAccounts from "../admin/wipeAccounts.js";
 import type * as auth from "../auth.js";
 import type * as core_gameEngine from "../core/gameEngine.js";
+import type * as http from "../http.js";
 import type * as internal_gameEngine from "../internal/gameEngine.js";
 import type * as players from "../players.js";
 import type * as shared_validation from "../shared/validation.js";
@@ -35,8 +37,10 @@ import type * as utils_turnManager from "../utils/turnManager.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "admin/wipeAccounts": typeof admin_wipeAccounts;
   auth: typeof auth;
   "core/gameEngine": typeof core_gameEngine;
+  http: typeof http;
   "internal/gameEngine": typeof internal_gameEngine;
   players: typeof players;
   "shared/validation": typeof shared_validation;

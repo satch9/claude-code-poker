@@ -1,16 +1,21 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  // Auth tables (authAccounts, authSessions, authRefreshTokens, etc.)
+  // managed by @convex-dev/auth.
+  ...authTables,
+
   // Users table
+  // NOTE: password / passwordSalt fields removed — credentials are now
+  // stored in `authAccounts` (managed by @convex-dev/auth Password provider).
   users: defineTable({
     email: v.string(),
     name: v.string(),
     avatar: v.optional(v.string()),
     avatarColor: v.optional(v.string()), // Avatar background color
     avatarImageId: v.optional(v.id("_storage")), // File ID for uploaded avatar
-    password: v.optional(v.string()), // For email/password auth
-    passwordSalt: v.optional(v.string()), // Per-user random salt (16 bytes hex)
     createdAt: v.number(),
     lastSeen: v.optional(v.number()),
   }).index("by_email", ["email"]),

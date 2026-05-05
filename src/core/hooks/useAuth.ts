@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useMutation, useQuery } from "convex/react";
+import { createContext, useContext, useState, useCallback } from 'react';
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { User } from '../../shared/types';
-import { isValidUserId, cleanupCorruptedUserData } from '../../shared/utils/validation';
 
 interface AuthContextType {
   user: User | null;
@@ -27,160 +27,87 @@ export function useAuth() {
   return context;
 }
 
-export function useAuthState() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+/**
+ * Auth state hook backed by `@convex-dev/auth`.
+ *
+ * The user document is sourced from the `auth.loggedInUser` query, which
+ * reads `getAuthUserId(ctx)` server-side. Sessions are HTTP-only tokens
+ * managed by `ConvexAuthProvider`.
+ */
+export function useAuthState(): AuthContextType {
+  const { signIn: signInAction, signOut: signOutAction } = useAuthActions();
+  const userDoc = useQuery(api.auth.loggedInUser);
   const [error, setError] = useState<string | null>(null);
-  const signUpMutation = useMutation(api.auth.signUpWithPassword);
-  const signInMutation = useMutation(api.auth.signInWithPassword);
-  const signOutMutation = useMutation(api.auth.signOut);
+  // localUser holds optimistic name/avatar updates between mutation and re-query
+  const [localOverrides, setLocalOverrides] = useState<Partial<User>>({});
 
-  const clearError = () => setError(null);
-  
-  // Query to get full user data from database
-  // Only call if we have a valid user ID that doesn't come from notifications table
-  const userIdValid = user && isValidUserId(user._id);
-    
-  const userQuery = useQuery(
-    api.users.getUser,
-    userIdValid ? { userId: user._id } : "skip"
+  // user === undefined while query is loading; null when unauthenticated
+  const isLoading = userDoc === undefined;
+  const isAuthenticated = userDoc !== null && userDoc !== undefined;
+
+  const user: User | null = userDoc
+    ? ({ ...(userDoc as any), ...localOverrides } as User)
+    : null;
+
+  const clearError = useCallback(() => setError(null), []);
+
+  const signUp = useCallback(
+    async (email: string, password: string, name: string) => {
+      setError(null);
+      try {
+        const result = await signInAction("password", {
+          email,
+          password,
+          name,
+          flow: "signUp",
+        });
+        return result;
+      } catch (e: any) {
+        const msg = extractErrorMessage(e);
+        setError(msg);
+        throw e;
+      }
+    },
+    [signInAction]
   );
 
-  // Charger l'utilisateur depuis localStorage au démarrage
-  useEffect(() => {
-    const storedUser = localStorage.getItem('poker-user');
-    if (storedUser) {
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setError(null);
       try {
-        const parsedUser = JSON.parse(storedUser);
-        // Validate that the user ID looks correct (not a notification ID)
-        if (isValidUserId(parsedUser._id)) {
-          setUser(parsedUser);
-        } else {
-          console.error('Invalid user ID found in localStorage:', parsedUser._id);
-          cleanupCorruptedUserData();
-          localStorage.clear();
-        }
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('poker-user');
+        const result = await signInAction("password", {
+          email,
+          password,
+          flow: "signIn",
+        });
+        return result;
+      } catch (e: any) {
+        const msg = extractErrorMessage(e);
+        setError(msg);
+        throw e;
       }
+    },
+    [signInAction]
+  );
+
+  const logout = useCallback(async () => {
+    setError(null);
+    setLocalOverrides({});
+    try {
+      await signOutAction();
+    } catch (e) {
+      console.warn("signOut failed", e);
     }
-    setIsLoading(false);
+  }, [signOutAction]);
+
+  const login = useCallback(() => {
+    // Legacy no-op kept for backwards compatibility.
+    // Sign-in is performed via the EmailPasswordForm calling `signIn()`.
   }, []);
 
-  // Additional effect to clean up bad user data
-  useEffect(() => {
-    if (user && !isValidUserId(user._id)) {
-      console.error('Detected problematic user ID, clearing user data:', user._id);
-      setUser(null);
-      cleanupCorruptedUserData();
-      localStorage.clear();
-    }
-  }, [user]);
-
-  // Sync user data with database when userQuery updates
-  useEffect(() => {
-    if (userQuery && user && userQuery._id === user._id) {
-      // Only update if there are actual changes to avoid infinite loop
-      const hasChanges = 
-        userQuery.name !== user.name ||
-        userQuery.avatarColor !== user.avatarColor ||
-        userQuery.avatarImageId !== user.avatarImageId ||
-        userQuery.email !== user.email;
-      
-      if (hasChanges) {
-        const updatedUser = { ...userQuery } as User;
-        setUser(updatedUser);
-        localStorage.setItem('poker-user', JSON.stringify(updatedUser));
-      }
-    }
-  }, [userQuery, user?._id, user?.name, user?.avatarColor, user?.avatarImageId, user?.email]);
-
-  const isAuthenticated = user !== null;
-
-  const signUp = async (email: string, password: string, name: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await signUpMutation({ email, password, name });
-      const newUser: User = {
-        _id: result.userId,
-        email,
-        name,
-        createdAt: Date.now(),
-        lastSeen: Date.now(),
-      };
-      
-      // Validate the user ID before storing
-      if (isValidUserId(newUser._id)) {
-        setUser(newUser);
-        localStorage.setItem('poker-user', JSON.stringify(newUser));
-      } else {
-        console.error('Invalid user ID received from signup:', newUser._id);
-        throw new Error('Invalid user ID received from server');
-      }
-      return result;
-    } catch (e) {
-      const msg = extractErrorMessage(e);
-      setError(msg);
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await signInMutation({ email, password });
-      // Use the full user data returned from the backend
-      if (result.user) {
-        const userData = result.user as User;
-        
-        // Validate the user ID before storing
-        if (isValidUserId(userData._id)) {
-          setUser(userData);
-          localStorage.setItem('poker-user', JSON.stringify(userData));
-        } else {
-          console.error('Invalid user ID received from signin:', userData._id);
-          throw new Error('Invalid user ID received from server');
-        }
-      }
-      return result;
-    } catch (e) {
-      const msg = extractErrorMessage(e);
-      setError(msg);
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const login = () => {
-    console.log('Login called - handled by form components');
-  };
-
-  const logout = async () => {
-    if (user?._id) {
-      try {
-        await signOutMutation({ userId: user._id });
-      } catch (e) {
-        console.warn('signOut server failed', e);
-      }
-    }
-    setUser(null);
-    setError(null);
-    localStorage.removeItem('poker-user');
-  };
-
-  const updateUser = (updates: Partial<User>) => {
-    if (!user) return;
-    
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('poker-user', JSON.stringify(updatedUser));
-  };
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setLocalOverrides((prev) => ({ ...prev, ...updates }));
+  }, []);
 
   return {
     user,
@@ -196,13 +123,13 @@ export function useAuthState() {
   };
 }
 
-// Convex/ConvexError messages can be strings or objects. Extract a readable string.
 function extractErrorMessage(e: unknown): string {
   if (!e) return 'Erreur inconnue';
   if (typeof e === 'string') return e;
   if (e instanceof Error) {
-    // Strip Convex internal prefix if present (e.g. "[CONVEX M(auth:signIn)] ...")
-    const m = e.message.match(/Validation:.+|Invalid email or password|User already exists.+|Mot de passe.+/);
+    const m = e.message.match(
+      /Validation:.+|Invalid email or password|InvalidAccountId|InvalidSecret|User already exists.+|Mot de passe.+/
+    );
     return m ? m[0] : e.message;
   }
   return String(e);
