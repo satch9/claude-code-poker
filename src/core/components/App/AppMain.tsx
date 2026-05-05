@@ -17,6 +17,7 @@ const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { createTable } = useTableActions();
   const joinTableMutation = useMutation(api.players.joinTable);
+  const leaveTableMutation = useMutation(api.players.leaveTable);
   const [currentView, setCurrentView] = useState<AppView>("lobby");
   const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(
     null
@@ -78,7 +79,15 @@ const AppContent: React.FC = () => {
     setCurrentView("lobby");
   };
 
-  const handleLeaveTable = () => {
+  const handleLeaveTable = async () => {
+    if (user && selectedTableId) {
+      try {
+        await leaveTableMutation({ tableId: selectedTableId, userId: user._id });
+      } catch (error) {
+        // Si le user n'est pas dans la table (déjà parti, etc.), on continue la navigation
+        console.warn("leaveTable failed (continuing to lobby):", error);
+      }
+    }
     setCurrentView("lobby");
     setSelectedTableId(null);
   };
