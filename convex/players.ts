@@ -107,12 +107,52 @@ export const leaveTable = mutation({
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .first();
 
-    if (gameState && gameState.phase !== "waiting") {
-      throw new Error("Cannot leave table during active game");
+    // If hand is in progress, fold the player automatically before removing
+    if (gameState && gameState.phase !== "waiting" && gameState.phase !== "showdown") {
+      if (!player.isFolded) {
+        await ctx.db.patch(player._id, {
+          isFolded: true,
+          hasActed: true,
+          lastAction: "fold",
+        });
+      }
     }
 
     // Remove player from table
     await ctx.db.delete(player._id);
+
+    // Log the leave event in the action feed
+    const user = await ctx.db.get(player.userId);
+    await ctx.db.insert("gameActions", {
+      tableId: args.tableId,
+      playerId: undefined,
+      playerName: user?.name || "Joueur",
+      action: "left",
+      message: `${user?.name || "Joueur"} a quitté la table`,
+      isSystem: true,
+      timestamp: Date.now(),
+    });
+
+    // If fewer than 2 players remain, reset gameState to waiting (solo state)
+    const remainingPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+
+    if (remainingPlayers.length < 2 && gameState) {
+      await ctx.db.patch(gameState._id, {
+        phase: "waiting",
+        pot: 0,
+        currentBet: 0,
+        communityCards: [],
+        remainingDeck: [],
+        sidePots: [],
+        currentPlayerPosition: -1,
+        autoAdvanceAt: undefined,
+        updatedAt: Date.now(),
+      });
+      await ctx.db.patch(args.tableId, { status: "waiting" });
+    }
 
     return { success: true, chips: player.chips };
   },
