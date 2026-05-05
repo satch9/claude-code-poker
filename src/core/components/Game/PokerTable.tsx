@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
+import { Card } from "../UI/Card";
 import { BettingControls } from "./BettingControls";
 import { ActionFeed } from "./ActionFeed";
 // import { ActionTimer } from "./ActionTimer"; // Unused
@@ -329,6 +330,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Mobile portrait heads-up : layout vertical simplifié
   if (isMobile && table.maxPlayers === 2 && isPortrait) {
     const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
+    const parseCardStr = (cardStr: string) => {
+      if (!cardStr || cardStr.length < 2) return undefined;
+      const rank = cardStr.slice(0, -1) as any;
+      const suitChar = cardStr.slice(-1).toLowerCase();
+      const suitMap: Record<string, any> = { h: "hearts", d: "diamonds", c: "clubs", s: "spades" };
+      return { rank, suit: suitMap[suitChar] };
+    };
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
         {/* Header */}
@@ -372,8 +380,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 {opponent.currentBet > 0 && ` • mise ${opponent.currentBet}`}
               </div>
               <div className="flex gap-1 mt-2">
-                <div className="w-12 h-16 bg-indigo-900 border border-indigo-700 rounded-lg" />
-                <div className="w-12 h-16 bg-indigo-900 border border-indigo-700 rounded-lg" />
+                <Card isHidden size="sm" />
+                <Card isHidden size="sm" />
               </div>
             </div>
           ) : (
@@ -413,12 +421,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               </div>
               <div className="flex gap-1 mt-2">
                 {(currentPlayer.cards ?? []).map((cardStr: string, i: number) => (
-                  <div
-                    key={i}
-                    className="w-14 h-20 bg-white text-black border border-gray-300 rounded-lg flex items-center justify-center font-bold text-base"
-                  >
-                    {cardStr}
-                  </div>
+                  <Card key={i} card={parseCardStr(cardStr)} size="md" />
                 ))}
               </div>
             </>

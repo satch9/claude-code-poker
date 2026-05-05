@@ -60,15 +60,15 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
 
   return (
     <div className={cn(
-      'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm',
+      'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4',
       className
     )}>
-      <div className="bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="bg-white rounded-2xl p-3 sm:p-6 shadow-2xl border border-gray-200 max-w-4xl w-full max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
+        <div className="text-center mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">
             🎉 Résultats du Showdown
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             {winners.length === 1 ?
               `${winnerNames} remporte ${pot.toLocaleString()} jetons !` :
               `${winnerNames} se partagent ${pot.toLocaleString()} jetons (${winningsPerPlayer.toLocaleString()} chacun)`
@@ -77,16 +77,16 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
         </div>
 
         {/* Community Cards */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 text-center">
             Cartes communes
           </h3>
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-1 sm:gap-2 justify-center">
             {communityCards.map((cardStr, index) => (
               <Card
                 key={index}
                 card={parseCard(cardStr)}
-                size="md"
+                size="sm"
                 className="shadow-lg"
               />
             ))}
@@ -102,21 +102,21 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
               <div
                 key={result.player.userId}
                 className={cn(
-                  'flex items-center justify-between p-4 rounded-lg border-2',
+                  'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 rounded-lg border-2',
                   isWinner
                     ? 'bg-green-50 border-green-200 shadow-md'
                     : 'bg-gray-50 border-gray-200'
                 )}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm',
+                    'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0',
                     isWinner ? 'bg-green-500' : 'bg-gray-500'
                   )}>
                     {index + 1}
                   </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-gray-900 truncate">
                       {result.player.user?.name || 'Joueur'}
                       {isWinner && ' 👑'}
                     </div>
@@ -129,7 +129,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between sm:gap-4 sm:justify-end">
                   {/* Player Cards */}
                   <div className="flex gap-1">
                     {result.cards.map((cardStr, cardIndex) => (
