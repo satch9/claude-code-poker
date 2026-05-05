@@ -1,7 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
 import { requireSelf } from "./shared/auth";
+import { sanitizePlayer } from "./shared/sanitize";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -169,17 +171,18 @@ export const leaveTable = mutation({
 export const getTablePlayers = query({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    const callerId = await getAuthUserId(ctx);
     const players = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .collect();
 
-    // Get user info for each player
+    // Get user info for each player + sanitize private cards
     const playersWithUserInfo = await Promise.all(
       players.map(async (player) => {
         const user = await ctx.db.get(player.userId);
         return {
-          ...player,
+          ...sanitizePlayer(player, callerId),
           user,
         };
       })
@@ -218,6 +221,7 @@ export const getPlayerByUserAndTable = query({
 export const getActivePlayers = query({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
+    const callerId = await getAuthUserId(ctx);
     const players = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
@@ -228,7 +232,7 @@ export const getActivePlayers = query({
       players.map(async (player) => {
         const user = await ctx.db.get(player.userId);
         return {
-          ...player,
+          ...sanitizePlayer(player, callerId),
           user,
         };
       })

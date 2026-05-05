@@ -1500,6 +1500,20 @@ export const getGameActions = query({
   },
 });
 
+// Public game state — sanitized to avoid exposing remainingDeck (C4.4).
+import { sanitizeGameState } from "../shared/sanitize";
+
+export const getGameState = query({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const state = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .first();
+    return sanitizeGameState(state);
+  },
+});
+
 // New state machine-based phase advancement
 async function advanceToNextPhaseWithStateMachine(
   ctx: any,

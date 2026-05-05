@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { createTableSchema, validateOrThrow } from "./shared/validation";
+import { sanitizeGameState } from "./shared/sanitize";
 
 // Create a new table
 export const createTable = mutation({
@@ -159,10 +160,11 @@ export const getTable = query({
 export const getGameState = query({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const state = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .first();
+    return sanitizeGameState(state);
   },
 });
 // Lookup d'une table par son inviteCode (6 chars uppercase)
