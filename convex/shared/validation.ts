@@ -39,6 +39,8 @@ export const createTableSchema = z
 
 export const buyInAmountSchema = z.number().int().positive();
 
+export const rebuyAmountSchema = z.number().int().positive();
+
 // Helper pour transformer un échec Zod en erreur lisible
 export function validateOrThrow<T>(schema: z.ZodSchema<T>, value: unknown): T {
   const result = schema.safeParse(value);

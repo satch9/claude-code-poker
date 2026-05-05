@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -271,5 +272,66 @@ export const getActivePlayers = query({
     );
 
     return playersWithUserInfo.sort((a, b) => a.seatPosition - b.seatPosition);
+  },
+});
+// Rebuy: remplace la stack du joueur en cash game (entre les mains)
+export const rebuy = mutation({
+  args: {
+    tableId: v.id("tables"),
+    userId: v.id("users"),
+    amount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    validateOrThrow(rebuyAmountSchema, args.amount);
+
+    const table = await ctx.db.get(args.tableId);
+    if (!table) throw new Error("Table not found");
+
+    if (table.gameType !== "cash") {
+      throw new Error("Rebuy n'est disponible qu'en cash game");
+    }
+
+    if (args.amount > table.startingStack) {
+      throw new Error(`Le montant ne peut pas dépasser ${table.startingStack}`);
+    }
+
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!player) throw new Error("Joueur non trouvé à la table");
+
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .first();
+
+    const phase = gameState?.phase ?? "waiting";
+    const allowedBetweenHands = phase === "waiting" || phase === "showdown";
+    const allowedAsFolded = player.isFolded === true;
+
+    if (!allowedBetweenHands && !allowedAsFolded) {
+      throw new Error("Recharge possible seulement entre les mains");
+    }
+
+    // Décision spec: remplace le stack (pas additif)
+    await ctx.db.patch(player._id, { chips: args.amount });
+
+    // Log dans le feed
+    const user = await ctx.db.get(args.userId);
+    await ctx.db.insert("gameActions", {
+      tableId: args.tableId,
+      playerId: player._id,
+      playerName: user?.name ?? "Joueur",
+      action: "rebuy",
+      amount: args.amount,
+      message: `${user?.name ?? "Joueur"} se recave pour ${args.amount} jetons`,
+      isSystem: true,
+      timestamp: Date.now(),
+    });
+
+    return { success: true, chips: args.amount };
   },
 });
