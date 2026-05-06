@@ -142,7 +142,9 @@ export const leaveTable = mutation({
       .first();
 
     if (!player) {
-      throw new Error("Player not found in table");
+      // Idempotent : l'utilisateur n'a plus de record (déjà sorti, ou tournoi
+      // terminé avec records nettoyés). On laisse le frontend naviguer.
+      return { success: true, alreadyOut: true };
     }
 
     const table = await ctx.db.get(args.tableId);
