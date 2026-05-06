@@ -1155,10 +1155,9 @@ export const getShowdownResults = query({
       const handRank = evaluateHandRobust(allCards);
 
       results.push({
-        player: {
-          ...player,
-          user,
-        },
+        userId: player.userId,
+        playerName: user?.name ?? "Joueur",
+        seatPosition: player.seatPosition,
         handRank,
         cards: player.cards,
       });
@@ -1183,12 +1182,12 @@ export const getShowdownResults = query({
     const winnerIds = determineWinners(
       results.map((r) => ({
         hand: r.handRank,
-        playerId: String(r.player.userId),
+        playerId: String(r.userId),
       }))
     );
     const resultsWithWinnerFlag = results.map((r) => ({
       ...r,
-      isWinner: winnerIds.includes(String(r.player.userId)),
+      isWinner: winnerIds.includes(String(r.userId)),
     }));
 
     return {

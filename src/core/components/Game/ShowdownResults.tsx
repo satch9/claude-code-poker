@@ -3,13 +3,9 @@ import { Card } from '../UI/Card';
 import { cn } from '../../../shared/utils/cn';
 
 interface ShowdownResult {
-  player: {
-    userId: string;
-    user?: {
-      name: string;
-    } | null;
-    chips: number;
-  };
+  userId: string;
+  playerName: string;
+  seatPosition: number;
   handRank: {
     name: string;
     rank: number;
@@ -55,7 +51,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
   const winners = results.some(r => r.isWinner !== undefined)
     ? results.filter(r => r.isWinner)
     : results.filter(r => r.handRank.rank === results[0].handRank.rank);
-  const winnerNames = winners.map(w => w.player.user?.name || 'Joueur').join(', ');
+  const winnerNames = winners.map(w => w.playerName || 'Joueur').join(', ');
   const winningsPerPlayer = winners.length > 0 ? Math.floor(pot / winners.length) : 0;
 
   return (
@@ -100,7 +96,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
 
             return (
               <div
-                key={result.player.userId}
+                key={result.userId}
                 className={cn(
                   'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 rounded-lg border-2',
                   isWinner
@@ -117,7 +113,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
                   </div>
                   <div className="min-w-0">
                     <div className="font-semibold text-gray-900 truncate">
-                      {result.player.user?.name || 'Joueur'}
+                      {result.playerName || 'Joueur'}
                       {isWinner && ' 👑'}
                     </div>
                     <div className={cn(
