@@ -12,12 +12,14 @@ interface LobbyProps {
   title: string;
   onJoinTable: (tableId: Id<"tables">) => void;
   onCreateTable: () => void;
+  onViewStats?: () => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
   title,
   onJoinTable,
   onCreateTable,
+  onViewStats,
 }) => {
   const { user } = useAuth();
   const data = useQuery(
@@ -39,7 +41,19 @@ export const Lobby: React.FC<LobbyProps> = ({
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0">
               🃏 {title}
             </h1>
-            <UserProfile compact />
+            <div className="flex items-center gap-2">
+              {onViewStats && (
+                <button
+                  type="button"
+                  onClick={onViewStats}
+                  title="Mes statistiques"
+                  className="px-3 py-1.5 text-sm rounded bg-poker-green-700 hover:bg-poker-green-600 text-white transition-colors"
+                >
+                  📊 Stats
+                </button>
+              )}
+              <UserProfile compact />
+            </div>
           </div>
         </div>
       </header>

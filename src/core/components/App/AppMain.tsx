@@ -12,6 +12,9 @@ const PokerTable = lazy(() =>
 const CreateTableForm = lazy(() =>
   import("../Table/CreateTableForm").then((m) => ({ default: m.CreateTableForm }))
 );
+const StatsPage = lazy(() =>
+  import("../Stats/StatsPage").then((m) => ({ default: m.StatsPage }))
+);
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
 import { usePendingJoin } from "../../hooks/usePendingJoin";
@@ -20,7 +23,7 @@ import { api } from "../../../../convex/_generated/api";
 // Table, Player, GameState plus nécessaires ici
 import { Id } from "../../../../convex/_generated/dataModel";
 
-type AppView = "lobby" | "table" | "create-table";
+type AppView = "lobby" | "table" | "create-table" | "stats";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -201,6 +204,7 @@ const AppContent: React.FC = () => {
           title={title}
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
+          onViewStats={() => setCurrentView("stats")}
         />
       );
 
@@ -247,12 +251,20 @@ const AppContent: React.FC = () => {
         </Suspense>
       );
 
+    case "stats":
+      return (
+        <Suspense fallback={<SuspenseFallback />}>
+          <StatsPage onBack={() => setCurrentView("lobby")} />
+        </Suspense>
+      );
+
     default:
       return (
         <Lobby
           title={title}
           onJoinTable={handleJoinTable}
           onCreateTable={handleCreateTable}
+          onViewStats={() => setCurrentView("stats")}
         />
       );
   }

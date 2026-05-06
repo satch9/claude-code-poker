@@ -3,11 +3,11 @@ import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { Card } from "../UI/Card";
 import { BettingControls } from "./BettingControls";
-import { ActionFeed } from "./ActionFeed";
-// import { ActionTimer } from "./ActionTimer"; // Unused
-import { HandStats } from "./HandStats";
-import { TurnIndicator } from "./TurnIndicator";
 import { ShowdownResults } from "./ShowdownResults";
+import { HeaderActionIcons } from "./HeaderActionIcons";
+import { ActionFeedDrawer } from "./ActionFeedDrawer";
+import { ChatDrawer } from "./ChatDrawer";
+import { SettingsDrawer } from "./SettingsDrawer";
 import { TournamentInfo } from "./TournamentInfo";
 import { Button } from "../UI/Button";
 import { LandscapeWarning } from "../UI/LandscapeWarning";
@@ -222,6 +222,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Masquée par défaut sur mobile
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showChatDrawer, setShowChatDrawer] = useState(false);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
+  const [showActionsDrawer, setShowActionsDrawer] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
   const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
@@ -242,7 +245,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   }, []);
 
   // Use hooks
-  const { isMobile, isTablet, isIOS } = useBreakpoint();
+  const { isMobile, isIOS } = useBreakpoint();
   const responsiveClasses = useResponsiveClasses();
   const seatPositioning = useSeatPositioning();
 
@@ -599,17 +602,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
               Blinds: {table.smallBlind}/{table.bigBlind}
             </p>
-            {table.inviteCode && (
-              <button
-                onClick={() => setShowInviteDialog(true)}
-                title="Inviter des joueurs"
-                className="mt-1 inline-flex items-center gap-1 px-3 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-sm font-mono tracking-widest text-white transition-colors"
-              >
-                📤 Inviter ({table.inviteCode})
-              </button>
-            )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 items-center">
             {/* Start game button in header - only for first game */}
             {gameState.phase === "waiting" &&
               table.status === "waiting" &&
@@ -626,8 +620,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </Button>
               )}
 
+            <HeaderActionIcons
+              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
+              onToggleGameInfo={() => setShowGameInfo((v) => !v)}
+              onToggleInvite={() => setShowInviteDialog((v) => !v)}
+              onToggleActions={() => setShowActionsDrawer((v) => !v)}
+              showInvite={
+                !!table.inviteCode && authUser?._id === table.creatorId
+              }
+            />
+
             <Button variant="secondary" onClick={onLeaveTable}>
-              Quitter la table
+              Quitter
             </Button>
 
             {table.gameType === "cash" &&
@@ -664,47 +669,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       <div className={cn(
         "flex flex-1",
         isMobile ? "overflow-hidden" : "overflow-x-auto"
-      )} style={!isMobile ? { minWidth: "1200px" } : {}}>
+      )}>
 
-        {/* Left sidebar - Actions (desktop/tablet only) */}
-        {(!isMobile && !isIOS) && (
-          <div className={cn(
-            responsiveClasses.sidebarWidth,
-            "p-4 border-r"
-          )}>
-            <ActionFeed actions={actionHistory} />
-
-            <TurnIndicator
-              currentPhase={gameState.phase}
-              currentPlayerPosition={gameState.currentPlayerPosition}
-              dealerPosition={gameState.dealerPosition}
-              isMyTurn={isMyTurn || false}
-              playerName={
-                players.find(
-                  (p) => p.seatPosition === gameState.currentPlayerPosition
-                )?.user?.name || ""
-              }
-            />
-
-            {gameStats && (
-              <HandStats
-                handNumber={handNumber}
-                potSize={gameState.pot}
-                totalPlayers={players.length}
-                activePlayers={players.filter((p) => !p.isFolded).length}
-                bigBlind={table.bigBlind}
-                averageStack={gameStats.averageChips}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Center - Table */}
+        {/* Center - Table (full width après refactor) */}
         <div className={cn(
           "flex-1 flex flex-col items-center",
           responsiveClasses.responsivePadding,
           isIOS && "safe-area"
-        )} style={!isMobile ? { maxWidth: isTablet ? "calc(100% - 480px)" : "calc(100% - 640px)" } : {}}>
+        )}>
 
           {/* Main table area - fullscreen on mobile */}
           <div className={responsiveClasses.tableContainer}>
@@ -881,132 +853,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Right sidebar - Chat and features (desktop/tablet only) */}
-        {!isMobile && (
-          <div className={cn(
-            responsiveClasses.sidebarWidth,
-            "p-4 border-l"
-          )}>
-            {/* Chat placeholder */}
-            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12a8 8 0 018-8c4.418 0 8 3.582 8 8z"
-                  />
-                </svg>
-                Chat
-              </h3>
-              <div className="text-poker-green-200 text-sm">
-                <div className="bg-poker-green-900/50 rounded p-2 mb-2">
-                  Chat sera disponible prochainement
-                </div>
-              </div>
-            </div>
-
-            {/* Table settings placeholder */}
-            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                Paramètres
-              </h3>
-              <div className="space-y-2">
-                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                  Sons et notifications
-                </button>
-                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                  Animations
-                </button>
-                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-1 px-2 rounded hover:bg-poker-green-700/50 transition-colors">
-                  Affichage
-                </button>
-              </div>
-            </div>
-
-            {/* Quick actions */}
-            <div className="bg-poker-green-800/50 rounded-lg p-4 border border-poker-green-600">
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                Actions rapides
-              </h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setShowGameInfo(true)}
-                  className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  Infos de la partie
-                </button>
-                <button className="w-full text-left text-poker-green-200 hover:text-white text-sm py-2 px-3 rounded hover:bg-poker-green-700/50 transition-colors flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                    />
-                  </svg>
-                  Inviter des joueurs
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Right sidebar desktop supprimée — Chat / Paramètres / Actions rapides
+            sont désormais accessibles via les icônes du header (drawers). */}
 
         {/* Mobile left sidebar - fixed navigation */}
         {isMobile && (
@@ -1344,6 +1192,21 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             inviteCode={table.inviteCode}
           />
         )}
+
+        {/* Drawers déclenchés par les icônes du header */}
+        <ActionFeedDrawer
+          isOpen={showActionsDrawer}
+          onClose={() => setShowActionsDrawer(false)}
+          actions={actionHistory}
+        />
+        <ChatDrawer
+          isOpen={showChatDrawer}
+          onClose={() => setShowChatDrawer(false)}
+        />
+        <SettingsDrawer
+          isOpen={showSettingsDrawer}
+          onClose={() => setShowSettingsDrawer(false)}
+        />
       </div>
     </div>
   );
