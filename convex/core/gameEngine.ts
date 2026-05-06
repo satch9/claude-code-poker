@@ -1845,5 +1845,5 @@ async function endTournament(ctx: any, tableId: string) {
   });
 }
 
-export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine };
+export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine, endTournament };
 

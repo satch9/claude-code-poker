@@ -5,6 +5,7 @@ import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
 import { requireSelf } from "./shared/auth";
 import { sanitizePlayer } from "./shared/sanitize";
 import { rateLimiter } from "./shared/rateLimit";
+import { endTournament } from "./core/gameEngine";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -120,6 +121,11 @@ export const leaveTable = mutation({
       throw new Error("Player not found in table");
     }
 
+    const table = await ctx.db.get(args.tableId);
+    if (!table) {
+      throw new Error("Table not found");
+    }
+
     // Check if game is active
     const gameState = await ctx.db
       .query("gameStates")
@@ -137,7 +143,54 @@ export const leaveTable = mutation({
       }
     }
 
-    // Remove player from table
+    const isRunningTournament =
+      table.gameType === "tournament" &&
+      table.modules?.tournament?.status === "running";
+
+    const user = await ctx.db.get(player.userId);
+
+    if (isRunningTournament && !player.eliminatedAt) {
+      // Tournoi en cours : forfait = élimination propre.
+      // On garde le record (pour le finalRanking), on lui assigne le pire rang
+      // libre parmi les joueurs encore en lice.
+      const allPlayers = await ctx.db
+        .query("players")
+        .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+        .collect();
+      const stillIn = allPlayers.filter(
+        (p: any) => !p.eliminatedAt && p.chips > 0
+      ).length;
+
+      await ctx.db.patch(player._id, {
+        chips: 0,
+        eliminatedAt: Date.now(),
+        tournamentRank: stillIn, // pire rang libre (ex: 4/4 si 4 encore en lice)
+      });
+
+      await ctx.db.insert("gameActions", {
+        tableId: args.tableId,
+        playerId: undefined,
+        playerName: user?.name || "Joueur",
+        action: "left",
+        message: `${user?.name || "Joueur"} a déclaré forfait (éliminé)`,
+        isSystem: true,
+        timestamp: Date.now(),
+      });
+
+      // Si plus qu'un joueur encore en lice → fin de tournoi
+      const stillInAfter = allPlayers.filter(
+        (p: any) =>
+          p._id !== player._id && !p.eliminatedAt && p.chips > 0
+      ).length;
+      if (stillInAfter <= 1) {
+        await endTournament(ctx, args.tableId);
+      }
+
+      return { success: true, chips: 0, forfeited: true };
+    }
+
+    // Cash game OU tournoi non démarré (registering) OU joueur déjà éliminé :
+    // suppression normale.
     await ctx.db.delete(player._id);
 
     // C6.3 : sync atomique du compteur dénormalisé.
@@ -150,8 +203,6 @@ export const leaveTable = mutation({
       }
     }
 
-    // Log the leave event in the action feed
-    const user = await ctx.db.get(player.userId);
     await ctx.db.insert("gameActions", {
       tableId: args.tableId,
       playerId: undefined,
