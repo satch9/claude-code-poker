@@ -147,6 +147,7 @@ export const leaveTable = mutation({
       .first();
 
     // If hand is in progress, fold the player automatically before removing
+    let wasActiveTurn = false;
     if (gameState && gameState.phase !== "waiting" && gameState.phase !== "showdown") {
       if (!player.isFolded) {
         await ctx.db.patch(player._id, {
@@ -155,6 +156,50 @@ export const leaveTable = mutation({
           lastAction: "fold",
         });
       }
+      wasActiveTurn = gameState.currentPlayerPosition === player.seatPosition;
+    }
+
+    // Si le joueur qui part avait le tour, on avance currentPlayerPosition au
+    // prochain joueur qui doit encore agir (sinon la main reste bloquée).
+    if (wasActiveTurn && gameState) {
+      const allPlayers = await ctx.db
+        .query("players")
+        .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+        .collect();
+
+      const seatOrder = allPlayers
+        .filter((p) => !p.isFolded)
+        .map((p) => p.seatPosition)
+        .sort((a, b) => a - b);
+
+      const needsToAct = (p: typeof allPlayers[number]): boolean => {
+        if (p.isFolded || p.isAllIn) return false;
+        if (!p.hasActed) return true;
+        return p.currentBet < gameState.currentBet;
+      };
+
+      let nextPlayer = -1;
+      const startIdx = seatOrder.indexOf(player.seatPosition);
+      const startCursor = startIdx === -1 ? 0 : (startIdx + 1) % seatOrder.length;
+      for (let i = 0; i < seatOrder.length; i++) {
+        const seat = seatOrder[(startCursor + i) % seatOrder.length];
+        if (seat === player.seatPosition) continue;
+        const candidate = allPlayers.find((p) => p.seatPosition === seat);
+        if (candidate && needsToAct(candidate)) {
+          nextPlayer = seat;
+          break;
+        }
+      }
+
+      if (nextPlayer >= 0) {
+        await ctx.db.patch(gameState._id, {
+          currentPlayerPosition: nextPlayer,
+          updatedAt: Date.now(),
+        });
+      }
+      // Si nextPlayer === -1 : tour terminé, mais on ne peut pas avancer la phase
+      // ici sans dupliquer toute la logique advanceToNextPhase. Le prochain joueur
+      // qui agira (ou un timeout) la déclenchera. À surveiller au smoke.
     }
 
     const isRunningTournament =
