@@ -115,10 +115,10 @@ export default {
           info: '#06B6D4',
         },
         'felt': {
-          DEFAULT: '#0F4C3A',
-          rim: '#1A2E26',
+          DEFAULT: 'var(--felt)',
+          rim: 'var(--felt-rim)',
         },
-        'gold': '#D4AF37',
+        'gold': 'var(--gold)',
       },
       
       // Tailles standardisées
