@@ -223,6 +223,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
+  const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
 
   // Détection portrait pour layout mobile heads-up
@@ -266,6 +267,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   } = useGameLogic(tableId, onLeaveTable);
 
   const isLoading = !tableId || !gameState || !players || !table;
+
+  // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
+  // on appelle joinTable pour reset le flag (il vient de revenir).
+  useEffect(() => {
+    if (!authUser || !tableId || !currentPlayer) return;
+    if (!(currentPlayer as any).sitOut) return;
+    joinTableMutation({
+      tableId: tableId as Id<"tables">,
+      userId: authUser._id,
+    }).catch((err) => {
+      console.warn("Auto-rejoin (sit-out reactivation) failed:", err);
+    });
+  }, [authUser?._id, tableId, currentPlayer, joinTableMutation]);
 
   // Get game info
   const potOdds = getPotOdds();
