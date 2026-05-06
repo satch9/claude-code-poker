@@ -152,6 +152,13 @@ export const leaveTable = mutation({
       throw new Error("Table not found");
     }
 
+    // Table terminée (tournoi fini ou cash game ended) : on conserve le
+    // record players pour préserver l'historique / les stats du profil.
+    // Le frontend navigue, point.
+    if (table.status === "finished") {
+      return { success: true, finished: true };
+    }
+
     // Check if game is active
     const gameState = await ctx.db
       .query("gameStates")
