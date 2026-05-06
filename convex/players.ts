@@ -168,12 +168,12 @@ export const leaveTable = mutation({
         .collect();
 
       const seatOrder = allPlayers
-        .filter((p) => !p.isFolded)
+        .filter((p) => !p.isFolded && !p.eliminatedAt)
         .map((p) => p.seatPosition)
         .sort((a, b) => a - b);
 
       const needsToAct = (p: typeof allPlayers[number]): boolean => {
-        if (p.isFolded || p.isAllIn) return false;
+        if (p.isFolded || p.isAllIn || p.eliminatedAt) return false;
         if (!p.hasActed) return true;
         return p.currentBet < gameState.currentBet;
       };

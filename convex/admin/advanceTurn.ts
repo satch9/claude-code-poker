@@ -4,6 +4,27 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 
+// Force la montée au niveau suivant en mettant nextBlindIncrease dans le passé.
+// Le passage effectif se fait à la prochaine main (startNextHandInternal).
+export const forceNextBlindLevel = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const table = await ctx.db.get(args.tableId);
+    if (!table || !table.modules?.tournament) throw new Error("Not a tournament table");
+    const t = table.modules.tournament;
+    await ctx.db.patch(args.tableId, {
+      modules: {
+        ...table.modules,
+        tournament: {
+          ...t,
+          nextBlindIncrease: Date.now() - 1000,
+        },
+      },
+    });
+    return { ok: true, currentBlindLevel: t.currentBlindLevel };
+  },
+});
+
 export const setCurrentPlayer = mutation({
   args: { tableId: v.id("tables"), seatPosition: v.number() },
   handler: async (ctx, args) => {
@@ -35,12 +56,12 @@ export const advanceTurn = mutation({
       .collect();
 
     const seatOrder = allPlayers
-      .filter((p) => !p.isFolded)
+      .filter((p) => !p.isFolded && !p.eliminatedAt)
       .map((p) => p.seatPosition)
       .sort((a, b) => a - b);
 
     const needsToAct = (p: any): boolean => {
-      if (p.isFolded || p.isAllIn) return false;
+      if (p.isFolded || p.isAllIn || p.eliminatedAt) return false;
       if (!p.hasActed) return true;
       return p.currentBet < gs.currentBet;
     };

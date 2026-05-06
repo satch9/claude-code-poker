@@ -542,12 +542,12 @@ export const playerAction = mutation({
       // soit pas encore acté ce round, soit currentBet < mise courante.
       // Ça évite de redonner la main à un joueur qui a déjà matché la raise.
       const seatOrder = allPlayers
-        .filter((p) => !p.isFolded)
+        .filter((p) => !p.isFolded && !p.eliminatedAt)
         .map((p) => p.seatPosition)
         .sort((a, b) => a - b);
 
       const needsToAct = (p: typeof allPlayers[number]): boolean => {
-        if (p.isFolded || p.isAllIn) return false;
+        if (p.isFolded || p.isAllIn || p.eliminatedAt) return false;
         if (!p.hasActed) return true;
         return p.currentBet < updatedGameState.currentBet;
       };
@@ -1183,16 +1183,29 @@ async function prepareNextHand(ctx: any, tableId: string) {
   }
 
   await Promise.all(
-    players.map((player: any) =>
-      ctx.db.patch(player._id, {
+    players.map((player: any) => {
+      // Joueurs éliminés en tournoi : on ne reset rien (isFolded reste true,
+      // hasActed reste true, etc.) pour qu'ils ne réapparaissent pas dans la
+      // rotation des next-players.
+      if (player.eliminatedAt) {
+        return ctx.db.patch(player._id, {
+          cards: [],
+          currentBet: 0,
+          hasActed: true,
+          isAllIn: false,
+          isFolded: true,
+          lastAction: undefined,
+        });
+      }
+      return ctx.db.patch(player._id, {
         cards: [],
         currentBet: 0,
         hasActed: false,
         isAllIn: false,
         isFolded: false,
         lastAction: undefined,
-      })
-    )
+      });
+    })
   );
 
   // Reset game state but keep dealer position for rotation
