@@ -154,9 +154,17 @@ async function startGameInternal(ctx: any, tableId: string) {
   );
 
   // Add blind actions to feed
+  // Pre-load SB+BB users in parallel to avoid sequential ctx.db.get in loop
+  const blindUsers = await Promise.all(
+    players
+      .filter((p: any) => p.seatPosition === smallBlind || p.seatPosition === bigBlind)
+      .map(async (p: any) => [p.userId, await ctx.db.get(p.userId)] as const)
+  );
+  const userBy = new Map<string, any>(blindUsers);
+
   for (const player of players) {
     if (player.seatPosition === smallBlind) {
-      const user = await ctx.db.get(player.userId);
+      const user = userBy.get(player.userId);
       await addActionToFeed(ctx, tableId, {
         playerId: player._id,
         playerName: user?.name || "Joueur",
@@ -166,7 +174,7 @@ async function startGameInternal(ctx: any, tableId: string) {
         isSystem: false,
       });
     } else if (player.seatPosition === bigBlind) {
-      const user = await ctx.db.get(player.userId);
+      const user = userBy.get(player.userId);
       await addActionToFeed(ctx, tableId, {
         playerId: player._id,
         playerName: user?.name || "Joueur",
