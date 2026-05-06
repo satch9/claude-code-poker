@@ -36,12 +36,29 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     tableId ? { tableId } : "skip"
   );
   const players = useQuery(
-    api.players.getTablePlayers, 
+    api.players.getTablePlayers,
     tableId ? { tableId } : "skip"
   );
+
+  // Compute whether the current user could act (used to gate getAvailableActions).
+  // We check phase + turn position here directly to avoid depending on `isMyTurn`
+  // (which is derived later and would create ordering noise).
+  const myPlayer = players?.find(p => p.userId === user?._id);
+  const phase = gameState?.phase;
+  const couldActNow = !!(
+    user &&
+    tableId &&
+    myPlayer &&
+    phase &&
+    phase !== 'waiting' &&
+    phase !== 'showdown' &&
+    !myPlayer.isFolded &&
+    gameState?.currentPlayerPosition === myPlayer.seatPosition
+  );
+
   const availableActions = useQuery(
     api.core.gameEngine.getAvailableActions,
-    user && tableId ? { tableId, userId: user._id } : 'skip'
+    couldActNow && user && tableId ? { tableId, userId: user._id } : 'skip'
   );
   // Re-enable showdown results
   const showdownResults = useQuery(
