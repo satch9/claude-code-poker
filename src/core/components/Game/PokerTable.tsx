@@ -802,9 +802,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       seat.isCurrentPlayer || gameState.phase === "showdown"
                     }
                     isEmpty={seat.isEmpty}
-                    onSeatClick={() =>
-                      seat.isEmpty && onJoinSeat(seat.position)
-                    }
+                    onSeatClick={() => {
+                      if (!seat.isEmpty) return;
+                      // Tournoi running : on n'accepte plus de nouveaux joueurs
+                      // (pas de rebuy). Les sièges vides correspondent à des éliminés.
+                      const tournamentRunning =
+                        table.gameType === "tournament" &&
+                        table.modules?.tournament?.status === "running";
+                      if (tournamentRunning) return;
+                      onJoinSeat(seat.position);
+                    }}
                     onTimeOut={seat.isActivePlayer && gameState.phase !== "waiting" ? handleTimeOut : undefined}
                     timeLimit={30}
                   />

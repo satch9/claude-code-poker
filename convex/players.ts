@@ -51,6 +51,16 @@ export const joinTable = mutation({
       throw new Error("User already in table");
     }
 
+    // Tournoi running : on n'accepte plus de nouveaux joueurs (pas de rebuy
+    // ni late reg pour le MVP). Le sit-out reactivation ci-dessus a déjà été
+    // géré pour les joueurs qui reviennent.
+    if (
+      table.gameType === "tournament" &&
+      table.modules?.tournament?.status === "running"
+    ) {
+      throw new Error("Tournament is already running, no new players allowed");
+    }
+
     // Check if table is full
     const currentPlayers = await ctx.db
       .query("players")
