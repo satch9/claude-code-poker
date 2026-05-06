@@ -28,6 +28,188 @@ interface PokerTableProps {
   onJoinSeat: (position: number) => void;
 }
 
+// ============================================================================
+// Helpers stables (module-scope) — déplacés hors du composant pour stabilité
+// des références dans useMemo. Toutes les dépendances sont passées en args.
+// ============================================================================
+
+// Calculate the BASE angle for a seat position (before viewer rotation)
+function computeBaseAngle(position: number, maxPlayers: number, isMobile: boolean): number {
+  let angle: number;
+
+  if (maxPlayers === 2) {
+    const angles = isMobile ? [
+      Math.PI / 2 + 0.2,
+      -Math.PI / 2 - 0.2
+    ] : [
+      Math.PI / 2,
+      -Math.PI / 2
+    ];
+    angle = angles[position % 2];
+  } else if (maxPlayers === 3) {
+    const angles = isMobile ? [
+      -Math.PI / 2,
+      Math.PI * 7 / 6 + 0.1,
+      Math.PI / 3 - 0.1
+    ] : [
+      -Math.PI / 2,
+      Math.PI * 7 / 6,
+      Math.PI / 3
+    ];
+    angle = angles[position % 3];
+  } else if (maxPlayers === 4) {
+    const angles = [
+      -Math.PI / 2,
+      0,
+      Math.PI / 2,
+      Math.PI
+    ];
+    angle = angles[position % 4];
+  } else if (maxPlayers === 5) {
+    const angles = [
+      -Math.PI / 2,
+      -Math.PI / 2 + (2 * Math.PI / 5),
+      -Math.PI / 2 + (4 * Math.PI / 5),
+      -Math.PI / 2 + (6 * Math.PI / 5),
+      -Math.PI / 2 + (8 * Math.PI / 5)
+    ];
+    angle = angles[position % 5];
+  } else if (maxPlayers === 6) {
+    const angles = [
+      -Math.PI / 2,
+      -Math.PI / 6,
+      Math.PI / 6,
+      Math.PI / 2,
+      5 * Math.PI / 6,
+      -5 * Math.PI / 6
+    ];
+    angle = angles[position % 6];
+  } else {
+    angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
+  }
+  return angle;
+}
+
+interface SeatGeomDeps {
+  radius: { radiusX: number; radiusY: number };
+  constraints: { minX: number; maxX: number; minY: number; maxY: number };
+}
+
+// Calculate seat positions for oval table (avec rotation viewer-relative).
+function computeSeatPosition(
+  position: number,
+  maxPlayers: number,
+  viewerRotation: number,
+  isMobile: boolean,
+  seatPositioning: SeatGeomDeps
+) {
+  const angle = computeBaseAngle(position, maxPlayers, isMobile) + viewerRotation;
+
+  const radiusX = seatPositioning.radius.radiusX;
+  const radiusY = seatPositioning.radius.radiusY;
+
+  const rawX = 50 + radiusX * Math.cos(angle);
+  const rawY = 50 + radiusY * Math.sin(angle);
+
+  const { constraints } = seatPositioning;
+  const x = Math.max(constraints.minX, Math.min(constraints.maxX, rawX));
+  const y = Math.max(constraints.minY, Math.min(constraints.maxY, rawY));
+
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    transform: "translate(-50%, -50%)",
+    angle,
+  } as const;
+}
+
+// Calculate dealer button position (in front of player seat).
+function computeDealerButtonPosition(
+  position: number,
+  maxPlayers: number,
+  viewerRotation: number,
+  isMobile: boolean,
+  seatPositioning: SeatGeomDeps
+) {
+  const angle = computeBaseAngle(position, maxPlayers, isMobile) + viewerRotation;
+
+  const { radiusX, radiusY } = seatPositioning.radius;
+  const { minX, maxX, minY, maxY } = seatPositioning.constraints;
+
+  const rawX = 50 + radiusX * Math.cos(angle);
+  const rawY = 50 + radiusY * Math.sin(angle);
+
+  const x = Math.max(minX, Math.min(maxX, rawX));
+  const y = Math.max(minY, Math.min(maxY, rawY));
+
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    transform: "translate(-50%, -50%)",
+  };
+}
+
+interface BlindPlayerLike {
+  user?: unknown;
+  chips: number;
+  seatPosition: number;
+}
+
+function computeSmallBlindPosition(
+  players: BlindPlayerLike[] | null | undefined,
+  dealerPosition: number | undefined
+): number {
+  if (!players || dealerPosition === undefined) return -1;
+
+  const playerPositions = players
+    .filter(p => p.user && p.chips > 0)
+    .map(p => p.seatPosition)
+    .sort((a, b) => a - b);
+
+  if (playerPositions.length < 2) return -1;
+
+  if (playerPositions.length === 2) {
+    return dealerPosition;
+  } else {
+    const dealerIndex = playerPositions.indexOf(dealerPosition);
+    if (dealerIndex === -1) {
+      console.warn(`Dealer position ${dealerPosition} not found in active players`);
+      return playerPositions[0];
+    }
+    const sbIndex = (dealerIndex + 1) % playerPositions.length;
+    return playerPositions[sbIndex];
+  }
+}
+
+function computeBigBlindPosition(
+  players: BlindPlayerLike[] | null | undefined,
+  dealerPosition: number | undefined
+): number {
+  if (!players || dealerPosition === undefined) return -1;
+
+  const playerPositions = players
+    .filter(p => p.user && p.chips > 0)
+    .map(p => p.seatPosition)
+    .sort((a, b) => a - b);
+
+  if (playerPositions.length < 2) return -1;
+
+  if (playerPositions.length === 2) {
+    const dealerIndex = playerPositions.indexOf(dealerPosition);
+    if (dealerIndex === -1) return playerPositions[0];
+    const bbIndex = (dealerIndex + 1) % playerPositions.length;
+    return playerPositions[bbIndex];
+  } else {
+    const dealerIndex = playerPositions.indexOf(dealerPosition);
+    if (dealerIndex === -1) {
+      console.warn(`Dealer position ${dealerPosition} not found in active players`);
+      return playerPositions[1];
+    }
+    const bbIndex = (dealerIndex + 2) % playerPositions.length;
+    return playerPositions[bbIndex];
+  }
+}
+
 export const PokerTable: React.FC<PokerTableProps> = ({
   tableId,
   appTitle,
@@ -90,128 +272,27 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const gameStats = getGameStats();
   const currentBet = gameState?.currentBet || 0;
 
-  // Calculate the BASE angle for a seat position (before viewer rotation)
-  const getBaseAngle = (position: number, maxPlayers: number): number => {
-    let angle: number;
-
-    if (maxPlayers === 2) {
-      const angles = isMobile ? [
-        Math.PI / 2 + 0.2,
-        -Math.PI / 2 - 0.2
-      ] : [
-        Math.PI / 2,
-        -Math.PI / 2
-      ];
-      angle = angles[position % 2];
-    } else if (maxPlayers === 3) {
-      const angles = isMobile ? [
-        -Math.PI / 2,
-        Math.PI * 7 / 6 + 0.1,
-        Math.PI / 3 - 0.1
-      ] : [
-        -Math.PI / 2,
-        Math.PI * 7 / 6,
-        Math.PI / 3
-      ];
-      angle = angles[position % 3];
-    } else if (maxPlayers === 4) {
-      const angles = [
-        -Math.PI / 2,
-        0,
-        Math.PI / 2,
-        Math.PI
-      ];
-      angle = angles[position % 4];
-    } else if (maxPlayers === 5) {
-      const angles = [
-        -Math.PI / 2,
-        -Math.PI / 2 + (2 * Math.PI / 5),
-        -Math.PI / 2 + (4 * Math.PI / 5),
-        -Math.PI / 2 + (6 * Math.PI / 5),
-        -Math.PI / 2 + (8 * Math.PI / 5)
-      ];
-      angle = angles[position % 5];
-    } else if (maxPlayers === 6) {
-      const angles = [
-        -Math.PI / 2,
-        -Math.PI / 6,
-        Math.PI / 6,
-        Math.PI / 2,
-        5 * Math.PI / 6,
-        -5 * Math.PI / 6
-      ];
-      angle = angles[position % 6];
-    } else {
-      angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
-    }
-    return angle;
-  };
-
   // Rotation à appliquer pour que le viewer (currentPlayer) soit toujours en bas
   // (angle = Math.PI / 2). Si pas de currentPlayer, pas de rotation.
   const viewerRotation = currentPlayer && table
-    ? Math.PI / 2 - getBaseAngle(currentPlayer.seatPosition, table.maxPlayers)
+    ? Math.PI / 2 - computeBaseAngle(currentPlayer.seatPosition, table.maxPlayers, isMobile)
     : 0;
 
-  // Calculate seat positions for oval table (avec rotation viewer-relative).
-  // Le joueur courant (viewer) est toujours placé au sud (Math.PI / 2).
-  const getSeatPosition = (position: number, _maxPlayers: number) => {
-    const angle = getBaseAngle(position, _maxPlayers) + viewerRotation;
-
-    // Radius ajusté pour positionner les seats au bord de la table
-    const radiusX = seatPositioning.radius.radiusX; // Horizontal radius percentage (au bord de la table)
-    const radiusY = seatPositioning.radius.radiusY; // Vertical radius percentage (au bord de la table)
-
-    // Calculer la position avec contraintes pour éviter les débordements
-    const rawX = 50 + radiusX * Math.cos(angle);
-    const rawY = 50 + radiusY * Math.sin(angle);
-
-    // Contraindre dans les limites visibles (seats au bord de la table)
-    // Ajustement pour mobile pour éviter les empiètements  
-    const { constraints } = seatPositioning;
-    const x = Math.max(constraints.minX, Math.min(constraints.maxX, rawX)); // Seats au bord de la table
-    const y = Math.max(constraints.minY, Math.min(constraints.maxY, rawY)); // Espace vertical ajusté
-
-    return {
-      left: `${x}%`,
-      top: `${y}%`,
-      transform: "translate(-50%, -50%)",
-      angle,
-    } as const;
-  };
-
-  // Calculate dealer button position (in front of player seat).
-  // Utilise getBaseAngle + viewerRotation pour suivre la rotation du viewer.
-  const getDealerButtonPosition = (position: number, maxPlayers: number) => {
-    const angle = getBaseAngle(position, maxPlayers) + viewerRotation;
-
-    // Utiliser les hooks pour le positionnement
-    const { radiusX, radiusY } = seatPositioning.radius;
-    const { minX, maxX, minY, maxY } = seatPositioning.constraints;
-
-    const rawX = 50 + radiusX * Math.cos(angle);
-    const rawY = 50 + radiusY * Math.sin(angle);
-
-    // Contraindre dans les limites visibles
-    const x = Math.max(minX, Math.min(maxX, rawX));
-    const y = Math.max(minY, Math.min(maxY, rawY));
-
-    return {
-      left: `${x}%`,
-      top: `${y}%`,
-      transform: "translate(-50%, -50%)",
-    };
-  };
-
   // Create array of all seat positions
-  const smallBlindPos = getSmallBlindPosition();
-  const bigBlindPos = getBigBlindPosition();
+  const smallBlindPos = computeSmallBlindPosition(players, gameState?.dealerPosition);
+  const bigBlindPos = computeBigBlindPosition(players, gameState?.dealerPosition);
   const seats = useMemo(() => {
     if (!table || !players || !gameState) return [];
     return Array.from({ length: table.maxPlayers }, (_, position) => {
       const player = players.find((p) => p.seatPosition === position && p.user);
       const isEmpty = !player;
-      const seatGeom = getSeatPosition(position, table.maxPlayers);
+      const seatGeom = computeSeatPosition(
+        position,
+        table.maxPlayers,
+        viewerRotation,
+        isMobile,
+        seatPositioning
+      );
 
       return {
         position,
@@ -226,12 +307,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         seatGeom,
       } as const;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    table?.maxPlayers,
+    table,
     players,
-    gameState?.dealerPosition,
-    gameState?.currentPlayerPosition,
+    gameState,
     currentPlayer?.userId,
     smallBlindPos,
     bigBlindPos,
@@ -252,69 +331,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     );
   }
 
-  function getSmallBlindPosition() {
-    if (!players || !gameState || !table) return -1;
-
-    // Obtenir les positions réelles des joueurs actifs avec chips
-    const playerPositions = players
-      .filter(p => p.user && p.chips > 0) // Joueurs présents avec chips
-      .map(p => p.seatPosition)
-      .sort((a, b) => a - b);
-
-    if (playerPositions.length < 2) return -1;
-
-    if (playerPositions.length === 2) {
-      // Heads-up: dealer est small blind
-      return gameState.dealerPosition;
-    } else {
-      // Multi-way: small blind est le joueur actif suivant le dealer
-      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
-      if (dealerIndex === -1) {
-        // Dealer éliminé, utiliser la logique de rotation
-        console.warn(`Dealer position ${gameState.dealerPosition} not found in active players`);
-        return playerPositions[0]; // Fallback
-      }
-      const sbIndex = (dealerIndex + 1) % playerPositions.length;
-      return playerPositions[sbIndex];
-    }
-  }
-
-  function getBigBlindPosition() {
-    if (!players || !gameState || !table) return -1;
-
-    // Obtenir les positions réelles des joueurs actifs avec chips
-    const playerPositions = players
-      .filter(p => p.user && p.chips > 0) // Joueurs présents avec chips
-      .map(p => p.seatPosition)
-      .sort((a, b) => a - b);
-
-    if (playerPositions.length < 2) return -1;
-
-    if (playerPositions.length === 2) {
-      // Heads-up: big blind est le non-dealer
-      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
-      if (dealerIndex === -1) return playerPositions[0]; // Fallback
-      const bbIndex = (dealerIndex + 1) % playerPositions.length;
-      return playerPositions[bbIndex];
-    } else {
-      // Multi-way: big blind est 2 positions après le dealer
-      const dealerIndex = playerPositions.indexOf(gameState.dealerPosition);
-      if (dealerIndex === -1) {
-        console.warn(`Dealer position ${gameState.dealerPosition} not found in active players`);
-        return playerPositions[1]; // Fallback
-      }
-      const bbIndex = (dealerIndex + 2) % playerPositions.length;
-      return playerPositions[bbIndex];
-    }
-  }
-
   // Mobile portrait heads-up : layout vertical simplifié
   if (isMobile && table.maxPlayers === 2 && isPortrait) {
     const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
     // En heads-up : dealer = small blind, l'autre = big blind
     const dealerPos = gameState.dealerPosition;
-    const sbPos = getSmallBlindPosition();
-    const bbPos = getBigBlindPosition();
+    const sbPos = smallBlindPos;
+    const bbPos = bigBlindPos;
     const renderBadges = (seatPosition: number) => (
       <span className="inline-flex gap-1 ml-2">
         {seatPosition === dealerPos && (
@@ -673,11 +696,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 <div
                   className={responsiveClasses.dealerButton}
                   style={{
-                    ...getDealerButtonPosition(
+                    ...computeDealerButtonPosition(
                       gameState.dealerPosition,
-                      table.maxPlayers
+                      table.maxPlayers,
+                      viewerRotation,
+                      isMobile,
+                      seatPositioning
                     ),
-                    transform: `${getDealerButtonPosition(gameState.dealerPosition, table.maxPlayers).transform} scaleY(1.43)`
+                    transform: `${computeDealerButtonPosition(gameState.dealerPosition, table.maxPlayers, viewerRotation, isMobile, seatPositioning).transform} scaleY(1.43)`
                   }}
                 >
                   DEALER
