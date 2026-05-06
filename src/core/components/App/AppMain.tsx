@@ -5,6 +5,8 @@ import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
 import type { CreateTableData } from "../Table/CreateTableForm";
 import { SuspenseFallback } from "../UI/SuspenseFallback";
+import { AppShell } from "../../../shared/ui/AppShell";
+import type { TabItem } from "../../../shared/ui/TabBar";
 
 const PokerTable = lazy(() =>
   import("../Game/PokerTable").then((m) => ({ default: m.PokerTable }))
@@ -196,78 +198,127 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Render different views based on current state
-  switch (currentView) {
-    case "lobby":
-      return (
-        <Lobby
-          title={title}
-          onJoinTable={handleJoinTable}
-          onCreateTable={handleCreateTable}
-          onViewStats={() => setCurrentView("stats")}
-        />
-      );
+  type TabId = "lobby" | "tournois" | "stats" | "profil";
 
-    case "table":
-      if (!user || !selectedTableId) {
+  const tabs: TabItem[] = [
+    { id: "lobby", label: "Lobby", icon: <span aria-hidden>🃏</span> },
+    { id: "tournois", label: "Tournois", icon: <span aria-hidden>🏆</span> },
+    { id: "stats", label: "Stats", icon: <span aria-hidden>📊</span> },
+    { id: "profil", label: "Profil", icon: <span aria-hidden>👤</span> },
+  ];
+
+  const viewToTab = (v: AppView): TabId => {
+    if (v === "stats") return "stats";
+    return "lobby";
+  };
+
+  const onTabChange = (id: string) => {
+    if (id === "stats") setCurrentView("stats");
+    else if (id === "lobby") setCurrentView("lobby");
+    else if (id === "tournois") {
+      setCurrentView("lobby");
+      alert("La refonte Tournois arrive au Sprint 3.");
+    } else if (id === "profil") {
+      setCurrentView("lobby");
+      alert("La refonte Profil arrive au Sprint 5.");
+    }
+  };
+
+  const headerTitle = (() => {
+    switch (currentView) {
+      case "lobby": return title;
+      case "create-table": return "Créer une table";
+      case "stats": return "Stats";
+      case "table": return title;
+      default: return title;
+    }
+  })();
+
+  const renderView = (): JSX.Element => {
+    switch (currentView) {
+      case "lobby":
         return (
-          <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-8 shadow-xl text-center">
-              <h2 className="text-2xl font-bold mb-4">Erreur</h2>
-              <p className="text-gray-600 mb-6">
-                Impossible de charger la table
-              </p>
-              <button
-                onClick={() => setCurrentView("lobby")}
-                className="bg-poker-green-600 text-white px-4 py-2 rounded hover:bg-poker-green-700"
-              >
-                Retour au lobby
-              </button>
-            </div>
-          </div>
+          <Lobby
+            title={title}
+            onJoinTable={handleJoinTable}
+            onCreateTable={handleCreateTable}
+            onViewStats={() => setCurrentView("stats")}
+          />
         );
-      }
 
-      // selectedTableId est garanti d'être non-null ici grâce au check ci-dessus
-      return (
-        <Suspense fallback={<SuspenseFallback />}>
-          <PokerTable
-            key={selectedTableId}
-            tableId={selectedTableId}
-            appTitle={title}
-            onLeaveTable={handleLeaveTable}
-            onJoinSeat={handleJoinSeat}
+      case "table":
+        if (!user || !selectedTableId) {
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-8 shadow-xl text-center">
+                <h2 className="text-2xl font-bold mb-4">Erreur</h2>
+                <p className="text-gray-600 mb-6">
+                  Impossible de charger la table
+                </p>
+                <button
+                  onClick={() => setCurrentView("lobby")}
+                  className="bg-poker-green-600 text-white px-4 py-2 rounded hover:bg-poker-green-700"
+                >
+                  Retour au lobby
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        // selectedTableId est garanti d'être non-null ici grâce au check ci-dessus
+        return (
+          <Suspense fallback={<SuspenseFallback />}>
+            <PokerTable
+              key={selectedTableId}
+              tableId={selectedTableId}
+              appTitle={title}
+              onLeaveTable={handleLeaveTable}
+              onJoinSeat={handleJoinSeat}
+            />
+          </Suspense>
+        );
+
+      case "create-table":
+        return (
+          <Suspense fallback={<SuspenseFallback />}>
+            <CreateTableForm
+              onSubmit={handleTableCreated}
+              onCancel={handleCancelCreateTable}
+            />
+          </Suspense>
+        );
+
+      case "stats":
+        return (
+          <Suspense fallback={<SuspenseFallback />}>
+            <StatsPage onBack={() => setCurrentView("lobby")} />
+          </Suspense>
+        );
+
+      default:
+        return (
+          <Lobby
+            title={title}
+            onJoinTable={handleJoinTable}
+            onCreateTable={handleCreateTable}
+            onViewStats={() => setCurrentView("stats")}
           />
-        </Suspense>
-      );
+        );
+    }
+  };
 
-    case "create-table":
-      return (
-        <Suspense fallback={<SuspenseFallback />}>
-          <CreateTableForm
-            onSubmit={handleTableCreated}
-            onCancel={handleCancelCreateTable}
-          />
-        </Suspense>
-      );
-
-    case "stats":
-      return (
-        <Suspense fallback={<SuspenseFallback />}>
-          <StatsPage onBack={() => setCurrentView("lobby")} />
-        </Suspense>
-      );
-
-    default:
-      return (
-        <Lobby
-          title={title}
-          onJoinTable={handleJoinTable}
-          onCreateTable={handleCreateTable}
-          onViewStats={() => setCurrentView("stats")}
-        />
-      );
-  }
+  return (
+    <AppShell
+      title={headerTitle}
+      tabs={tabs}
+      activeTabId={viewToTab(currentView)}
+      onTabChange={onTabChange}
+      fullscreen={currentView === "table"}
+    >
+      {renderView()}
+    </AppShell>
+  );
 };
 
 export const AppMain: React.FC = () => {
