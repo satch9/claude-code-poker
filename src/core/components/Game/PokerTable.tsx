@@ -385,7 +385,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               {table.gameType === "tournament" ? "Tournoi" : "Cash"}
             </div>
           </div>
-          {table.inviteCode && (
+          {table.inviteCode && authUser?._id === table.creatorId && (
             <button
               onClick={() => setShowInviteDialog(true)}
               title="Inviter des joueurs"
