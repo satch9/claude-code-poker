@@ -428,27 +428,6 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
             </Button>
           </div>
         </form>
-
-        {/* Preview */}
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-900 mb-2">Aperçu</h3>
-          <div className="text-sm text-gray-600 space-y-1">
-            <div>
-              <strong>{formData.name}</strong> 
-              {formData.isPrivate && ' (Privée)'}
-            </div>
-            <div>
-              {formData.gameType === 'tournament' ? 'Tournoi' : 'Cash Game'} • 
-              {formData.maxPlayers} joueurs max
-            </div>
-            <div>
-              Blinds: {formData.smallBlind}/{formData.bigBlind} • Stack: {formData.startingStack}
-              {formData.gameType === 'tournament' && (
-                formData.buyIn === 0 ? ' • Freeroll' : ` • Buy-in: ${formData.buyIn}€`
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
