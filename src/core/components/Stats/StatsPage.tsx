@@ -4,6 +4,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { PlayerStats } from "./PlayerStats";
 import { Button } from "../UI/Button";
+import { UserProfile } from "../Auth/UserProfile";
 
 interface StatsPageProps {
   onBack: () => void;
@@ -57,13 +58,14 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onBack }) => {
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
               📊 Mes statistiques
             </h1>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={handleExportJson}>
                 Exporter JSON
               </Button>
               <Button variant="secondary" size="sm" onClick={onBack}>
                 Retour
               </Button>
+              <UserProfile compact />
             </div>
           </div>
         </div>
