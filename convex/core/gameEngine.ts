@@ -888,9 +888,18 @@ async function determineWinner(ctx: any, tableId: string) {
     isSystem: true,
   });
 
+  // Pré-charger les users en un seul Promise.all → réutiliser dans les boucles
+  const userIdsForShowdown = playerHands.map((h: any) => h.player.userId);
+  const usersById = new Map<string, any>(
+    await Promise.all(
+      userIdsForShowdown.map(async (uid: any) => [uid, await ctx.db.get(uid)] as const)
+    )
+  );
+  const userOf = (userId: any) => usersById.get(userId);
+
   // Log showdown results for each player
   for (const hand of playerHands) {
-    const user = await ctx.db.get(hand.player.userId);
+    const user = userOf(hand.player.userId);
     await addActionToFeed(ctx, tableId, {
       playerId: hand.player._id,
       playerName: user?.name || "Joueur",
@@ -981,7 +990,7 @@ async function determineWinner(ctx: any, tableId: string) {
 
     // Add winner announcement for this side pot
     if (potWinners.length === 1) {
-      const winnerUser = await ctx.db.get(potWinners[0].player.userId);
+      const winnerUser = userOf(potWinners[0].player.userId);
       await addActionToFeed(ctx, tableId, {
         playerId: potWinners[0].player._id,
         playerName: winnerUser?.name || "Joueur",
@@ -992,12 +1001,10 @@ async function determineWinner(ctx: any, tableId: string) {
       });
     } else {
       // Multiple winners for this side pot (tie)
-      const winnerNames = await Promise.all(
-        potWinners.map(async (winner: any) => {
-          const user = await ctx.db.get(winner.player.userId);
-          return user?.name || "Joueur";
-        })
-      );
+      const winnerNames = potWinners.map((winner: any) => {
+        const user = userOf(winner.player.userId);
+        return user?.name || "Joueur";
+      });
 
       await addActionToFeed(ctx, tableId, {
         playerName: "Système",
@@ -1134,8 +1141,15 @@ export const getShowdownResults = query({
     const communityCards = gameState.communityCards.map(stringToCard);
     const results = [];
 
+    // Pré-charger les users en un seul Promise.all → cache local
+    const usersById = new Map<string, any>(
+      await Promise.all(
+        activePlayers.map(async (p) => [p.userId as string, await ctx.db.get(p.userId)] as const)
+      )
+    );
+
     for (const player of activePlayers) {
-      const user = await ctx.db.get(player.userId);
+      const user = usersById.get(player.userId);
       const holeCards = player.cards.map(stringToCard);
       const allCards = [...holeCards, ...communityCards];
       const handRank = evaluateHandRobust(allCards);
