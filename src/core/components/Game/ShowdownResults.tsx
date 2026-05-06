@@ -21,6 +21,7 @@ interface ShowdownResultsProps {
   className?: string;
   table?: any;
   players?: any[];
+  onBackToLobby?: () => void;
 }
 
 export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
@@ -30,6 +31,7 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
   className,
   table,
   players,
+  onBackToLobby,
 }) => {
   // Tournament final ranking takes priority over hand result
   const tournament = table?.modules?.tournament;
@@ -76,6 +78,17 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
               );
             })}
           </ol>
+          {onBackToLobby && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={onBackToLobby}
+                className="px-4 py-2 bg-poker-green-700 hover:bg-poker-green-600 text-white rounded-md font-medium transition-colors"
+              >
+                Retour au lobby
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -552,6 +552,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               communityCards={[]}
               table={table}
               players={players}
+              onBackToLobby={onLeaveTable}
             />
           )}
 
@@ -1193,6 +1194,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               communityCards={[]}
               table={table}
               players={players}
+              onBackToLobby={onLeaveTable}
             />
           )}
 
