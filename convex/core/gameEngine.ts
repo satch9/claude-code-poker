@@ -18,7 +18,6 @@ import {
 import {
   getBlindPositions,
   getFirstPlayerToAct,
-  getNextActivePlayer,
   resetPlayersForNewRound,
   shouldEndHand,
   getNextPhase,
@@ -528,19 +527,38 @@ export const playerAction = mutation({
       // Move to next phase
       await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
     } else {
-      // Move to next active player
-      // Don't filter all-in players when looking for next player, 
-      // as other players still need to act against all-in
-      const activePlayers = allPlayers
-        .filter(p => !p.isFolded)
-        .map(p => p.seatPosition)
+      // Move to next active player.
+      // On parcourt les sièges clockwise (triés) à partir du joueur courant et on
+      // s'arrête au premier qui doit encore agir : non-folded, non-all-in, et
+      // soit pas encore acté ce round, soit currentBet < mise courante.
+      // Ça évite de redonner la main à un joueur qui a déjà matché la raise.
+      const seatOrder = allPlayers
+        .filter((p) => !p.isFolded)
+        .map((p) => p.seatPosition)
         .sort((a, b) => a - b);
 
-      const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
+      const needsToAct = (p: typeof allPlayers[number]): boolean => {
+        if (p.isFolded || p.isAllIn) return false;
+        if (!p.hasActed) return true;
+        return p.currentBet < updatedGameState.currentBet;
+      };
+
+      let nextPlayer = -1;
+      const startIdx = seatOrder.indexOf(player.seatPosition);
+      const startCursor = startIdx === -1 ? 0 : (startIdx + 1) % seatOrder.length;
+      for (let i = 0; i < seatOrder.length; i++) {
+        const seat = seatOrder[(startCursor + i) % seatOrder.length];
+        if (seat === player.seatPosition) continue;
+        const candidate = allPlayers.find((p) => p.seatPosition === seat);
+        if (candidate && needsToAct(candidate)) {
+          nextPlayer = seat;
+          break;
+        }
+      }
 
       console.log("Debug next player:", {
         currentPlayerPosition: player.seatPosition,
-        activePlayers,
+        seatOrder,
         nextPlayer,
         allPlayers: allPlayers.map(p => ({
           seat: p.seatPosition,
