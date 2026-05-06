@@ -178,7 +178,8 @@ export const playerAction = internalMutation({
             // Move to next active player
             const activePlayers = allPlayers
                 .filter((p: any) => !p.isFolded && !p.isAllIn)
-                .map((p: any) => p.seatPosition);
+                .map((p: any) => p.seatPosition)
+                .sort((a: number, b: number) => a - b);
 
             const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
 

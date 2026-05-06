@@ -128,7 +128,11 @@ async function startGameInternal(ctx: any, tableId: string) {
     dealerPosition = activePlayers[rngArr[0] % activePlayers.length].seatPosition;
   }
 
-  const playerPositions = activePlayers.map((p: any) => p.seatPosition);
+  // Toujours trier par seat pour respecter l'ordre clockwise géométrique
+  // (sinon getBlindPositions / getFirstPlayerToAct utilisent l'ordre d'insertion DB)
+  const playerPositions = activePlayers
+    .map((p: any) => p.seatPosition)
+    .sort((a: number, b: number) => a - b);
   const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
 
 
@@ -529,7 +533,8 @@ export const playerAction = mutation({
       // as other players still need to act against all-in
       const activePlayers = allPlayers
         .filter(p => !p.isFolded)
-        .map(p => p.seatPosition);
+        .map(p => p.seatPosition)
+        .sort((a, b) => a - b);
 
       const nextPlayer = getNextActivePlayer(player.seatPosition, activePlayers);
 
@@ -1166,7 +1171,7 @@ async function prepareNextHand(ctx: any, tableId: string) {
     const playersWithChips = players.filter((p: any) => p.chips > 0);
     const nextDealerPosition = getNextDealerPosition(
       gameState.dealerPosition,
-      playersWithChips.map((p: any) => p.seatPosition)
+      playersWithChips.map((p: any) => p.seatPosition).sort((a: number, b: number) => a - b)
     );
 
     console.log(`🔄 Dealer rotation: ${gameState.dealerPosition} → ${nextDealerPosition}`);
