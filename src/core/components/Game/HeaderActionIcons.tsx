@@ -21,7 +21,7 @@ const IconButton: React.FC<{
     onClick={onClick}
     title={label}
     aria-label={label}
-    className="px-2 py-1 rounded bg-poker-green-700 hover:bg-poker-green-600 text-base leading-none transition-colors"
+    className="h-10 px-3 inline-flex items-center justify-center rounded-md bg-poker-green-700 hover:bg-poker-green-600 text-base leading-none transition-colors"
   >
     <span aria-hidden>{emoji}</span>
   </button>
