@@ -534,8 +534,20 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </footer>
 
-        {/* Showdown Results Modal */}
-        {showdownResults && (
+        {/* Tournament terminé : prioritaire sur le showdown de la dernière main
+            (le scoreboard final + bouton 'Retour au lobby' doit rester visible
+            même si gameState.phase est encore 'showdown'). */}
+        {table.gameType === "tournament" &&
+        table.modules?.tournament?.status === "finished" ? (
+          <ShowdownResults
+            results={[]}
+            pot={0}
+            communityCards={[]}
+            table={table}
+            players={players}
+            onBackToLobby={onLeaveTable}
+          />
+        ) : showdownResults ? (
           <ShowdownResults
             results={showdownResults.results}
             pot={showdownResults.pot}
@@ -543,21 +555,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             table={table}
             players={players}
           />
-        )}
-
-        {/* Tournament finished — final ranking modal */}
-        {!showdownResults &&
-          table.gameType === "tournament" &&
-          table.modules?.tournament?.status === "finished" && (
-            <ShowdownResults
-              results={[]}
-              pot={0}
-              communityCards={[]}
-              table={table}
-              players={players}
-              onBackToLobby={onLeaveTable}
-            />
-          )}
+        ) : null}
 
         {/* Modale Rebuy */}
         {showRebuyDialog && currentPlayer && authUser && (
@@ -1021,8 +1019,20 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </div>
         )}
 
-        {/* Showdown Results Modal */}
-        {showdownResults && (
+        {/* Tournament terminé : prioritaire sur le showdown de la dernière main
+            (le scoreboard final + bouton 'Retour au lobby' doit rester visible
+            même si gameState.phase est encore 'showdown'). */}
+        {table.gameType === "tournament" &&
+        table.modules?.tournament?.status === "finished" ? (
+          <ShowdownResults
+            results={[]}
+            pot={0}
+            communityCards={[]}
+            table={table}
+            players={players}
+            onBackToLobby={onLeaveTable}
+          />
+        ) : showdownResults ? (
           <ShowdownResults
             results={showdownResults.results}
             pot={showdownResults.pot}
@@ -1030,21 +1040,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             table={table}
             players={players}
           />
-        )}
-
-        {/* Tournament finished — final ranking modal */}
-        {!showdownResults &&
-          table.gameType === "tournament" &&
-          table.modules?.tournament?.status === "finished" && (
-            <ShowdownResults
-              results={[]}
-              pot={0}
-              communityCards={[]}
-              table={table}
-              players={players}
-              onBackToLobby={onLeaveTable}
-            />
-          )}
+        ) : null}
 
         {/* Game info modal */}
         {showGameInfo && (
