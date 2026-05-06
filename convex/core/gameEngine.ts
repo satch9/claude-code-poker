@@ -115,13 +115,14 @@ async function startGameInternal(ctx: any, tableId: string) {
     .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .unique();
 
+  // La rotation du dealer est gérée par prepareNextHand entre les mains.
+  // startNewHand utilise simplement la valeur stockée (sans la ré-avancer,
+  // sinon double rotation : en heads-up ça revenait au même siège).
   let dealerPosition: number;
   if (currentGameState && currentGameState.dealerPosition >= 0) {
-    // Advance dealer position for next hand
-    const playerPositions = activePlayers.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
-    dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
+    dealerPosition = currentGameState.dealerPosition;
   } else {
-    // Random dealer for first game (crypto-secure RNG)
+    // Première main du jeu : dealer aléatoire (crypto-secure RNG)
     const rngArr = new Uint32Array(1);
     crypto.getRandomValues(rngArr);
     dealerPosition = activePlayers[rngArr[0] % activePlayers.length].seatPosition;
@@ -341,6 +342,16 @@ export const playerAction = mutation({
     // Validate it's player's turn
     if (gameState.currentPlayerPosition !== player.seatPosition) {
       throw new Error("Not your turn");
+    }
+
+    // Garde supplémentaire : un joueur déjà foldé ou all-in ne peut pas agir.
+    // Évite les actions doublées (ex: double-clic frontend qui pousse fold +
+    // call) qui peuvent réintroduire un joueur dans la main.
+    if (player.isFolded) {
+      throw new Error("You have already folded this hand");
+    }
+    if (player.isAllIn) {
+      throw new Error("You are already all-in");
     }
 
     // Validate action
