@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { Card } from "../UI/Card";
@@ -82,17 +82,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     showdownResults,
   } = useGameLogic(tableId, onLeaveTable);
 
-  // Early return if no tableId or no data
-  if (!tableId || !gameState || !players || !table) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading table...</p>
-        </div>
-      </div>
-    );
-  }
+  const isLoading = !tableId || !gameState || !players || !table;
 
   // Get game info
   const potOdds = getPotOdds();
@@ -159,7 +149,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Rotation à appliquer pour que le viewer (currentPlayer) soit toujours en bas
   // (angle = Math.PI / 2). Si pas de currentPlayer, pas de rotation.
-  const viewerRotation = currentPlayer
+  const viewerRotation = currentPlayer && table
     ? Math.PI / 2 - getBaseAngle(currentPlayer.seatPosition, table.maxPlayers)
     : 0;
 
@@ -214,24 +204,53 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   };
 
   // Create array of all seat positions
-  const seats = Array.from({ length: table.maxPlayers }, (_, position) => {
-    const player = players.find((p) => p.seatPosition === position && p.user);
-    const isEmpty = !player;
-    const seatGeom = getSeatPosition(position, table.maxPlayers);
+  const smallBlindPos = getSmallBlindPosition();
+  const bigBlindPos = getBigBlindPosition();
+  const seats = useMemo(() => {
+    if (!table || !players || !gameState) return [];
+    return Array.from({ length: table.maxPlayers }, (_, position) => {
+      const player = players.find((p) => p.seatPosition === position && p.user);
+      const isEmpty = !player;
+      const seatGeom = getSeatPosition(position, table.maxPlayers);
 
-    return {
-      position,
-      player,
-      isEmpty,
-      isDealer: gameState.dealerPosition === position,
-      isCurrentPlayer: player?.userId === currentPlayer?.userId,
-      isSmallBlind: getSmallBlindPosition() === position,
-      isBigBlind: getBigBlindPosition() === position,
-      isActivePlayer: gameState.currentPlayerPosition === position,
-      seatAngle: seatGeom.angle,
-      seatGeom,
-    } as const;
-  });
+      return {
+        position,
+        player,
+        isEmpty,
+        isDealer: gameState.dealerPosition === position,
+        isCurrentPlayer: player?.userId === currentPlayer?.userId,
+        isSmallBlind: smallBlindPos === position,
+        isBigBlind: bigBlindPos === position,
+        isActivePlayer: gameState.currentPlayerPosition === position,
+        seatAngle: seatGeom.angle,
+        seatGeom,
+      } as const;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    table?.maxPlayers,
+    players,
+    gameState?.dealerPosition,
+    gameState?.currentPlayerPosition,
+    currentPlayer?.userId,
+    smallBlindPos,
+    bigBlindPos,
+    viewerRotation,
+    seatPositioning,
+    isMobile,
+  ]);
+
+  // Early return if no tableId or no data (must be AFTER all hooks)
+  if (isLoading || !table || !gameState || !players) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 p-4 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading table...</p>
+        </div>
+      </div>
+    );
+  }
 
   function getSmallBlindPosition() {
     if (!players || !gameState || !table) return -1;

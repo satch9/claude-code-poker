@@ -25,7 +25,7 @@ interface PlayerSeatProps {
   className?: string;
 }
 
-export const PlayerSeat: React.FC<PlayerSeatProps> = ({
+const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   player,
   position: _position,
   seatAngle,
@@ -346,6 +346,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
     </>
   );
 };
+
+export const PlayerSeat = React.memo(PlayerSeatComponent);
 
 // Utility functions
 function parseCard(cardStr: string) {
