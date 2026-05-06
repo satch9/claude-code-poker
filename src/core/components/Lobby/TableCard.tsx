@@ -18,15 +18,29 @@ export const TableCard: React.FC<TableCardProps> = ({
   const isTableFull = (table.playerCount || 0) >= table.maxPlayers;
   const gameTypeDisplay =
     table.gameType === "tournament" ? "Tournoi" : "Cash Game";
-  
+
+  // Tournoi terminé : on remplace le CTA "Rejoindre" par "Voir le classement"
+  const tournamentFinished =
+    table.gameType === "tournament" &&
+    ((table as any).modules?.tournament?.status === "finished" ||
+      table.status === "finished");
+
   // Determine button state based on table status and user seating
-  const canJoin = !isTableFull || table.isUserSeated;
-  const buttonText = table.isUserSeated 
-    ? "Continuer" 
-    : isTableFull 
-    ? "Table pleine" 
+  const canJoin = tournamentFinished
+    ? true
+    : !isTableFull || table.isUserSeated;
+  const buttonText = tournamentFinished
+    ? "Voir le classement"
+    : table.isUserSeated
+    ? "Continuer"
+    : isTableFull
+    ? "Table pleine"
     : "Rejoindre";
-  const buttonVariant = canJoin ? "primary" : "secondary";
+  const buttonVariant = tournamentFinished
+    ? "secondary"
+    : canJoin
+    ? "primary"
+    : "secondary";
 
   return (
     <div
@@ -59,6 +73,11 @@ export const TableCard: React.FC<TableCardProps> = ({
             {table.gameType === 'tournament' && table.buyIn === 0 && (
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Freeroll
+              </span>
+            )}
+            {tournamentFinished && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+                Terminé
               </span>
             )}
           </div>
