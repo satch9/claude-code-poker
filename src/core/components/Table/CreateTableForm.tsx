@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../UI/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { GameType } from '../../../shared/types';
@@ -9,6 +9,8 @@ interface CreateTableFormProps {
   onCancel: () => void;
 }
 
+export type TournamentPreset = 'turbo' | 'standard' | 'long' | 'custom';
+
 export interface CreateTableData {
   name: string;
   maxPlayers: number;
@@ -18,6 +20,8 @@ export interface CreateTableData {
   smallBlind: number;
   bigBlind: number;
   isPrivate: boolean;
+  preset?: TournamentPreset;
+  levelDurationMin?: number;
 }
 
 export const CreateTableForm: React.FC<CreateTableFormProps> = ({
@@ -34,6 +38,22 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
     bigBlind: 20,
     isPrivate: false,
   });
+
+  // Tournament preset → auto level duration mapping
+  useEffect(() => {
+    if (formData.gameType !== 'tournament') return;
+    const preset = formData.preset;
+    if (!preset || preset === 'custom') return;
+    const map: Record<Exclude<TournamentPreset, 'custom'>, number> = {
+      turbo: 5,
+      standard: 10,
+      long: 15,
+    };
+    const target = map[preset];
+    if (formData.levelDurationMin !== target) {
+      setFormData(prev => ({ ...prev, levelDurationMin: target }));
+    }
+  }, [formData.preset, formData.gameType, formData.levelDurationMin]);
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTableData, string>>>({});
 
   const validateForm = (): boolean => {
@@ -84,6 +104,9 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
       buyIn: gameType === 'tournament' ? 0 : undefined,
       // Adjust starting stack based on game type
       startingStack: gameType === 'tournament' ? 1500 : 1000,
+      // Default tournament settings
+      preset: gameType === 'tournament' ? (prev.preset ?? 'standard') : undefined,
+      levelDurationMin: gameType === 'tournament' ? (prev.levelDurationMin ?? 10) : undefined,
     }));
   };
 
@@ -158,6 +181,77 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Tournament settings (preset, starting stack, level duration) */}
+          {formData.gameType === 'tournament' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-purple-200 bg-purple-50 rounded-lg">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Structure
+                </label>
+                <select
+                  value={formData.preset ?? 'standard'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, preset: e.target.value as TournamentPreset }))}
+                  className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 border-gray-300"
+                >
+                  <option value="turbo">Turbo (5 min)</option>
+                  <option value="standard">Standard (10 min)</option>
+                  <option value="long">Long (15 min)</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stack de départ
+                </label>
+                {formData.preset === 'custom' ? (
+                  <input
+                    type="number"
+                    value={formData.startingStack}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startingStack: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 border-gray-300"
+                    min="1"
+                  />
+                ) : (
+                  <select
+                    value={formData.startingStack}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startingStack: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 border-gray-300"
+                  >
+                    <option value={1500}>1500</option>
+                    <option value={3000}>3000</option>
+                    <option value={5000}>5000</option>
+                  </select>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Durée par niveau (min)
+                </label>
+                {formData.preset === 'custom' ? (
+                  <select
+                    value={formData.levelDurationMin ?? 10}
+                    onChange={(e) => setFormData(prev => ({ ...prev, levelDurationMin: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 border-gray-300"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    value={formData.levelDurationMin ?? 10}
+                    disabled
+                    className="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 text-gray-600 border-gray-300"
+                  />
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Configuration des jetons et buy-in */}
           <div className="space-y-4">

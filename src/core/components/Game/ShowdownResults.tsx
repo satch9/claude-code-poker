@@ -19,6 +19,8 @@ interface ShowdownResultsProps {
   pot: number;
   communityCards: string[];
   className?: string;
+  table?: any;
+  players?: any[];
 }
 
 export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
@@ -26,7 +28,56 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
   pot,
   communityCards,
   className,
+  table,
+  players,
 }) => {
+  // Tournament final ranking takes priority over hand result
+  const tournament = table?.modules?.tournament;
+  const finalRanking = tournament?.finalRanking;
+  if (
+    table?.gameType === "tournament" &&
+    tournament?.status === "finished" &&
+    Array.isArray(finalRanking) &&
+    finalRanking.length > 0
+  ) {
+    const usersById: Record<string, any> = (players ?? []).reduce(
+      (acc: Record<string, any>, p: any) => {
+        if (p?.user?._id) acc[p.user._id] = p.user;
+        if (p?.userId && p?.user) acc[p.userId] = p.user;
+        return acc;
+      },
+      {}
+    );
+    return (
+      <div className={cn(
+        'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4',
+        className
+      )}>
+        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-auto">
+          <h2 className="text-2xl font-bold mb-4 text-center">🏆 Tournoi terminé</h2>
+          <ol className="space-y-2">
+            {finalRanking.map((row: any) => {
+              const user = usersById[row.userId];
+              const name = user?.name ?? 'Joueur';
+              return (
+                <li key={row.userId} className="flex justify-between border-b pb-2">
+                  <span className="font-medium">
+                    #{row.position} · {name}
+                  </span>
+                  {row.prize > 0 && (
+                    <span className="text-green-700 font-bold">
+                      {row.prize} jetons
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </div>
+    );
+  }
+
   const parseCard = (cardStr: string) => {
     if (!cardStr || cardStr.length < 2) return undefined;
 

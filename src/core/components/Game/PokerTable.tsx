@@ -8,6 +8,7 @@ import { ActionFeed } from "./ActionFeed";
 import { HandStats } from "./HandStats";
 import { TurnIndicator } from "./TurnIndicator";
 import { ShowdownResults } from "./ShowdownResults";
+import { TournamentInfo } from "./TournamentInfo";
 import { Button } from "../UI/Button";
 import { LandscapeWarning } from "../UI/LandscapeWarning";
 import { cn } from "@/shared/utils/cn";
@@ -384,6 +385,22 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </Button>
         </header>
 
+        {/* Tournament info bar */}
+        {table.gameType === "tournament" && table.modules?.tournament && (
+          <div className="px-3 pt-2">
+            <TournamentInfo
+              blindStructure={table.modules.tournament.blindStructure}
+              currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+              nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+              prizeStructure={table.modules.tournament.prizeStructure}
+              status={table.modules.tournament.status ?? "registering"}
+              totalPlayers={table.maxPlayers}
+              remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+              buyIn={table.buyIn}
+            />
+          </div>
+        )}
+
         {/* Adversaire */}
         <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
           {opponent ? (
@@ -506,8 +523,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             results={showdownResults.results}
             pot={showdownResults.pot}
             communityCards={showdownResults.communityCards}
+            table={table}
+            players={players}
           />
         )}
+
+        {/* Tournament finished — final ranking modal */}
+        {!showdownResults &&
+          table.gameType === "tournament" &&
+          table.modules?.tournament?.status === "finished" && (
+            <ShowdownResults
+              results={[]}
+              pot={0}
+              communityCards={[]}
+              table={table}
+              players={players}
+            />
+          )}
 
         {/* Modale Rebuy */}
         {showRebuyDialog && currentPlayer && authUser && (
@@ -594,6 +626,22 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </Button>
               )}
           </div>
+        </div>
+      )}
+
+      {/* Tournament info bar */}
+      {table.gameType === "tournament" && table.modules?.tournament && (
+        <div className="px-4 pt-2">
+          <TournamentInfo
+            blindStructure={table.modules.tournament.blindStructure}
+            currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+            nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+            prizeStructure={table.modules.tournament.prizeStructure}
+            status={table.modules.tournament.status ?? "registering"}
+            totalPlayers={table.maxPlayers}
+            remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+            buyIn={table.buyIn}
+          />
         </div>
       )}
 
@@ -1099,8 +1147,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             results={showdownResults.results}
             pot={showdownResults.pot}
             communityCards={showdownResults.communityCards}
+            table={table}
+            players={players}
           />
         )}
+
+        {/* Tournament finished — final ranking modal */}
+        {!showdownResults &&
+          table.gameType === "tournament" &&
+          table.modules?.tournament?.status === "finished" && (
+            <ShowdownResults
+              results={[]}
+              pot={0}
+              communityCards={[]}
+              table={table}
+              players={players}
+            />
+          )}
 
         {/* Game info modal */}
         {showGameInfo && (

@@ -21,9 +21,11 @@ import type * as shared_validation from "../shared/validation.js";
 import type * as tables from "../tables.js";
 import type * as users_stats from "../users/stats.js";
 import type * as users from "../users.js";
+import type * as utils_blindStructure from "../utils/blindStructure.js";
 import type * as utils_gameStateMachine from "../utils/gameStateMachine.js";
 import type * as utils_handEvaluator from "../utils/handEvaluator.js";
 import type * as utils_poker from "../utils/poker.js";
+import type * as utils_prizeStructure from "../utils/prizeStructure.js";
 import type * as utils_turnManager from "../utils/turnManager.js";
 
 import type {
@@ -54,9 +56,11 @@ declare const fullApi: ApiFromModules<{
   tables: typeof tables;
   "users/stats": typeof users_stats;
   users: typeof users;
+  "utils/blindStructure": typeof utils_blindStructure;
   "utils/gameStateMachine": typeof utils_gameStateMachine;
   "utils/handEvaluator": typeof utils_handEvaluator;
   "utils/poker": typeof utils_poker;
+  "utils/prizeStructure": typeof utils_prizeStructure;
   "utils/turnManager": typeof utils_turnManager;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

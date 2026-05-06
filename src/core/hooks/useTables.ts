@@ -41,6 +41,8 @@ export function useTableActions() {
     smallBlind: number;
     bigBlind: number;
     isPrivate: boolean;
+    preset?: "turbo" | "standard" | "long" | "custom";
+    levelDurationMin?: number;
   }) => {
     try {
       const tableId = await createTable(tableData);
