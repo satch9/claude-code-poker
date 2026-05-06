@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -45,9 +45,16 @@ export function useAuthState(): AuthContextType {
   const isLoading = userDoc === undefined;
   const isAuthenticated = userDoc !== null && userDoc !== undefined;
 
-  const user: User | null = userDoc
-    ? ({ ...(userDoc as any), ...localOverrides } as User)
-    : null;
+  // Mémoïsé pour que l'identité de `user` ne change pas à chaque render
+  // (sinon les useEffect / useCallback qui en dépendent se ré-initialisent
+  // à l'infini — typique : le timer 30s d'auto-fold qui ne fire jamais).
+  const user: User | null = useMemo(
+    () =>
+      userDoc
+        ? ({ ...(userDoc as any), ...localOverrides } as User)
+        : null,
+    [userDoc, localOverrides]
+  );
 
   const clearError = useCallback(() => setError(null), []);
 
