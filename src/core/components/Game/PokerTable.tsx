@@ -379,10 +379,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
         {/* Header */}
-        <header className="px-3 py-2 border-b border-poker-green-700 flex justify-between items-center flex-shrink-0 gap-2">
-          <div className="text-sm min-w-0">
-            <div className="font-bold truncate max-w-[140px]">{table.name}</div>
-            <div className="text-xs text-poker-green-200">
+        <header className="px-2 py-2 border-b border-poker-green-700 flex justify-between items-center flex-shrink-0 gap-1">
+          <div className="text-sm min-w-0 flex-1">
+            <div className="font-bold truncate">{table.name}</div>
+            <div className="text-xs text-poker-green-200 truncate">
               {table.smallBlind}/{table.bigBlind}
               {" • "}
               {table.gameType === "tournament" ? "Tournoi" : "Cash"}
@@ -391,13 +391,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           {table.inviteCode && authUser?._id === table.creatorId && (
             <button
               onClick={() => setShowInviteDialog(true)}
-              title="Inviter des joueurs"
-              className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-xs font-mono tracking-widest"
+              title={`Code d'invitation : ${table.inviteCode}`}
+              className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-base flex-shrink-0"
+              aria-label="Inviter des joueurs"
             >
-              📤 {table.inviteCode}
+              📤
             </button>
           )}
-          <Button variant="secondary" size="sm" onClick={onLeaveTable}>
+          <Button variant="secondary" size="sm" onClick={onLeaveTable} className="flex-shrink-0">
             Quitter
           </Button>
         </header>
@@ -593,15 +594,18 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       <LandscapeWarning />
       {/* Header - hidden on mobile */}
       {(!isMobile && !isIOS) && (
-        <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 p-4">
-          <div className="text-white">
-            <h1 className="text-2xl font-bold">{appTitle} - {table.name}</h1>
-            <p className="text-sm text-poker-green-200">
+        <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-3 lg:px-4 py-3 lg:py-4 gap-2">
+          <div className="text-white min-w-0 flex-1">
+            <h1 className="text-base md:text-xl lg:text-2xl font-bold truncate">
+              <span className="hidden lg:inline">{appTitle} - </span>
+              {table.name}
+            </h1>
+            <p className="text-xs lg:text-sm text-poker-green-200 truncate">
               {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
               Blinds: {table.smallBlind}/{table.bigBlind}
             </p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1 lg:gap-2 items-center flex-shrink-0">
             {/* Start game button in header - only for first game */}
             {gameState.phase === "waiting" &&
               table.status === "waiting" &&

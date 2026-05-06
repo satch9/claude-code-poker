@@ -111,10 +111,10 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl p-4 sm:p-8 w-full max-w-2xl">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
             Créer une nouvelle table
           </h1>
           <p className="text-gray-600">

@@ -37,16 +37,16 @@ export const Lobby: React.FC<LobbyProps> = ({
       {/* Header fixe en haut */}
       <header className="bg-poker-green-100 backdrop-blur-sm border-b border-poker-green-300 sticky top-0 z-10">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex justify-between items-center gap-2">
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0">
+          <div className="flex justify-between items-center gap-1 sm:gap-2">
+            <h1 className="text-base sm:text-2xl font-bold text-gray-900 truncate min-w-0">
               🃏 {title}
             </h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 type="button"
                 onClick={onCreateTable}
                 title="Créer une nouvelle table"
-                className="h-12 px-4 inline-flex items-center gap-2 text-sm font-semibold rounded-lg bg-poker-green-700 hover:bg-poker-green-600 text-white shadow-sm hover:shadow-md transition-all duration-200"
+                className="h-10 sm:h-12 px-3 sm:px-4 inline-flex items-center gap-1 sm:gap-2 text-sm font-semibold rounded-lg bg-poker-green-700 hover:bg-poker-green-600 text-white shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <span aria-hidden>+</span>
                 <span className="hidden sm:inline">Créer une table</span>
@@ -57,10 +57,10 @@ export const Lobby: React.FC<LobbyProps> = ({
                   type="button"
                   onClick={onViewStats}
                   title="Mes statistiques"
-                  className="h-12 px-4 inline-flex items-center gap-2 text-sm font-medium rounded-lg bg-white shadow-sm hover:shadow-md hover:bg-gray-50 text-gray-900 transition-all duration-200"
+                  className="h-10 sm:h-12 px-3 sm:px-4 inline-flex items-center gap-1 sm:gap-2 text-sm font-medium rounded-lg bg-white shadow-sm hover:shadow-md hover:bg-gray-50 text-gray-900 transition-all duration-200"
                 >
                   <span aria-hidden>📊</span>
-                  <span>Stats</span>
+                  <span className="hidden sm:inline">Stats</span>
                 </button>
               )}
               <UserProfile compact />

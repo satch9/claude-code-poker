@@ -102,14 +102,14 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       {/* Community cards (rien en preflop) */}
       {cardsToShow.length > 0 && (
         <div className={cn(
-          "flex gap-2 justify-center",
-          isMobile && "gap-1"
+          "flex justify-center flex-wrap",
+          isMobile ? "gap-0.5" : "gap-2"
         )}>
           {cardsToShow.map((cardStr, index) => (
             <Card
               key={index}
               card={parseCard(cardStr)}
-              size={isMobile ? "sm" : "md"}
+              size={isMobile ? "xs" : "md"}
               animation="deal"
               animationDelay={index * 300}
               className="shadow-xl"

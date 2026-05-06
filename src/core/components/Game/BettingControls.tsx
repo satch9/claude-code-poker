@@ -121,78 +121,84 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
         {/* Primary actions */}
         <div className={cn(
-          "flex gap-2",
-          isMobile && "gap-1"
+          "flex",
+          isMobile ? "gap-1" : "gap-2"
         )}>
-                      {getAction('fold') && (
-              <Button
-                variant="danger"
-                onClick={() => onAction({ action: 'fold' })}
-                disabled={disabled}
-                className={cn(
-                  "flex-1",
-                  isMobile && "text-xs py-1"
-                )}
-              >
-                {isMobile ? 'Fold' : 'Fold'}
-              </Button>
-            )}
-          
-                      {getAction('check') && (
-              <Button
-                variant="secondary"
-                onClick={() => onAction({ action: 'check' })}
-                disabled={disabled}
-                className={cn(
-                  "flex-1",
-                  isMobile && "text-xs py-1"
-                )}
-              >
-                {isMobile ? 'Check' : 'Check'}
-              </Button>
-            )}
-          
-                      {callAction && (
-              <Button
-                variant="primary"
-                onClick={() => onAction({ action: 'call', amount: callAction.amount })}
-                disabled={disabled}
-                className={cn(
-                  "flex-1",
-                  isMobile && "text-xs py-1"
-                )}
-              >
-                {isMobile ? `Call ${callAction.amount && callAction.amount >= 1000 ? `${Math.floor(callAction.amount/1000)}K` : callAction.amount?.toLocaleString()}` : `Call ${callAction.amount?.toLocaleString()}`}
-              </Button>
-            )}
-          
-                      {raiseAction && (
-              <Button
-                variant="success"
-                onClick={() => setShowRaiseSlider(!showRaiseSlider)}
-                disabled={disabled}
-                className={cn(
-                  "flex-1",
-                  isMobile && "text-xs py-1"
-                )}
-              >
-                {isMobile ? 'Raise' : 'Raise'}
-              </Button>
-            )}
-          
-                      {allInAction && (
-              <Button
-                variant="danger"
-                onClick={() => onAction({ action: 'all-in', amount: allInAction.amount })}
-                disabled={disabled}
-                className={cn(
-                  "flex-1",
-                  isMobile && "text-xs py-1"
-                )}
-              >
-                {isMobile ? `All-In (${allInAction.amount && allInAction.amount >= 1000 ? `${Math.floor(allInAction.amount/1000)}K` : allInAction.amount?.toLocaleString()})` : `All-In (${allInAction.amount?.toLocaleString()})`}
-              </Button>
-            )}
+          {getAction('fold') && (
+            <Button
+              variant="danger"
+              onClick={() => onAction({ action: 'fold' })}
+              disabled={disabled}
+              className={cn(
+                "flex-1 min-w-0",
+                isMobile && "text-xs py-1 px-1"
+              )}
+            >
+              Fold
+            </Button>
+          )}
+
+          {getAction('check') && (
+            <Button
+              variant="secondary"
+              onClick={() => onAction({ action: 'check' })}
+              disabled={disabled}
+              className={cn(
+                "flex-1 min-w-0",
+                isMobile && "text-xs py-1 px-1"
+              )}
+            >
+              Check
+            </Button>
+          )}
+
+          {callAction && (
+            <Button
+              variant="primary"
+              onClick={() => onAction({ action: 'call', amount: callAction.amount })}
+              disabled={disabled}
+              className={cn(
+                "flex-1 min-w-0",
+                isMobile && "text-xs py-1 px-1"
+              )}
+            >
+              <span className="truncate">
+                Call {callAction.amount && callAction.amount >= 1000
+                  ? `${Math.floor(callAction.amount / 1000)}K`
+                  : callAction.amount?.toLocaleString()}
+              </span>
+            </Button>
+          )}
+
+          {raiseAction && (
+            <Button
+              variant="success"
+              onClick={() => setShowRaiseSlider(!showRaiseSlider)}
+              disabled={disabled}
+              className={cn(
+                "flex-1 min-w-0",
+                isMobile && "text-xs py-1 px-1"
+              )}
+            >
+              Raise
+            </Button>
+          )}
+
+          {allInAction && (
+            <Button
+              variant="danger"
+              onClick={() => onAction({ action: 'all-in', amount: allInAction.amount })}
+              disabled={disabled}
+              className={cn(
+                "flex-1 min-w-0",
+                isMobile && "text-xs py-1 px-1"
+              )}
+            >
+              <span className="truncate">
+                {isMobile ? "Tapis" : `All-In (${allInAction.amount?.toLocaleString()})`}
+              </span>
+            </Button>
+          )}
         </div>
 
         {/* Raise controls */}

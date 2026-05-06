@@ -48,7 +48,7 @@ export const TournamentInfo: React.FC<TournamentInfoProps> = ({
   const prizePool = buyIn ? totalPlayers * buyIn : 0;
 
   return (
-    <div className="bg-poker-green-900 text-white px-3 py-2 rounded mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+    <div className="bg-poker-green-900 text-white px-2 sm:px-3 py-2 rounded mb-2 flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-1 text-xs sm:text-sm">
       <span>
         Niveau {level?.level ?? "?"} · SB {level?.smallBlind ?? "?"} / BB {level?.bigBlind ?? "?"}
       </span>

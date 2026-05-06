@@ -215,8 +215,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             {/* Modal content */}
             <div className={cn(
               "relative bg-white shadow-2xl border border-gray-200 w-full mx-auto my-auto",
-              isMobile 
-                ? "rounded-xl p-4 max-w-sm max-h-[90vh] overflow-y-auto" 
+              isMobile
+                ? "rounded-xl p-4 max-w-[calc(100vw-1rem)] sm:max-w-sm max-h-[90vh] overflow-y-auto"
                 : "rounded-2xl p-6 max-w-md"
             )}>
               <div className={cn(
