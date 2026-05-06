@@ -47,9 +47,10 @@ export const Lobby: React.FC<LobbyProps> = ({
                   type="button"
                   onClick={onViewStats}
                   title="Mes statistiques"
-                  className="px-3 py-1.5 text-sm rounded bg-poker-green-700 hover:bg-poker-green-600 text-white transition-colors"
+                  className="h-12 px-4 inline-flex items-center gap-2 text-sm font-medium rounded-lg bg-white shadow-sm hover:shadow-md hover:bg-gray-50 text-gray-900 transition-all duration-200"
                 >
-                  📊 Stats
+                  <span aria-hidden>📊</span>
+                  <span>Stats</span>
                 </button>
               )}
               <UserProfile compact />
