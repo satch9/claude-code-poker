@@ -57,6 +57,18 @@ export default defineSchema({
           position: v.number(),
           percentage: v.number(),
         })),
+        status: v.optional(v.union(
+          v.literal("registering"),
+          v.literal("running"),
+          v.literal("finished"),
+        )),
+        startedAt: v.optional(v.number()),
+        finishedAt: v.optional(v.number()),
+        finalRanking: v.optional(v.array(v.object({
+          userId: v.id("users"),
+          position: v.number(),
+          prize: v.number(),
+        }))),
       })),
       invitations: v.optional(v.object({
         maxInvitations: v.number(),
@@ -87,6 +99,8 @@ export default defineSchema({
       v.literal("all-in")
     )),
     joinedAt: v.number(),
+    eliminatedAt: v.optional(v.number()),
+    tournamentRank: v.optional(v.number()),
   })
     .index("by_table", ["tableId"])
     .index("by_user", ["userId"])
