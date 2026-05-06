@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { formatAuthError } from "../../../shared/utils/authErrors";
 
 export const PasswordResetForm: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
@@ -48,10 +49,8 @@ export const PasswordResetForm: React.FC = () => {
     try {
       await reset({ token, newPassword: pwd });
       setDone(true);
-    } catch (e: any) {
-      const raw = e?.message || String(e);
-      const m = raw.match(/Validation:.+|Invalid or expired token/);
-      setErr(m ? m[0] : raw);
+    } catch (e: unknown) {
+      setErr(formatAuthError(e));
     } finally {
       setLoading(false);
     }

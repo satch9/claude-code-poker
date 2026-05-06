@@ -3,6 +3,7 @@ import { useMutation } from 'convex/react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../UI/Button';
 import { api } from '../../../../convex/_generated/api';
+import { formatAuthError } from '../../../shared/utils/authErrors';
 
 interface EmailPasswordFormProps {
   onSuccess?: () => void;
@@ -48,11 +49,8 @@ export const EmailPasswordForm: React.FC<EmailPasswordFormProps> = ({ onSuccess 
         await signIn(email, password);
       }
       onSuccess?.();
-    } catch (err: any) {
-      // Normaliser l'erreur Convex (souvent préfixée par "[CONVEX M(...)] ")
-      const raw = err?.message || err?.toString?.() || 'Une erreur est survenue';
-      const m = String(raw).match(/Validation:.+|Invalid email or password|User already exists.+|Mot de passe.+/);
-      setError(m ? m[0] : raw);
+    } catch (err: unknown) {
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
