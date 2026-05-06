@@ -336,14 +336,18 @@ export const getUserRanking = query({
       });
     }
 
+    // Ne garder que les utilisateurs qui ont effectivement joué au moins
+    // une main (sinon on compte tous les comptes inscrits, même inactifs).
+    const playedStats = userStats.filter((s) => s.gamesPlayed > 0);
+
     // Sort by total winnings
-    userStats.sort((a, b) => b.totalWinnings - a.totalWinnings);
-    
-    const userRank = userStats.findIndex(stat => stat.userId === args.userId) + 1;
-    const totalPlayers = userStats.length;
+    playedStats.sort((a, b) => b.totalWinnings - a.totalWinnings);
+
+    const userRank = playedStats.findIndex((stat) => stat.userId === args.userId) + 1;
+    const totalPlayers = playedStats.length;
 
     // Get top 5 players
-    const topPlayers = userStats.slice(0, 5).map((stat, index) => ({
+    const topPlayers = playedStats.slice(0, 5).map((stat, index) => ({
       rank: index + 1,
       name: stat.name,
       totalWinnings: stat.totalWinnings,
