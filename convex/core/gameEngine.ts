@@ -543,12 +543,20 @@ export const playerAction = mutation({
         return p.currentBet < updatedGameState.currentBet;
       };
 
+      // Si le joueur courant est folded (e.g. après fold), il n'est plus dans seatOrder.
+      // On cherche alors le premier siège strictement > player.seatPosition (ou wrap).
+      let startCursor: number;
+      const idx = seatOrder.indexOf(player.seatPosition);
+      if (idx >= 0) {
+        startCursor = (idx + 1) % seatOrder.length;
+      } else {
+        const greaterIdx = seatOrder.findIndex((s) => s > player.seatPosition);
+        startCursor = greaterIdx >= 0 ? greaterIdx : 0;
+      }
+
       let nextPlayer = -1;
-      const startIdx = seatOrder.indexOf(player.seatPosition);
-      const startCursor = startIdx === -1 ? 0 : (startIdx + 1) % seatOrder.length;
       for (let i = 0; i < seatOrder.length; i++) {
         const seat = seatOrder[(startCursor + i) % seatOrder.length];
-        if (seat === player.seatPosition) continue;
         const candidate = allPlayers.find((p) => p.seatPosition === seat);
         if (candidate && needsToAct(candidate)) {
           nextPlayer = seat;
