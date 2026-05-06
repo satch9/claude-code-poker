@@ -3,6 +3,7 @@
 
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
+import { endHand } from "../core/gameEngine";
 
 // Force la montée au niveau suivant en mettant nextBlindIncrease dans le passé.
 // Le passage effectif se fait à la prochaine main (startNextHandInternal).
@@ -74,6 +75,16 @@ export const fixGhostEliminated = mutation({
       }
     }
     return { fixed };
+  },
+});
+
+// Force la fin de la main en cours (utile quand un blocage logique a empêché
+// shouldEndHand de tirer la conclusion automatiquement).
+export const forceEndHand = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    await endHand(ctx, args.tableId);
+    return { ok: true };
   },
 });
 
