@@ -1182,8 +1182,15 @@ async function prepareNextHand(ctx: any, tableId: string) {
     }
   }
 
+  // Re-fetch players après les patches d'élimination, sinon le reset ci-dessous
+  // verrait encore eliminatedAt=undefined pour les joueurs tout juste éliminés.
+  const playersFresh = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .collect();
+
   await Promise.all(
-    players.map((player: any) => {
+    playersFresh.map((player: any) => {
       // Joueurs éliminés en tournoi : on ne reset rien (isFolded reste true,
       // hasActed reste true, etc.) pour qu'ils ne réapparaissent pas dans la
       // rotation des next-players.
