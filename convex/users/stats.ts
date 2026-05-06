@@ -206,6 +206,90 @@ export const getUserStats = query({
   },
 });
 
+// Get user hand history : pour chaque main jouée par l'utilisateur, renvoie
+// le tableId/tableName, handNumber, timestamp, et résultat (gagné ou non + gain).
+// Utilisé par /stats pour la section "Mains jouées".
+export const getUserHandsHistory = query({
+  args: { userId: v.id("users"), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50;
+
+    // Player records de l'utilisateur (pour relier playerId → user)
+    const userPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    const playerIds = new Set(userPlayers.map((p) => p._id));
+    if (playerIds.size === 0) return [];
+
+    // On ne tire que les actions du user via filter (full scan) — acceptable
+    // pour le MVP, le volume reste modeste.
+    const allActions = await ctx.db.query("gameActions").collect();
+    const userActions = allActions.filter((a) => playerIds.has(a.playerId as any));
+
+    // Grouper par main = (tableId, handNumber)
+    type HandKey = string;
+    const handsMap = new Map<
+      HandKey,
+      {
+        tableId: string;
+        handNumber: number;
+        startTs: number;
+        endTs: number;
+        won: boolean;
+        amountWon: number;
+        finalAction?: string;
+      }
+    >();
+
+    for (const a of userActions) {
+      if (!a.tableId || !a.handNumber) continue;
+      const key: HandKey = `${a.tableId}-${a.handNumber}`;
+      let h = handsMap.get(key);
+      if (!h) {
+        h = {
+          tableId: a.tableId,
+          handNumber: a.handNumber,
+          startTs: a.timestamp,
+          endTs: a.timestamp,
+          won: false,
+          amountWon: 0,
+        };
+        handsMap.set(key, h);
+      }
+      h.startTs = Math.min(h.startTs, a.timestamp);
+      h.endTs = Math.max(h.endTs, a.timestamp);
+      if (a.action === "win") {
+        h.won = true;
+        h.amountWon += a.amount || 0;
+      } else if (a.action !== "system" && a.action !== "blind") {
+        // Garde la dernière action métier comme "finale"
+        if (!h.finalAction || a.timestamp >= h.endTs) {
+          h.finalAction = a.action;
+        }
+      }
+    }
+
+    // Tri desc par fin de main (plus récente d'abord)
+    const hands = Array.from(handsMap.values()).sort((a, b) => b.endTs - a.endTs);
+    const sliced = hands.slice(0, limit);
+
+    // Enrichir avec le nom de la table
+    const enriched = await Promise.all(
+      sliced.map(async (h) => {
+        const table = await ctx.db.get(h.tableId as any);
+        return {
+          ...h,
+          tableName: (table as any)?.name ?? "Table inconnue",
+          gameType: (table as any)?.gameType,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
 // Get user ranking compared to other players
 export const getUserRanking = query({
   args: { userId: v.id("users") },

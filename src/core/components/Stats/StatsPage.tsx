@@ -21,6 +21,10 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onBack }) => {
     api.users.stats.getUserStats,
     user ? { userId: user._id } : "skip"
   );
+  const handsHistory = useQuery(
+    api.users.stats.getUserHandsHistory,
+    user ? { userId: user._id, limit: 100 } : "skip"
+  );
 
   if (!user) return null;
 
@@ -69,15 +73,86 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onBack }) => {
         <div className="max-w-5xl mx-auto space-y-6">
           <PlayerStats userId={user._id} showDetailed />
 
+          <section className="bg-white rounded-lg shadow p-4 sm:p-6 text-gray-900">
+            <h2 className="text-lg font-semibold mb-3">
+              Mains jouées ({handsHistory?.length ?? 0})
+            </h2>
+            {handsHistory === undefined && (
+              <div className="text-sm text-gray-500">Chargement…</div>
+            )}
+            {handsHistory && handsHistory.length === 0 && (
+              <div className="text-sm text-gray-500">
+                Aucune main jouée pour l&apos;instant.
+              </div>
+            )}
+            {handsHistory && handsHistory.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs uppercase text-gray-500 border-b border-gray-200">
+                      <th className="py-2 pr-2">Date</th>
+                      <th className="py-2 pr-2">Table</th>
+                      <th className="py-2 pr-2">Main</th>
+                      <th className="py-2 pr-2">Action finale</th>
+                      <th className="py-2 pr-2">Résultat</th>
+                      <th className="py-2 pr-2 text-right">Gain</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {handsHistory.map((h) => (
+                      <tr
+                        key={`${h.tableId}-${h.handNumber}`}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="py-2 pr-2 text-gray-600">
+                          {new Date(h.endTs).toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-2 truncate max-w-[160px]">
+                          {h.tableName}
+                          {h.gameType === "tournament" && (
+                            <span className="ml-1 text-xs text-purple-700">[T]</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2 text-gray-600">#{h.handNumber}</td>
+                        <td className="py-2 pr-2 capitalize text-gray-700">
+                          {h.finalAction ?? "—"}
+                        </td>
+                        <td className="py-2 pr-2">
+                          {h.won ? (
+                            <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                              Gagnée
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
+                              Perdue
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2 text-right font-medium">
+                          {h.won ? (
+                            <span className="text-green-700">
+                              +{h.amountWon.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
           <section className="bg-white rounded-lg shadow p-4 sm:p-6 text-sm text-gray-600">
             <h2 className="text-base font-semibold text-gray-900 mb-2">
               Données brutes &amp; IA
             </h2>
             <p>
-              L&apos;export JSON ci-dessus contient toutes les statistiques agrégées
-              (parties, victoires, breakdowns d&apos;actions, taux, gains). À terme cette
-              page accueillera l&apos;historique main-par-main, des graphiques et des
-              filtres pour alimenter l&apos;analyse / l&apos;entraînement IA.
+              L&apos;export JSON ci-dessus contient toutes les statistiques agrégées.
+              L&apos;historique main-par-main ci-dessus servira de base à l&apos;analyse /
+              entraînement IA — graphiques et filtres viendront enrichir cette page.
             </p>
           </section>
         </div>

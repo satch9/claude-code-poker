@@ -231,21 +231,21 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
               <h4 className="text-lg font-medium text-gray-800 mb-3">Activité récente</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {userStats.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-gray-900">
                     <div className="flex items-center gap-2">
                       <span className={`inline-block w-2 h-2 rounded-full ${
                         activity.action === 'win' ? 'bg-green-500' :
                         activity.action === 'all-in' ? 'bg-purple-500' :
                         'bg-blue-500'
                       }`}></span>
-                      <span className="text-sm font-medium capitalize">{activity.action}</span>
+                      <span className="text-sm font-medium capitalize text-gray-900">{activity.action}</span>
                       {activity.phase && (
                         <span className="text-xs text-gray-500">({activity.phase})</span>
                       )}
                     </div>
                     <div className="text-right">
                       {activity.amount && (
-                        <div className="text-sm font-bold text-poker-green-600">
+                        <div className="text-sm font-bold text-poker-green-700">
                           {activity.amount.toLocaleString()}
                         </div>
                       )}
