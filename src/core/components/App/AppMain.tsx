@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
-import { CreateTableForm, CreateTableData } from "../Table/CreateTableForm";
-import { PokerTable } from "../Game/PokerTable";
+import type { CreateTableData } from "../Table/CreateTableForm";
+import { SuspenseFallback } from "../UI/SuspenseFallback";
+
+const PokerTable = lazy(() =>
+  import("../Game/PokerTable").then((m) => ({ default: m.PokerTable }))
+);
+const CreateTableForm = lazy(() =>
+  import("../Table/CreateTableForm").then((m) => ({ default: m.CreateTableForm }))
+);
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
 import { usePendingJoin } from "../../hooks/usePendingJoin";
@@ -219,21 +226,25 @@ const AppContent: React.FC = () => {
 
       // selectedTableId est garanti d'être non-null ici grâce au check ci-dessus
       return (
-        <PokerTable
-          key={selectedTableId}
-          tableId={selectedTableId}
-          appTitle={title}
-          onLeaveTable={handleLeaveTable}
-          onJoinSeat={handleJoinSeat}
-        />
+        <Suspense fallback={<SuspenseFallback />}>
+          <PokerTable
+            key={selectedTableId}
+            tableId={selectedTableId}
+            appTitle={title}
+            onLeaveTable={handleLeaveTable}
+            onJoinSeat={handleJoinSeat}
+          />
+        </Suspense>
       );
 
     case "create-table":
       return (
-        <CreateTableForm
-          onSubmit={handleTableCreated}
-          onCancel={handleCancelCreateTable}
-        />
+        <Suspense fallback={<SuspenseFallback />}>
+          <CreateTableForm
+            onSubmit={handleTableCreated}
+            onCancel={handleCancelCreateTable}
+          />
+        </Suspense>
       );
 
     default:
