@@ -224,6 +224,30 @@ async function startGameInternal(ctx: any, tableId: string) {
   // Update table status
   await ctx.db.patch(tableId, { status: "playing" });
 
+  // Tournoi : passer en status "running" et initialiser le timer du niveau 1
+  if (table.gameType === "tournament" && table.modules?.tournament) {
+    const now = Date.now();
+    const tournament = table.modules.tournament;
+    const blindLvl = tournament.blindStructure[tournament.currentBlindLevel ?? 0];
+    await ctx.db.patch(tableId, {
+      modules: {
+        ...table.modules,
+        tournament: {
+          ...tournament,
+          status: "running",
+          startedAt: tournament.startedAt && tournament.startedAt > 0 ? tournament.startedAt : now,
+          nextBlindIncrease: now + blindLvl.duration,
+        },
+      },
+    });
+    await addActionToFeed(ctx, tableId, {
+      playerName: "Système",
+      action: "system",
+      message: `Tournoi démarré · Niveau 1 : SB ${blindLvl.smallBlind} / BB ${blindLvl.bigBlind}`,
+      isSystem: true,
+    });
+  }
+
   return { success: true, dealerPosition, pot, currentBet };
 }
 
