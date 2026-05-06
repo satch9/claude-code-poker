@@ -294,10 +294,14 @@ export const getTablePlayers = query({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
     const callerId = await getAuthUserId(ctx);
-    const players = await ctx.db
+    const allPlayers = await ctx.db
       .query("players")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
       .collect();
+
+    // Tournoi : ne pas afficher à la table les joueurs éliminés (record gardé
+    // en DB pour le finalRanking, mais leur siège doit redevenir vide).
+    const players = allPlayers.filter((p) => !p.eliminatedAt);
 
     // Get user info for each player + sanitize private cards
     const playersWithUserInfo = await Promise.all(
