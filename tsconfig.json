@@ -20,6 +20,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
+    /* TS 6: silence baseUrl deprecation warning (still functional until TS 7) */
+    "ignoreDeprecations": "6.0",
+
     /* Path mapping */
     "baseUrl": ".",
     "paths": {

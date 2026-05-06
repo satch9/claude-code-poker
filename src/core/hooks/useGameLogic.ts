@@ -18,7 +18,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionHistory, setActionHistory] = useState<any[]>([]);
   const [handNumber, setHandNumber] = useState(1);
-  const [, setTimeoutIds] = useState<Set<NodeJS.Timeout>>(new Set());
+  const [, setTimeoutIds] = useState<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   // Mutations
   const startGame = useMutation(api.core.gameEngine.startGame);
