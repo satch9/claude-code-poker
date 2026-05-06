@@ -53,20 +53,23 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
         'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4',
         className
       )}>
-        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-auto">
+        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-auto text-gray-900">
           <h2 className="text-2xl font-bold mb-4 text-center">🏆 Tournoi terminé</h2>
           <ol className="space-y-2">
             {finalRanking.map((row: any) => {
               const user = usersById[row.userId];
-              const name = user?.name ?? 'Joueur';
+              // Priorité au nom figé dans finalRanking (rempli par endTournament),
+              // fallback sur les players actifs (pour anciennes données).
+              const name = row.playerName ?? user?.name ?? 'Joueur';
+              const isWinner = row.position === 1;
               return (
-                <li key={row.userId} className="flex justify-between border-b pb-2">
-                  <span className="font-medium">
-                    #{row.position} · {name}
+                <li key={row.userId} className="flex justify-between border-b border-gray-200 pb-2">
+                  <span className={cn('font-medium', isWinner && 'text-green-700')}>
+                    #{row.position} · {name}{isWinner && ' 👑'}
                   </span>
                   {row.prize > 0 && (
                     <span className="text-green-700 font-bold">
-                      {row.prize} jetons
+                      {row.prize} €
                     </span>
                   )}
                 </li>

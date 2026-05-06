@@ -68,6 +68,7 @@ export default defineSchema({
           userId: v.id("users"),
           position: v.number(),
           prize: v.number(),
+          playerName: v.optional(v.string()),
         }))),
       })),
       invitations: v.optional(v.object({

@@ -1873,6 +1873,15 @@ async function endTournament(ctx: any, tableId: string) {
   const allPlayers = [winnerUpdated, ...players.filter((p: any) => p._id !== winner._id && p.eliminatedAt)];
   allPlayers.sort((a: any, b: any) => (a.tournamentRank ?? 999) - (b.tournamentRank ?? 999));
 
+  // Pré-charger les noms des users en parallèle pour les figer dans finalRanking
+  // (sinon le frontend ne peut pas les retrouver — getTablePlayers filtre les éliminés).
+  const usersByPlayer = await Promise.all(
+    allPlayers.map(async (p: any) => [p.userId, await ctx.db.get(p.userId)] as const)
+  );
+  const userNameById = new Map<string, string>(
+    usersByPlayer.map(([id, u]: any) => [id, (u && u.name) || "Joueur"])
+  );
+
   const finalRanking = allPlayers.map((p: any) => {
     const prizeRow = tournament.prizeStructure.find(
       (pz: any) => pz.position === p.tournamentRank
@@ -1882,6 +1891,7 @@ async function endTournament(ctx: any, tableId: string) {
       userId: p.userId,
       position: p.tournamentRank ?? 0,
       prize,
+      playerName: userNameById.get(p.userId) ?? "Joueur",
     };
   });
 
