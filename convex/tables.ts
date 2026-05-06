@@ -239,8 +239,6 @@ export const getTableByInviteCode = query({
     const code = args.code.toUpperCase().trim();
     if (code.length !== 6) return null;
 
-    const callerId = await getAuthUserId(ctx);
-
     const table = await ctx.db
       .query("tables")
       .withIndex("by_invite_code", (q) => q.eq("inviteCode", code))
@@ -248,22 +246,12 @@ export const getTableByInviteCode = query({
 
     if (!table) return null;
 
-    // Privacy filter (C2.20): pour les tables privées, on ne révèle l'existence
-    // qu'aux callers déjà membres (creator ou joueur assis).
-    if (table.isPrivate) {
-      if (!callerId) return null;
-      const isCreator = table.creatorId === callerId;
-      let isMember = isCreator;
-      if (!isMember) {
-        const seated = await ctx.db
-          .query("players")
-          .withIndex("by_table", (q) => q.eq("tableId", table._id))
-          .filter((q) => q.eq(q.field("userId"), callerId))
-          .first();
-        isMember = !!seated;
-      }
-      if (!isMember) return null;
-    }
+    // L'inviteCode lui-même fait office d'autorisation : si on a le bon
+    // code, on peut voir / rejoindre la table même si elle est privée.
+    // (Sinon impossible de joindre par code — Catch-22.) On exige juste
+    // d'être authentifié pour l'utiliser.
+    const callerId = await getAuthUserId(ctx);
+    if (!callerId) return null;
 
     // Compter les joueurs pour donner du contexte au frontend
     const players = await ctx.db
