@@ -3,7 +3,30 @@
  * destinés à l'utilisateur final. Les détails techniques (Request ID, stack,
  * chemins de fichiers) sont éliminés.
  */
+
+function formatRetryDelay(ms: number): string {
+  if (ms <= 0) return 'quelques instants';
+  const minutes = Math.ceil(ms / 60_000);
+  if (minutes <= 1) {
+    const seconds = Math.max(1, Math.ceil(ms / 1000));
+    return `${seconds} seconde${seconds > 1 ? 's' : ''}`;
+  }
+  return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+}
+
 export function formatAuthError(err: unknown): string {
+  // ConvexError avec data structurée : err.data contient l'objet thrown.
+  const data = (err as { data?: unknown })?.data;
+  if (data && typeof data === 'object') {
+    const d = data as { kind?: string; retryAfterMs?: number };
+    if (d.kind === 'Locked' && typeof d.retryAfterMs === 'number') {
+      return `Trop de tentatives. Réessayez dans ${formatRetryDelay(d.retryAfterMs)}.`;
+    }
+    if (d.kind === 'RateLimited' && typeof d.retryAfterMs === 'number') {
+      return `Trop de requêtes. Réessayez dans ${formatRetryDelay(d.retryAfterMs)}.`;
+    }
+  }
+
   const raw = (err as { message?: string })?.message
     ?? String(err ?? '')
     ?? '';
@@ -12,7 +35,7 @@ export function formatAuthError(err: unknown): string {
   const cvx = raw.match(/ConvexError:\s*([^\n]+?)(?:\s*at\s+handler|$)/);
   const core = (cvx ? cvx[1] : raw).trim();
 
-  // Mappings sémantiques → français
+  // Mappings sémantiques → français (fallback si pas de data structurée)
   if (/Locked:.*sign-in/i.test(core) || /too many sign-in/i.test(core)) {
     return 'Trop de tentatives. Réessayez dans 15 minutes.';
   }

@@ -87,9 +87,11 @@ export const signIn = action({
     if (flow === "signIn" && email) {
       const status = await rateLimiter.limit(ctx, "signIn", { key: email });
       if (!status.ok) {
-        throw new ConvexError(
-          "Locked: too many sign-in attempts, retry later",
-        );
+        throw new ConvexError({
+          kind: "Locked",
+          message: "Too many sign-in attempts",
+          retryAfterMs: status.retryAfter ?? 15 * 60 * 1000,
+        });
       }
     }
 
@@ -99,9 +101,11 @@ export const signIn = action({
       // emails ; pas de rate limit par IP côté mutation Convex.
       const status = await rateLimiter.limit(ctx, "signUp", { key: email });
       if (!status.ok) {
-        throw new ConvexError(
-          "RateLimited: too many signup attempts, retry later",
-        );
+        throw new ConvexError({
+          kind: "RateLimited",
+          message: "Too many signup attempts",
+          retryAfterMs: status.retryAfter ?? 60 * 60 * 1000,
+        });
       }
     }
 
