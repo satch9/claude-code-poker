@@ -53,9 +53,18 @@ export function evaluateGameConditions(
   // Les éliminés sont traités comme folded (défense en profondeur)
   const activePlayers = players.filter(p => !p.isFolded && !p.eliminatedAt);
   const playersNotAllIn = activePlayers.filter(p => !p.isAllIn);
-  
-  // All players are all-in
-  const allPlayersAllIn = playersNotAllIn.length === 0 && activePlayers.length > 1;
+
+  // "All players all-in" pour piloter l'auto-advance des phases sans
+  // intervention humaine. Couvre :
+  //  - tout le monde all-in (cas classique)
+  //  - 1 seul joueur encore en lice peut miser, mais TOUS les autres actifs
+  //    sont all-in : aucune mise utile possible (pas d'opposant à payer pour
+  //    ce qui dépasse le tapis du moins fortuné), on déroule jusqu'au
+  //    showdown automatiquement.
+  // (≥ 2 actifs requis : sinon onlyOnePlayerLeft prend le relais.)
+  const allPlayersAllIn =
+    activePlayers.length > 1 &&
+    (playersNotAllIn.length === 0 || playersNotAllIn.length === 1);
   
   // Only one player left (others folded)
   const onlyOnePlayerLeft = activePlayers.length <= 1;
