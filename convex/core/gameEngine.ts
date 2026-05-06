@@ -155,10 +155,11 @@ async function startGameInternal(ctx: any, tableId: string) {
       return ctx.db.patch(player._id, {
         cards: playerCards[player._id].map(cardToString),
         currentBet: betAmount,
-        hasActed: false,
+        hasActed: !!player.sitOut, // sit-out a "déjà agi" (auto-fold)
         isAllIn: betAmount > 0 && chips === 0,
-        isFolded: false,
-        lastAction: undefined,
+        // Sit-out : auto-fold dès le départ. Les blinds postées sont perdues.
+        isFolded: !!player.sitOut,
+        lastAction: player.sitOut ? "fold" : undefined,
         chips,
       });
     })

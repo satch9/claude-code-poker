@@ -5,7 +5,6 @@ import { rebuyAmountSchema, validateOrThrow } from "./shared/validation";
 import { requireSelf } from "./shared/auth";
 import { sanitizePlayer } from "./shared/sanitize";
 import { rateLimiter } from "./shared/rateLimit";
-import { endTournament } from "./core/gameEngine";
 
 // Join a table as a player
 export const joinTable = mutation({
@@ -34,6 +33,21 @@ export const joinTable = mutation({
       .first();
 
     if (existingPlayer) {
+      // Tournoi : si le joueur était en sit-out, on le réactive
+      if (existingPlayer.sitOut && !existingPlayer.eliminatedAt) {
+        await ctx.db.patch(existingPlayer._id, { sitOut: false });
+        const u = await ctx.db.get(args.userId);
+        await ctx.db.insert("gameActions", {
+          tableId: args.tableId,
+          playerId: undefined,
+          playerName: u?.name || "Joueur",
+          action: "joined",
+          message: `${u?.name || "Joueur"} est de retour à la table`,
+          isSystem: true,
+          timestamp: Date.now(),
+        });
+        return { playerId: existingPlayer._id, seatPosition: existingPlayer.seatPosition };
+      }
       throw new Error("User already in table");
     }
 
@@ -150,21 +164,14 @@ export const leaveTable = mutation({
     const user = await ctx.db.get(player.userId);
 
     if (isRunningTournament && !player.eliminatedAt) {
-      // Tournoi en cours : forfait = élimination propre.
-      // On garde le record (pour le finalRanking), on lui assigne le pire rang
-      // libre parmi les joueurs encore en lice.
-      const allPlayers = await ctx.db
-        .query("players")
-        .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
-        .collect();
-      const stillIn = allPlayers.filter(
-        (p: any) => !p.eliminatedAt && p.chips > 0
-      ).length;
-
+      // Tournoi en cours : sit-out (le joueur garde sa place et son stack,
+      // mais ses mains sont auto-foldées et ses blinds postées normalement
+      // jusqu'à ce qu'il revienne ou qu'il soit busté par les blinds).
+      // Si une main est en cours, on a déjà fold via le bloc plus haut.
       await ctx.db.patch(player._id, {
-        chips: 0,
-        eliminatedAt: Date.now(),
-        tournamentRank: stillIn, // pire rang libre (ex: 4/4 si 4 encore en lice)
+        sitOut: true,
+        // Si on était dans une main, le fold est déjà appliqué.
+        // Sinon on ne touche pas isFolded ici : startNewHand l'écrasera selon sitOut.
       });
 
       await ctx.db.insert("gameActions", {
@@ -172,21 +179,12 @@ export const leaveTable = mutation({
         playerId: undefined,
         playerName: user?.name || "Joueur",
         action: "left",
-        message: `${user?.name || "Joueur"} a déclaré forfait (éliminé)`,
+        message: `${user?.name || "Joueur"} est absent (sit-out · blinds en cours)`,
         isSystem: true,
         timestamp: Date.now(),
       });
 
-      // Si plus qu'un joueur encore en lice → fin de tournoi
-      const stillInAfter = allPlayers.filter(
-        (p: any) =>
-          p._id !== player._id && !p.eliminatedAt && p.chips > 0
-      ).length;
-      if (stillInAfter <= 1) {
-        await endTournament(ctx, args.tableId);
-      }
-
-      return { success: true, chips: 0, forfeited: true };
+      return { success: true, chips: player.chips, sitOut: true };
     }
 
     // Cash game OU tournoi non démarré (registering) OU joueur déjà éliminé :

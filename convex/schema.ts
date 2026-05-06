@@ -101,6 +101,8 @@ export default defineSchema({
     joinedAt: v.number(),
     eliminatedAt: v.optional(v.number()),
     tournamentRank: v.optional(v.number()),
+    // Tournoi : joueur absent (déconnecté / pause). Auto-fold + blinds postées.
+    sitOut: v.optional(v.boolean()),
   })
     .index("by_table", ["tableId"])
     .index("by_user", ["userId"])
