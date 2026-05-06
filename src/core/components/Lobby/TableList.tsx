@@ -7,14 +7,12 @@ import { Id } from "../../../../convex/_generated/dataModel";
 interface TableListProps {
   tables: Table[];
   onJoinTable: (tableId: Id<"tables">) => void;
-  onCreateTable: () => void;
   loading?: boolean;
 }
 
 export const TableList: React.FC<TableListProps> = ({
   tables,
   onJoinTable,
-  onCreateTable,
   loading = false,
 }) => {
   const [filter, setFilter] = useState<"all" | "cash" | "tournament">("all");
@@ -45,55 +43,35 @@ export const TableList: React.FC<TableListProps> = ({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header — titre + CTA "Créer" sur mobile, tout aligné sur desktop */}
+      {/* Header — titre + filtres. Le bouton "Créer une table" est maintenant
+          dans le header global du lobby (Lobby.tsx). */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-            Tables disponibles
-          </h2>
-          {/* CTA "Créer" inline avec le titre sur mobile */}
-          <Button
-            variant="success"
-            className="text-sm font-medium sm:hidden"
-            onClick={onCreateTable}
-          >
-            + Créer
-          </Button>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Tables disponibles
+        </h2>
 
         {/* Filtres — scrollable horizontalement si nécessaire sur mobile */}
-        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 sm:overflow-visible sm:gap-4">
-          <div className="flex gap-2 flex-shrink-0">
-            <Button
-              variant={filter === "all" ? "primary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("all")}
-            >
-              Toutes
-            </Button>
-            <Button
-              variant={filter === "cash" ? "primary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("cash")}
-            >
-              Cash
-            </Button>
-            <Button
-              variant={filter === "tournament" ? "primary" : "ghost"}
-              size="sm"
-              onClick={() => setFilter("tournament")}
-            >
-              Tournois
-            </Button>
-          </div>
-
-          {/* CTA "Créer" version desktop, à droite des filtres */}
+        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 sm:overflow-visible">
           <Button
-            variant="success"
-            className="text-sm font-medium hidden sm:inline-flex flex-shrink-0"
-            onClick={onCreateTable}
+            variant={filter === "all" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setFilter("all")}
           >
-            + Créer une table
+            Toutes
+          </Button>
+          <Button
+            variant={filter === "cash" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setFilter("cash")}
+          >
+            Cash
+          </Button>
+          <Button
+            variant={filter === "tournament" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setFilter("tournament")}
+          >
+            Tournois
           </Button>
         </div>
       </div>

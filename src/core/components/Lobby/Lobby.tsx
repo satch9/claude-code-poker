@@ -42,6 +42,16 @@ export const Lobby: React.FC<LobbyProps> = ({
               🃏 {title}
             </h1>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onCreateTable}
+                title="Créer une nouvelle table"
+                className="h-12 px-4 inline-flex items-center gap-2 text-sm font-semibold rounded-lg bg-poker-green-700 hover:bg-poker-green-600 text-white shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                <span aria-hidden>+</span>
+                <span className="hidden sm:inline">Créer une table</span>
+                <span className="sm:hidden">Créer</span>
+              </button>
               {onViewStats && (
                 <button
                   type="button"
@@ -73,7 +83,6 @@ export const Lobby: React.FC<LobbyProps> = ({
           <TableList
             tables={publicTables}
             onJoinTable={onJoinTable}
-            onCreateTable={onCreateTable}
             loading={loading}
           />
         </div>
