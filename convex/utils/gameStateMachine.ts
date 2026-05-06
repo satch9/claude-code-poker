@@ -34,6 +34,7 @@ export interface PlayerState {
   isAllIn: boolean;
   lastAction?: string;
   seatPosition: number;
+  eliminatedAt?: number;
 }
 
 export interface GameConditions {
@@ -49,7 +50,8 @@ export function evaluateGameConditions(
   currentBet: number,
   lastRaiserPosition?: number
 ): GameConditions {
-  const activePlayers = players.filter(p => !p.isFolded);
+  // Les éliminés sont traités comme folded (défense en profondeur)
+  const activePlayers = players.filter(p => !p.isFolded && !p.eliminatedAt);
   const playersNotAllIn = activePlayers.filter(p => !p.isAllIn);
   
   // All players are all-in

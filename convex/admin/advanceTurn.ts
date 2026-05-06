@@ -57,6 +57,26 @@ export const forceLevelUpNow = mutation({
   },
 });
 
+// Patche tous les joueurs avec eliminatedAt pour les marquer isFolded=true
+// et hasActed=true (corrige les états laissés par d'anciennes versions du code).
+export const fixGhostEliminated = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+    let fixed = 0;
+    for (const p of players) {
+      if (p.eliminatedAt && (!p.isFolded || !p.hasActed)) {
+        await ctx.db.patch(p._id, { isFolded: true, hasActed: true });
+        fixed++;
+      }
+    }
+    return { fixed };
+  },
+});
+
 export const setCurrentPlayer = mutation({
   args: { tableId: v.id("tables"), seatPosition: v.number() },
   handler: async (ctx, args) => {

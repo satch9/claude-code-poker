@@ -524,7 +524,8 @@ export const playerAction = mutation({
       isFolded: p.isFolded,
       isAllIn: p.isAllIn,
       lastAction: p.lastAction,
-      seatPosition: p.seatPosition
+      seatPosition: p.seatPosition,
+      eliminatedAt: p.eliminatedAt,
     }));
 
     const conditions = evaluateGameConditions(playerStates, updatedGameState.currentBet, updatedGameState.lastRaiserPosition);
@@ -654,7 +655,8 @@ export const advancePhase = mutation({
       isFolded: p.isFolded,
       isAllIn: p.isAllIn,
       lastAction: p.lastAction,
-      seatPosition: p.seatPosition
+      seatPosition: p.seatPosition,
+      eliminatedAt: p.eliminatedAt,
     }));
 
     const conditions = evaluateGameConditions(playerStates, gameState.currentBet, gameState.lastRaiserPosition);
