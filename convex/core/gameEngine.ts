@@ -788,8 +788,14 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
     .map((p: any) => p.seatPosition)
     .sort((a: any, b: any) => a - b);
 
-  // If all players are all-in, we need to continue automatically
-  const allPlayersAllIn = playerPositions.length === 0;
+  // Auto-advance dans deux cas :
+  // 1. Tous les joueurs actifs sont all-in (cas classique).
+  // 2. Il reste au plus un joueur non-all-in et au moins un all-in : pas
+  //    de mise utile possible (le solo n'a personne contre qui parier),
+  //    on doit dérouler les phases jusqu'au showdown.
+  const allPlayersAllIn =
+    playerPositions.length === 0 ||
+    (playerPositions.length === 1 && activePlayers.length > 1);
 
   console.log("Debug advanceToNextPhase:", {
     nextPhase,
