@@ -322,8 +322,11 @@ export function calculateSidePots(
 
 // Check if hand should end (only one player left)
 export function shouldEndHand(players: Array<{ isFolded: boolean; chips: number }>): boolean {
-  const activePlayers = players.filter(p => !p.isFolded && p.chips > 0);
-  return activePlayers.length <= 1;
+  // Un joueur all-in (chips=0) reste actif dans la main : il a déjà engagé son
+  // tapis et a droit au pot s'il gagne au showdown. Le seul cas où la main doit
+  // s'arrêter immédiatement est : tous les autres ont fold (1 seul non-folded).
+  const stillIn = players.filter(p => !p.isFolded);
+  return stillIn.length <= 1;
 }
 
 // Get phase progression
