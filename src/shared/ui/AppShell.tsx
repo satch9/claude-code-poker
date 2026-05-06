@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { BREAKPOINTS } from '../constants/breakpoints';
 import { TabBar, type TabItem } from './TabBar';
 import { cn } from '../utils/cn';
 
@@ -27,7 +28,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   fullscreen = false,
   children,
 }) => {
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery(BREAKPOINTS.lg);
 
   if (fullscreen) {
     return <div className="min-h-screen bg-bg-base text-text-primary">{children}</div>;
@@ -53,7 +54,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               onClick={headerAction.onClick}
               className="min-h-tap min-w-tap inline-flex items-center justify-center text-accent font-medium"
             >
-              {headerAction.icon ?? null}
+              {headerAction.icon && <span aria-hidden="true">{headerAction.icon}</span>}
               <span className={cn(headerAction.icon ? 'ml-1' : '')}>{headerAction.label}</span>
             </button>
           )}
@@ -66,6 +67,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <main
           className={cn(
             'flex-1 overflow-y-auto',
+            // pb-14 matches TabBar bottom variant height (h-14 = 3.5rem) so content isn't covered.
             !isDesktop && 'pb-14',
           )}
         >
