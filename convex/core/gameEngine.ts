@@ -401,7 +401,7 @@ export const playerAction = mutation({
           currentBet: newCurrentBet,
           hasActed: true,
           isAllIn,
-          lastAction: "call",
+          lastAction: isAllIn ? "all-in" : "call",
         });
 
         // Add to action feed
@@ -409,9 +409,11 @@ export const playerAction = mutation({
         await addActionToFeed(ctx, args.tableId, {
           playerId: player._id,
           playerName: callUser?.name || "Joueur",
-          action: "call",
+          action: isAllIn ? "all-in" : "call",
           amount: betAmount,
-          message: `suit pour ${betAmount} jetons`,
+          message: isAllIn
+            ? `suit et fait tapis pour ${betAmount} jetons`
+            : `suit pour ${betAmount} jetons`,
         });
         break;
 
@@ -435,7 +437,7 @@ export const playerAction = mutation({
           currentBet: newCurrentBet,
           hasActed: true,
           isAllIn,
-          lastAction: "raise",
+          lastAction: isAllIn ? "all-in" : "raise",
         });
 
         // Update current bet and last raiser
@@ -449,9 +451,11 @@ export const playerAction = mutation({
         await addActionToFeed(ctx, args.tableId, {
           playerId: player._id,
           playerName: raiseUser?.name || "Joueur",
-          action: "raise",
+          action: isAllIn ? "all-in" : "raise",
           amount: betAmount,
-          message: `relance à ${newCurrentBet} jetons`,
+          message: isAllIn
+            ? `fait tapis pour ${newCurrentBet} jetons`
+            : `relance à ${newCurrentBet} jetons`,
         });
         break;
 
