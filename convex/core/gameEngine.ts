@@ -1869,8 +1869,28 @@ async function endTournament(ctx: any, tableId: string) {
   const tournament = table.modules.tournament;
   const totalPot = (table.maxPlayers ?? players.length) * (table.buyIn ?? 0);
 
-  // Build finalRanking : all players sorted by tournamentRank ascending (1 = winner)
-  const allPlayers = [winnerUpdated, ...players.filter((p: any) => p._id !== winner._id && p.eliminatedAt)];
+  // Build finalRanking : TOUS les joueurs (le winner + tous les autres,
+  // qu'ils aient un eliminatedAt explicite ou non). Pour ceux sans
+  // tournamentRank, on en assigne un à la volée par chips décroissants
+  // après le winner.
+  const others = players.filter((p: any) => p._id !== winner._id);
+  // D'abord ceux avec rank défini, puis fallback chips desc
+  others.sort((a: any, b: any) => {
+    const ra = a.tournamentRank ?? Number.POSITIVE_INFINITY;
+    const rb = b.tournamentRank ?? Number.POSITIVE_INFINITY;
+    if (ra !== rb) return ra - rb;
+    return (b.chips ?? 0) - (a.chips ?? 0);
+  });
+  // Affecter les ranks manquants : le pire rang libre après le winner
+  let nextRank = 2;
+  for (const p of others) {
+    if (!p.tournamentRank) {
+      await ctx.db.patch(p._id, { tournamentRank: nextRank });
+      (p as any).tournamentRank = nextRank;
+    }
+    nextRank = Math.max(nextRank + 1, (p.tournamentRank ?? nextRank) + 1);
+  }
+  const allPlayers = [winnerUpdated, ...others];
   allPlayers.sort((a: any, b: any) => (a.tournamentRank ?? 999) - (b.tournamentRank ?? 999));
 
   // Pré-charger les noms des users en parallèle pour les figer dans finalRanking
