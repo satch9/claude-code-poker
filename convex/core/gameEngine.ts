@@ -87,13 +87,24 @@ async function startGameInternal(ctx: any, tableId: string) {
     throw new Error("Need at least 2 players to start");
   }
 
+  // Tournoi : exclure les éliminés (chips=0 + eliminatedAt) du flow de la main
+  const activePlayers = table.gameType === "tournament"
+    ? players.filter((p: any) => !p.eliminatedAt && p.chips > 0)
+    : players;
+
+  if (activePlayers.length < 2) {
+    // 1 seul joueur restant ou aucun → fin tournoi à gérer en aval (par endHand)
+    // Pour cash game, ce cas n'arrive normalement pas
+    return { success: false, reason: "not enough active players" };
+  }
+
   // Create and shuffle deck
   const deck = shuffleDeck(createDeck());
   let remainingDeck = deck;
 
-  // Deal 2 cards to each player
+  // Deal 2 cards to each active player
   const playerCards: { [playerId: string]: Card[] } = {};
-  for (const player of players) {
+  for (const player of activePlayers) {
     const { dealtCards, remainingDeck: newDeck } = dealCards(remainingDeck, 2);
     playerCards[player._id] = dealtCards;
     remainingDeck = newDeck;
@@ -108,16 +119,16 @@ async function startGameInternal(ctx: any, tableId: string) {
   let dealerPosition: number;
   if (currentGameState && currentGameState.dealerPosition >= 0) {
     // Advance dealer position for next hand
-    const playerPositions = players.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
+    const playerPositions = activePlayers.map((p: any) => p.seatPosition).sort((a: any, b: any) => a - b);
     dealerPosition = getNextDealerPosition(currentGameState.dealerPosition, playerPositions);
   } else {
     // Random dealer for first game (crypto-secure RNG)
     const rngArr = new Uint32Array(1);
     crypto.getRandomValues(rngArr);
-    dealerPosition = players[rngArr[0] % players.length].seatPosition;
+    dealerPosition = activePlayers[rngArr[0] % activePlayers.length].seatPosition;
   }
 
-  const playerPositions = players.map((p: any) => p.seatPosition);
+  const playerPositions = activePlayers.map((p: any) => p.seatPosition);
   const { smallBlind, bigBlind } = getBlindPositions(dealerPosition, playerPositions);
 
 
@@ -125,9 +136,9 @@ async function startGameInternal(ctx: any, tableId: string) {
   let pot = 0;
   const currentBet = table.bigBlind;
 
-  // Reset all players and post blinds
+  // Reset active players and post blinds (eliminated players stay as-is)
   await Promise.all(
-    players.map(async (player: any) => {
+    activePlayers.map(async (player: any) => {
       let betAmount = 0;
       let chips = player.chips;
 
@@ -156,13 +167,13 @@ async function startGameInternal(ctx: any, tableId: string) {
   // Add blind actions to feed
   // Pre-load SB+BB users in parallel to avoid sequential ctx.db.get in loop
   const blindUsers = await Promise.all(
-    players
+    activePlayers
       .filter((p: any) => p.seatPosition === smallBlind || p.seatPosition === bigBlind)
       .map(async (p: any) => [p.userId, await ctx.db.get(p.userId)] as const)
   );
   const userBy = new Map<string, any>(blindUsers);
 
-  for (const player of players) {
+  for (const player of activePlayers) {
     if (player.seatPosition === smallBlind) {
       const user = userBy.get(player.userId);
       await addActionToFeed(ctx, tableId, {
@@ -1082,6 +1093,14 @@ async function endHand(ctx: any, tableId: string) {
 
   const playersWithChips = players.filter((p: any) => p.chips > 0);
 
+  // Tournoi : si plus qu'un joueur a des chips, c'est terminé
+  if (table.gameType === "tournament") {
+    if (playersWithChips.length <= 1) {
+      await endTournament(ctx, tableId);
+      return; // ne pas schedule la main suivante
+    }
+  }
+
   if (playersWithChips.length >= 2) {
     // Schedule next hand 3s later — showdown phase stays visible to clients
     await ctx.scheduler.runAfter(
@@ -1097,11 +1116,30 @@ async function endHand(ctx: any, tableId: string) {
 
 // Prepare for next hand
 async function prepareNextHand(ctx: any, tableId: string) {
+  const table = await ctx.db.get(tableId);
   // Reset players for new hand
   const players = await ctx.db
     .query("players")
     .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
     .collect();
+
+  // Tournoi : marquer les nouveaux éliminés (chips=0 et pas encore eliminatedAt)
+  if (table?.gameType === "tournament") {
+    const now = Date.now();
+    const stillIn = players.filter(
+      (p: any) => !p.eliminatedAt && p.chips > 0
+    ).length;
+    let rankCounter = stillIn;
+    for (const player of players) {
+      if (!player.eliminatedAt && player.chips === 0) {
+        await ctx.db.patch(player._id, {
+          eliminatedAt: now,
+          tournamentRank: rankCounter,
+        });
+        rankCounter--;
+      }
+    }
+  }
 
   await Promise.all(
     players.map((player: any) =>
@@ -1743,6 +1781,68 @@ async function advanceToNextPhaseWithStateMachine(
     isSystem: true,
   });
 
+}
+
+async function endTournament(ctx: any, tableId: string) {
+  const table = await ctx.db.get(tableId);
+  if (!table || table.gameType !== "tournament" || !table.modules?.tournament) return;
+
+  const players = await ctx.db
+    .query("players")
+    .withIndex("by_table", (q: any) => q.eq("tableId", tableId))
+    .collect();
+
+  // Le winner est le seul avec chips > 0
+  const winner = players.find((p: any) => p.chips > 0);
+  if (!winner) return;
+  if (!winner.tournamentRank) {
+    await ctx.db.patch(winner._id, { tournamentRank: 1 });
+  }
+
+  // Re-fetch winner with updated rank
+  const winnerUpdated = await ctx.db.get(winner._id);
+  if (!winnerUpdated) return;
+
+  const tournament = table.modules.tournament;
+  const totalPot = (table.maxPlayers ?? players.length) * (table.buyIn ?? 0);
+
+  // Build finalRanking : all players sorted by tournamentRank ascending (1 = winner)
+  const allPlayers = [winnerUpdated, ...players.filter((p: any) => p._id !== winner._id && p.eliminatedAt)];
+  allPlayers.sort((a: any, b: any) => (a.tournamentRank ?? 999) - (b.tournamentRank ?? 999));
+
+  const finalRanking = allPlayers.map((p: any) => {
+    const prizeRow = tournament.prizeStructure.find(
+      (pz: any) => pz.position === p.tournamentRank
+    );
+    const prize = prizeRow ? Math.floor(totalPot * prizeRow.percentage / 100) : 0;
+    return {
+      userId: p.userId,
+      position: p.tournamentRank ?? 0,
+      prize,
+    };
+  });
+
+  const now = Date.now();
+  await ctx.db.patch(tableId, {
+    status: "finished",
+    modules: {
+      ...table.modules,
+      tournament: {
+        ...tournament,
+        status: "finished",
+        finishedAt: now,
+        finalRanking,
+      },
+    },
+  });
+
+  const winnerUser = await ctx.db.get(winner.userId);
+  await addActionToFeed(ctx, tableId, {
+    playerName: "Système",
+    action: "system",
+    message: `Tournoi terminé · Vainqueur : ${winnerUser?.name ?? "Joueur"}`,
+    isSystem: true,
+  });
 }
 
 export { endHand, advanceToNextPhase, advanceToNextPhaseWithStateMachine };
