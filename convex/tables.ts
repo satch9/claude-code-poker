@@ -74,6 +74,7 @@ export const createTable = mutation({
       creatorId,
       status: "waiting",
       createdAt: Date.now(),
+      playerCount: 0,
     });
 
     // Initialize game state
@@ -107,23 +108,11 @@ export const getPublicTables = query({
       )
       .collect();
 
-    // Get player count for each table
-    const tablesWithPlayerCount = await Promise.all(
-      tables.map(async (table) => {
-        const playerCount = await ctx.db
-          .query("players")
-          .withIndex("by_table", (q) => q.eq("tableId", table._id))
-          .collect()
-          .then(players => players.length);
-
-        return {
-          ...table,
-          playerCount,
-        };
-      })
-    );
-
-    return tablesWithPlayerCount;
+    // C6.3 : lecture directe du compteur dénormalisé (évite N+1).
+    return tables.map((table) => ({
+      ...table,
+      playerCount: table.playerCount ?? 0,
+    }));
   },
 });
 
@@ -140,29 +129,35 @@ export const getTablesWithUserInfo = query({
       .filter((q) => q.neq(q.field("status"), "finished"))
       .collect();
 
-    const tablesWithInfo = await Promise.all(
-      allTables.map(async (table) => {
-        const players = await ctx.db
-          .query("players")
-          .withIndex("by_table", (q) => q.eq("tableId", table._id))
-          .collect();
+    // C6.3 : une seule requête indexée pour les sièges de l'user, au lieu
+    // de scanner tous les players de toutes les tables.
+    const userSeatedTableIds = new Set<string>();
+    if (args.userId) {
+      const userPlayers = await ctx.db
+        .query("players")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId!))
+        .collect();
+      for (const p of userPlayers) {
+        userSeatedTableIds.add(p.tableId as unknown as string);
+      }
+    }
 
-        const playerCount = players.length;
-        const isUserSeated = args.userId
-          ? players.some((p) => p.userId === args.userId)
-          : false;
-        const isUserCreator = args.userId
-          ? table.creatorId === args.userId
-          : false;
+    const tablesWithInfo = allTables.map((table) => {
+      const playerCount = table.playerCount ?? 0;
+      const isUserSeated = args.userId
+        ? userSeatedTableIds.has(table._id as unknown as string)
+        : false;
+      const isUserCreator = args.userId
+        ? table.creatorId === args.userId
+        : false;
 
-        return {
-          ...table,
-          playerCount,
-          isUserSeated,
-          isUserCreator,
-        };
-      })
-    );
+      return {
+        ...table,
+        playerCount,
+        isUserSeated,
+        isUserCreator,
+      };
+    });
 
     const myTables = tablesWithInfo.filter(
       (t) => t.isUserCreator || t.isUserSeated

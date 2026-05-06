@@ -38,6 +38,10 @@ export default defineSchema({
       v.literal("finished")
     ),
     createdAt: v.number(),
+    // Dénormalisation : nombre de joueurs assis (C6.3, évite N+1 lobby).
+    // Optional pour compat avec lignes existantes pré-migration ; les queries
+    // appliquent un fallback `?? 0`.
+    playerCount: v.optional(v.number()),
     // Modular data for extensions
     modules: v.optional(v.object({
       tournament: v.optional(v.object({

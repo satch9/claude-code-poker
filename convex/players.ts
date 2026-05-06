@@ -93,6 +93,11 @@ export const joinTable = mutation({
       joinedAt: Date.now(),
     });
 
+    // C6.3 : sync atomique du compteur dénormalisé.
+    await ctx.db.patch(args.tableId, {
+      playerCount: (table.playerCount ?? 0) + 1,
+    });
+
     return { playerId, seatPosition };
   },
 });
@@ -134,6 +139,16 @@ export const leaveTable = mutation({
 
     // Remove player from table
     await ctx.db.delete(player._id);
+
+    // C6.3 : sync atomique du compteur dénormalisé.
+    {
+      const tbl = await ctx.db.get(args.tableId);
+      if (tbl) {
+        await ctx.db.patch(args.tableId, {
+          playerCount: Math.max(0, (tbl.playerCount ?? 0) - 1),
+        });
+      }
+    }
 
     // Log the leave event in the action feed
     const user = await ctx.db.get(player.userId);
