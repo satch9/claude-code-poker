@@ -165,10 +165,10 @@ export const getPublicTables = query({
 export const getTablesWithUserInfo = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    const allTables = await ctx.db
-      .query("tables")
-      .filter((q) => q.neq(q.field("status"), "finished"))
-      .collect();
+    // On lit toutes les tables (y compris terminées) car l'utilisateur doit
+    // pouvoir retrouver ses tournois finis pour revoir le scoreboard.
+    // Le filtre 'finished' n'est appliqué qu'aux tables publiques.
+    const allTables = await ctx.db.query("tables").collect();
 
     // C6.3 : une seule requête indexée pour les sièges de l'user, au lieu
     // de scanner tous les players de toutes les tables.
@@ -200,11 +200,25 @@ export const getTablesWithUserInfo = query({
       };
     });
 
-    const myTables = tablesWithInfo.filter(
-      (t) => t.isUserCreator || t.isUserSeated
-    );
+    // myTables : créateur OU joueur assis, finished inclus (pour scoreboard).
+    // Tri : actives d'abord (status != finished), puis terminées (les plus
+    // récentes d'abord pour qu'on retrouve la dernière partie en haut).
+    const myTables = tablesWithInfo
+      .filter((t) => t.isUserCreator || t.isUserSeated)
+      .sort((a, b) => {
+        const aFinished = a.status === "finished" ? 1 : 0;
+        const bFinished = b.status === "finished" ? 1 : 0;
+        if (aFinished !== bFinished) return aFinished - bFinished;
+        return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+      });
+    // publicTables : ouvertes / en cours uniquement (on ne pollue pas le lobby
+    // public avec des tournois terminés d'autres joueurs)
     const publicTables = tablesWithInfo.filter(
-      (t) => !t.isPrivate && !t.isUserCreator && !t.isUserSeated
+      (t) =>
+        !t.isPrivate &&
+        !t.isUserCreator &&
+        !t.isUserSeated &&
+        t.status !== "finished"
     );
 
     return { myTables, publicTables };
