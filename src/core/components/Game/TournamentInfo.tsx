@@ -58,7 +58,7 @@ export const TournamentInfo: React.FC<TournamentInfoProps> = ({
       <span>
         Joueurs : {remainingPlayers}/{totalPlayers}
       </span>
-      {prizePool > 0 && <span>Prize pool : {prizePool} jetons</span>}
+      {prizePool > 0 && <span>Prize pool : {prizePool} €</span>}
       {status === "finished" && <span className="font-bold">Tournoi terminé</span>}
     </div>
   );
