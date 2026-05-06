@@ -218,8 +218,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   onJoinSeat,
 }) => {
   const [showGameInfo, setShowGameInfo] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Masquée par défaut sur mobile
+  // (showMobileMenu / showMobileSidebar retirés — remplacés par le top
+  // header mobile + drawers communs au desktop)
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showChatDrawer, setShowChatDrawer] = useState(false);
@@ -264,7 +264,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     getHandStrength,
     getGameStats,
     actionHistory,
-    handNumber,
     handleTimeOut,
     showdownResults,
   } = useGameLogic(tableId, onLeaveTable);
@@ -287,7 +286,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Get game info
   const potOdds = getPotOdds();
   const handStrength = getHandStrength();
-  const gameStats = getGameStats();
+  void getGameStats; // hook conservé pour usage futur
   const currentBet = gameState?.currentBet || 0;
 
   // Rotation à appliquer pour que le viewer (currentPlayer) soit toujours en bas
@@ -592,7 +591,48 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
       {/* Landscape Warning for mobile portrait */}
       <LandscapeWarning />
-      {/* Header - hidden on mobile */}
+      {/* Header mobile (non heads-up portrait) — version compacte du header
+          desktop, avec la même rangée d'icônes dans le drawer system. */}
+      {isMobile && !isIOS && (
+        <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-2 py-2 gap-1">
+          <div className="text-white min-w-0 flex-1">
+            <div className="text-sm font-bold truncate">{table.name}</div>
+            <div className="text-xs text-poker-green-200 truncate">
+              {table.gameType === "tournament" ? "Tournoi" : "Cash"} •
+              {" "}{table.smallBlind}/{table.bigBlind}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {gameState.phase === "waiting" &&
+              table.status === "waiting" &&
+              players.length >= 2 &&
+              currentPlayer &&
+              currentPlayer.userId === table.creatorId && (
+                <Button
+                  onClick={handleStartGame}
+                  disabled={isProcessing}
+                  size="sm"
+                  variant="primary"
+                >
+                  {isProcessing ? "..." : "Démarrer"}
+                </Button>
+              )}
+            <HeaderActionIcons
+              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
+              onToggleGameInfo={() => setShowGameInfo((v) => !v)}
+              onToggleInvite={() => setShowInviteDialog((v) => !v)}
+              onToggleActions={() => setShowActionsDrawer((v) => !v)}
+              showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
+            />
+            <Button variant="secondary" size="sm" onClick={onLeaveTable}>
+              Quitter
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Header desktop */}
       {(!isMobile && !isIOS) && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-3 lg:px-4 py-3 lg:py-4 gap-2">
           <div className="text-white min-w-0 flex-1">
@@ -858,170 +898,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         {/* Right sidebar desktop supprimée — Chat / Paramètres / Actions rapides
             sont désormais accessibles via les icônes du header (drawers). */}
 
-        {/* Mobile left sidebar - fixed navigation */}
-        {isMobile && (
-          <div className={cn(
-            "fixed left-0 top-1/2 transform -translate-y-1/2 z-40 bg-poker-green-800/95 backdrop-blur-sm border-r border-poker-green-600 rounded-r-lg transition-transform duration-300",
-            showMobileSidebar ? "translate-x-0" : "-translate-x-full",
-            isIOS && "safe-area"
-          )}>
-            <div className="flex flex-col items-center justify-around py-4 px-2">
-              {/* Toggle button */}
-              <button
-                onClick={() => setShowMobileSidebar(false)}
-                className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-poker-green-800/95 backdrop-blur-sm border border-poker-green-600 rounded-full flex items-center justify-center transition-colors hover:bg-poker-green-700/95"
-              >
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              {/* Menu button */}
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="flex flex-col items-center gap-1 p-2 text-white hover:text-poker-green-200 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <span className="text-xs">Menu</span>
-              </button>
-
-              {/* Game info button */}
-              <button
-                onClick={() => setShowGameInfo(!showGameInfo)}
-                className="flex flex-col items-center gap-1 p-2 text-white hover:text-poker-green-200 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs">Info</span>
-              </button>
-
-              {/* Phase indicator */}
-              <div className="flex flex-col items-center gap-1 p-2">
-                <div className={cn(
-                  "w-3 h-3 rounded-full",
-                  gameState.phase === "waiting" && "bg-gray-400",
-                  gameState.phase === "preflop" && "bg-blue-400",
-                  gameState.phase === "flop" && "bg-green-400",
-                  gameState.phase === "turn" && "bg-yellow-400",
-                  gameState.phase === "river" && "bg-orange-400",
-                  gameState.phase === "showdown" && "bg-purple-400"
-                )}></div>
-                <span className="text-xs text-white capitalize">{gameState.phase}</span>
-              </div>
-
-              {/* Start game or leave button */}
-              {gameState.phase === "waiting" && table.status === "waiting" && players.length >= 2 && currentPlayer && currentPlayer.userId === table.creatorId ? (
-                <button
-                  onClick={handleStartGame}
-                  disabled={isProcessing}
-                  className="flex flex-col items-center gap-1 p-2 text-poker-green-200 hover:text-white transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M10 19a9 9 0 100-18 9 9 0 000 18z" />
-                  </svg>
-                  <span className="text-xs">{isProcessing ? "..." : "Start"}</span>
-                </button>
-              ) : (
-                <button
-                  onClick={onLeaveTable}
-                  className="flex flex-col items-center gap-1 p-2 text-red-400 hover:text-red-300 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="text-xs">Quit</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Mobile sidebar toggle button - only visible when sidebar is hidden */}
-        {isMobile && !showMobileSidebar && (
-          <button
-            onClick={() => setShowMobileSidebar(true)}
-            className={cn(
-              "fixed left-0 top-1/2 transform -translate-y-1/2 z-50 bg-poker-green-800/95 backdrop-blur-sm border-r border-poker-green-600 rounded-r-lg p-2 transition-all duration-300",
-              isIOS && "safe-area"
-            )}
-          >
-            <svg
-              className="w-5 h-5 text-white transition-transform duration-300 rotate-180"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        )}
-
-        {/* Mobile menu modal */}
-        {isMobile && showMobileMenu && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowMobileMenu(false)}
-            />
-
-            {/* Modal content */}
-            <div className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 w-full max-w-sm mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">Menu</h3>
-                <button
-                  onClick={() => setShowMobileMenu(false)}
-                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setShowGameInfo(true);
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg flex items-center gap-3"
-                >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Infos de la partie
-                </button>
-
-                {gameStats && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Statistiques</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div>Main #{handNumber}</div>
-                      <div>Pot: {gameState.pot.toLocaleString()}</div>
-                      <div>Joueurs: {players.filter((p) => !p.isFolded).length}/{players.length}</div>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => {
-                    onLeaveTable();
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full text-left p-3 bg-red-50 hover:bg-red-100 rounded-lg flex items-center gap-3 text-red-600"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Quitter la table
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Mobile : la navbar verticale et le menu modal ont été retirés.
+            Le top header mobile (plus haut) + les drawers (Chat/Paramètres/
+            Actions/Infos) couvrent désormais ces fonctions. */}
 
         {/* Tournament terminé : prioritaire sur le showdown de la dernière main
             (le scoreboard final + bouton 'Retour au lobby' doit rester visible
