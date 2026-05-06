@@ -5,6 +5,8 @@ import { createTableSchema, validateOrThrow } from "./shared/validation";
 import { sanitizeGameState } from "./shared/sanitize";
 import { requireUserId } from "./shared/auth";
 import { rateLimiter } from "./shared/rateLimit";
+import { generateBlindStructure, getPresetLevelDuration } from "./utils/blindStructure";
+import { computePrizeStructure } from "./utils/prizeStructure";
 
 // Invite code generation : crypto-secure 6 chars [0-9A-Z]
 const INVITE_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -28,6 +30,15 @@ export const createTable = mutation({
     smallBlind: v.number(),
     bigBlind: v.number(),
     isPrivate: v.boolean(),
+    preset: v.optional(
+      v.union(
+        v.literal("turbo"),
+        v.literal("standard"),
+        v.literal("long"),
+        v.literal("custom"),
+      ),
+    ),
+    levelDurationMin: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const creatorId = await requireUserId(ctx);
@@ -44,6 +55,8 @@ export const createTable = mutation({
       smallBlind: args.smallBlind,
       bigBlind: args.bigBlind,
       isPrivate: args.isPrivate,
+      preset: args.preset,
+      levelDurationMin: args.levelDurationMin,
     });
 
     // Génération inconditionnelle d'un code (6 chars A-Z0-9) pour permettre
@@ -61,20 +74,48 @@ export const createTable = mutation({
       attempts++;
     }
 
+    // Tournament module init (gameType === "tournament" only)
+    let modulesField: any = undefined;
+    let initialSmallBlind = args.smallBlind;
+    let initialBigBlind = args.bigBlind;
+
+    if (args.gameType === "tournament") {
+      const fromPreset = args.preset ? getPresetLevelDuration(args.preset) : null;
+      const levelDurationMin = fromPreset ?? args.levelDurationMin ?? 10;
+
+      const blindStructure = generateBlindStructure(args.startingStack, levelDurationMin);
+      const prizeStructure = computePrizeStructure(args.maxPlayers);
+
+      initialSmallBlind = blindStructure[0].smallBlind;
+      initialBigBlind = blindStructure[0].bigBlind;
+
+      modulesField = {
+        tournament: {
+          blindStructure,
+          currentBlindLevel: 0,
+          nextBlindIncrease: 0,
+          prizeStructure,
+          status: "registering" as const,
+          startedAt: 0,
+        },
+      };
+    }
+
     const tableId = await ctx.db.insert("tables", {
       name: args.name,
       maxPlayers: args.maxPlayers,
       gameType: args.gameType,
       buyIn: args.buyIn,
       startingStack: args.startingStack,
-      smallBlind: args.smallBlind,
-      bigBlind: args.bigBlind,
+      smallBlind: initialSmallBlind,
+      bigBlind: initialBigBlind,
       isPrivate: args.isPrivate,
       inviteCode,
       creatorId,
       status: "waiting",
       createdAt: Date.now(),
       playerCount: 0,
+      modules: modulesField,
     });
 
     // Initialize game state

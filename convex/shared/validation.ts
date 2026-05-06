@@ -43,10 +43,12 @@ export const createTableSchema = z
     maxPlayers: z.number().int().min(2).max(9),
     gameType: z.enum(["cash", "tournament"]),
     buyIn: z.number().nonnegative().optional(),
-    startingStack: z.number().int().positive(),
+    startingStack: z.number().int().min(100).max(100_000),
     smallBlind: z.number().int().positive(),
     bigBlind: z.number().int().positive(),
     isPrivate: z.boolean(),
+    preset: z.enum(["turbo", "standard", "long", "custom"]).optional(),
+    levelDurationMin: z.number().int().min(5).max(60).optional(),
   })
   .refine((d) => d.bigBlind >= 2 * d.smallBlind, {
     message: "bigBlind doit être >= 2 × smallBlind",
