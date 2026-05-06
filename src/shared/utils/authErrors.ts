@@ -42,7 +42,7 @@ export function formatAuthError(err: unknown): string {
   if (/RateLimited/i.test(core)) {
     return 'Trop de requêtes. Réessayez dans quelques instants.';
   }
-  if (/InvalidAccountId|Invalid email or password|Invalid password/i.test(core)) {
+  if (/InvalidAccountId|InvalidSecret|Invalid email or password|Invalid password/i.test(core)) {
     return 'Email ou mot de passe incorrect.';
   }
   if (/User already exists|already registered|already an account/i.test(core)) {
