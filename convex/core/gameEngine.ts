@@ -32,7 +32,7 @@ import {
   type PlayerState
 } from "../utils/gameStateMachine";
 import { internal } from "../_generated/api";
-import { requireSelf, requireTableCreator } from "../shared/auth";
+import { requireSelf, requireTableCreator, requireUserId } from "../shared/auth";
 
 // Helper function to add action to server-side feed
 async function addActionToFeed(ctx: any, tableId: string, data: {
@@ -520,7 +520,11 @@ export const playerAction = mutation({
 export const advancePhase = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
-    await requireTableCreator(ctx, args.tableId);
+    // Tout user authentifié peut déclencher : l'avancement est state-driven
+    // (vérifie autoAdvanceAt côté state machine), donc idempotent et non
+    // exploitable. Plusieurs clients trigger le timer simultanément, seul le
+    // premier passe les conditions et fait avancer.
+    await requireUserId(ctx);
     const gameState = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
@@ -592,7 +596,9 @@ export const advancePhase = mutation({
 export const advanceFromShowdown = mutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
-    await requireTableCreator(ctx, args.tableId);
+    // Idem advancePhase : trigger state-driven, vérifié par le check de phase
+    // ci-dessous (n'avance que si actuellement en showdown).
+    await requireUserId(ctx);
     const gameState = await ctx.db
       .query("gameStates")
       .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
