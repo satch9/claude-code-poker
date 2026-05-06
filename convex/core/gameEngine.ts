@@ -1496,6 +1496,42 @@ async function startNextHandInternal(ctx: any, tableId: string) {
     return; // Not in waiting state
   }
 
+  // Tournoi : montée de niveau si timer expiré
+  const table = await ctx.db.get(tableId);
+  if (!table) return;
+
+  if (table.gameType === "tournament" && table.modules?.tournament) {
+    const tournament = table.modules.tournament;
+    const now = Date.now();
+    if (
+      tournament.status === "running" &&
+      tournament.nextBlindIncrease > 0 &&
+      now >= tournament.nextBlindIncrease &&
+      (tournament.currentBlindLevel ?? 0) < tournament.blindStructure.length - 1
+    ) {
+      const newLevelIdx = (tournament.currentBlindLevel ?? 0) + 1;
+      const newLevel = tournament.blindStructure[newLevelIdx];
+      await ctx.db.patch(tableId, {
+        smallBlind: newLevel.smallBlind,
+        bigBlind: newLevel.bigBlind,
+        modules: {
+          ...table.modules,
+          tournament: {
+            ...tournament,
+            currentBlindLevel: newLevelIdx,
+            nextBlindIncrease: now + newLevel.duration,
+          },
+        },
+      });
+      await addActionToFeed(ctx, tableId, {
+        playerName: "Système",
+        action: "system",
+        message: `Niveau ${newLevel.level} : SB ${newLevel.smallBlind} / BB ${newLevel.bigBlind}`,
+        isSystem: true,
+      });
+    }
+  }
+
   // Check if we have enough players
   const players = await ctx.db
     .query("players")
