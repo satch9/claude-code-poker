@@ -4,15 +4,18 @@ export interface PrizeRow {
 }
 
 export function computePrizeStructure(nbPlayers: number): PrizeRow[] {
-  if (nbPlayers <= 4) {
+  // 2 joueurs (heads-up) : winner takes all
+  if (nbPlayers <= 2) {
     return [{ position: 1, percentage: 100 }];
   }
-  if (nbPlayers <= 7) {
+  // 3-6 joueurs : top 2 payés (70 / 30)
+  if (nbPlayers <= 6) {
     return [
       { position: 1, percentage: 70 },
       { position: 2, percentage: 30 },
     ];
   }
+  // 7+ joueurs : top 3 payés (50 / 30 / 20)
   return [
     { position: 1, percentage: 50 },
     { position: 2, percentage: 30 },

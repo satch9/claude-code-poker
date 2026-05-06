@@ -4,6 +4,7 @@
 import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { endHand } from "../core/gameEngine";
+import { computePrizeStructure } from "../utils/prizeStructure";
 
 // Force la montée au niveau suivant en mettant nextBlindIncrease dans le passé.
 // Le passage effectif se fait à la prochaine main (startNextHandInternal).
@@ -75,6 +76,48 @@ export const fixGhostEliminated = mutation({
       }
     }
     return { fixed };
+  },
+});
+
+// Recalcule prizeStructure + finalRanking d'un tournoi déjà terminé selon
+// la fonction computePrizeStructure courante (utile après évolution des règles).
+export const recomputeFinalRanking = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const table = await ctx.db.get(args.tableId);
+    if (!table || table.gameType !== "tournament" || !table.modules?.tournament) {
+      throw new Error("Not a tournament table");
+    }
+    const t = table.modules.tournament;
+    if (!t.finalRanking) throw new Error("Tournament not finished yet");
+
+    const prizeStructure = computePrizeStructure(table.maxPlayers);
+    const totalPot = (table.maxPlayers ?? 0) * (table.buyIn ?? 0);
+
+    const newFinalRanking = await Promise.all(
+      t.finalRanking.map(async (row: any) => {
+        const prizeRow = prizeStructure.find((pz) => pz.position === row.position);
+        const prize = prizeRow ? Math.floor((totalPot * prizeRow.percentage) / 100) : 0;
+        let playerName = row.playerName;
+        if (!playerName) {
+          const u = await ctx.db.get(row.userId);
+          playerName = (u && (u as any).name) || "Joueur";
+        }
+        return { ...row, prize, playerName };
+      })
+    );
+
+    await ctx.db.patch(args.tableId, {
+      modules: {
+        ...table.modules,
+        tournament: {
+          ...t,
+          prizeStructure,
+          finalRanking: newFinalRanking,
+        },
+      },
+    });
+    return { ok: true, prizeStructure, newFinalRanking };
   },
 });
 
