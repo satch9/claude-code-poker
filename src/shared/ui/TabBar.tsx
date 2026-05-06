@@ -57,7 +57,7 @@ export const TabBar: React.FC<TabBarProps> = ({ items, activeId, onChange, varia
                 </span>
               )}
             </span>
-            {!isBottom && <span aria-hidden="true" className="sr-only text-xs">{item.label}</span>}
+            <span className={cn('text-xs', !isBottom && 'sr-only')}>{item.label}</span>
           </button>
         );
       })}

@@ -31,7 +31,7 @@ describe('AppShell', () => {
         <div>main content</div>
       </AppShell>,
     );
-    expect(screen.getByText('Lobby')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Lobby' })).toBeInTheDocument();
     expect(screen.getByText('main content')).toBeInTheDocument();
   });
 
