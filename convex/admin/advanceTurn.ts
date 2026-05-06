@@ -25,6 +25,38 @@ export const forceNextBlindLevel = mutation({
   },
 });
 
+// Force immédiatement le passage au niveau suivant (sans attendre la prochaine main).
+// Patche directement currentBlindLevel et table.smallBlind / bigBlind.
+export const forceLevelUpNow = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const table = await ctx.db.get(args.tableId);
+    if (!table || !table.modules?.tournament) throw new Error("Not a tournament table");
+    const t = table.modules.tournament;
+    const newLevelIdx = (t.currentBlindLevel ?? 0) + 1;
+    if (newLevelIdx >= t.blindStructure.length) throw new Error("Already at max level");
+    const newLevel = t.blindStructure[newLevelIdx];
+    await ctx.db.patch(args.tableId, {
+      smallBlind: newLevel.smallBlind,
+      bigBlind: newLevel.bigBlind,
+      modules: {
+        ...table.modules,
+        tournament: {
+          ...t,
+          currentBlindLevel: newLevelIdx,
+          nextBlindIncrease: Date.now() + newLevel.duration,
+        },
+      },
+    });
+    return {
+      ok: true,
+      newLevel: newLevel.level,
+      sb: newLevel.smallBlind,
+      bb: newLevel.bigBlind,
+    };
+  },
+});
+
 export const setCurrentPlayer = mutation({
   args: { tableId: v.id("tables"), seatPosition: v.number() },
   handler: async (ctx, args) => {
