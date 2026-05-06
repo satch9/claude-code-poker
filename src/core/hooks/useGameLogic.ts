@@ -11,7 +11,7 @@ interface GameAction {
   maxAmount?: number;
 }
 
-export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => void) => {
+export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () => void) => {
   const { user } = useAuth();
   const [selectedAction, setSelectedAction] = useState<GameAction | null>(null);
   const [raiseAmount, setRaiseAmount] = useState<number>(0);
@@ -303,20 +303,9 @@ export const useGameLogic = (tableId: Id<'tables'> | null, onLeaveTable?: () => 
     }
   }, [gameState?.phase, gameState?.pot]);
 
-  // Check for tournament end and redirect to lobby
-  useEffect(() => {
-    if (!table || !user || !onLeaveTable) return;
-
-    if (table.status === 'finished' && table.gameType === 'tournament') {
-      // Tournament has ended, redirect to lobby after a delay to show final results
-      const timeoutId = setTimeout(() => {
-        console.log('Tournament finished, redirecting to lobby...');
-        onLeaveTable();
-      }, 5000); // 5 second delay to see results
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [table?.status, table?.gameType, user, onLeaveTable]);
+  // (Ancien auto-redirect retiré : le scoreboard a maintenant un bouton
+  // explicite 'Retour au lobby'. L'auto-redirect au bout de 5s coupait
+  // la modale dès qu'on revenait voir le classement depuis le lobby.)
 
   // Calculate betting info
   const getBettingInfo = () => {
