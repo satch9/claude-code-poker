@@ -773,8 +773,18 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )}
 
 
-              {/* Player seats around the table */}
-              {seats.map((seat) => (
+              {/* Player seats around the table.
+                  En tournoi running, on n'affiche pas les sièges vides
+                  (= joueurs éliminés) pour ne pas polluer la vue. */}
+              {seats
+                .filter((seat) => {
+                  if (!seat.isEmpty) return true;
+                  const tournamentRunning =
+                    table.gameType === "tournament" &&
+                    table.modules?.tournament?.status === "running";
+                  return !tournamentRunning;
+                })
+                .map((seat) => (
                 <div
                   key={seat.position}
                   className={cn(
