@@ -1,0 +1,31 @@
+/* Tokens CSS dynamiques (exposés en variables pour usages runtime, ex: feutre table). */
+:root {
+  --felt: #0F4C3A;
+  --felt-rim: #1A2E26;
+  --gold: #D4AF37;
+  --tap-min: 44px;
+  --tap-comfort: 48px;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+/* Helpers safe-area iOS (notch + home indicator). */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

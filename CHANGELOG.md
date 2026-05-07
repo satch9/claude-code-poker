@@ -5,6 +5,23 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 0 fondations mobile-first
+
+### Ajouté
+- Tokens Tailwind étendus : breakpoints `xs 320` à `2xl 1536`, couleurs UI minimaliste (`bg-base/surface/elevated`, `text-primary/muted`, `accent`, `sem-*`, `felt`, `gold`), motion (fast/base/slow), tap targets 44px / 48px.
+- Variables CSS dynamiques (`src/shared/styles/tokens.css`) — single source of truth pour `--felt`, `--felt-rim`, `--gold` ; helpers safe-area iOS.
+- Constante `BREAKPOINTS` (`src/shared/constants/breakpoints.ts`) pour partager la valeur `lg` entre AppShell et tests.
+- Primitives partagées dans `src/shared/ui/` : `Button`, `Card`, `Input`, `BottomSheet`, `TabBar`, `AppShell`. Barrel export `src/shared/ui/index.ts`.
+- Hooks `useMediaQuery` et `useOrientation` (`src/shared/hooks/`).
+- Infra de test composants : jsdom + `@testing-library/react` + `@testing-library/jest-dom` + `@testing-library/user-event` ; suite `tests/ui/**` avec 35 tests (TDD).
+- `AppShell` responsive : bottom tabs sur < 1024 px, sidebar rail sur ≥ 1024 px, mode `fullscreen` masquant tout le chrome pour la table de jeu, slot `activeTableBanner` pour bandeau "table active" (câblé Sprint 2).
+- Intégration de `AppShell` dans `AppMain` : 4 onglets (Lobby / Tournois / Stats / Profil), placeholders alerte pour Tournois (Sprint 3) et Profil (Sprint 5), aucune régression fonctionnelle.
+
+### Notes
+- Les écrans existants (Lobby, PokerTable, StatsPage, CreateTableForm, LoginForm) ne sont pas refondus dans ce sprint — ils sont juste enveloppés par le nouveau shell. Refonte écran par écran à partir du Sprint 1 (Table en priorité).
+- Tokens legacy `poker-green`, `poker-gold`, `poker.*` conservés intacts pour compatibilité avec les écrans non-refondus.
+- Captures de référence à 320 / 375 / 768 / 1024 / 1280 px à produire manuellement après déploiement (cf. `docs/superpowers/specs/screenshots/sprint-0/README.md`).
+
 ## [1.2.0] - 2025-07-10
 
 ### 🎨 Ajouté

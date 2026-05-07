@@ -6,6 +6,14 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        // 'xs' ajouté pour cibler les petits écrans (320 px). Les autres
+        // breakpoints (sm/md/lg/xl/2xl) restent aux valeurs Tailwind par défaut
+        // (640/768/1024/1280/1536) pour ne pas casser le code legacy qui en
+        // dépend. Le breakpoint design "sm: 375" du spec mobile-first est
+        // implicitement couvert par le base mobile-first sans préfixe.
+        'xs': '320px',
+      },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
@@ -84,12 +92,33 @@ export default {
           'player-current': '#f59e0b', // Amber-500
           'player-folded': '#6b7280',  // Gray-500
           'player-allin': '#ef4444',   // Red-500
-          
+
           // Cartes
           'card-red': '#dc2626',       // Red-600
           'card-black': '#1f2937',     // Gray-800
           'card-back': '#312e81',      // Indigo-800
-        }
+        },
+        'bg-base': '#0B0F14',
+        'bg-surface': '#151B23',
+        'bg-elevated': '#1E2630',
+        'text-primary': '#E6EDF3',
+        'text-muted': '#8B98A8',
+        'border-default': '#2A3340',
+        'accent': {
+          DEFAULT: '#3B82F6',
+          hover: '#2563EB',
+        },
+        'sem': {
+          success: '#10B981',
+          danger: '#EF4444',
+          warning: '#F59E0B',
+          info: '#06B6D4',
+        },
+        'felt': {
+          DEFAULT: 'var(--felt)',
+          rim: 'var(--felt-rim)',
+        },
+        'gold': 'var(--gold)',
       },
       
       // Tailles standardisées
@@ -115,7 +144,20 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(-10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         }
-      }
+      },
+      transitionDuration: {
+        'fast': '120ms',
+        'base': '200ms',
+        'slow': '320ms',
+      },
+      minHeight: {
+        'tap': '44px',
+        'tap-comfort': '48px',
+      },
+      minWidth: {
+        'tap': '44px',
+        'tap-comfort': '48px',
+      },
     },
   },
   plugins: [],
