@@ -713,9 +713,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         isMobile ? "overflow-hidden" : "overflow-x-auto"
       )}>
 
-        {/* Center - Table (full width après refactor) */}
+        {/* Center - Table (full width après refactor)
+            justify-center : centre verticalement la table quand sa
+            hauteur est inférieure au parent (cas desktop h-[700px]
+            dans un viewport plus grand). Sinon le 700px était collé
+            en haut avec un vide visible en dessous. */}
         <div className={cn(
-          "flex-1 flex flex-col items-center",
+          "flex-1 flex flex-col items-center justify-center",
           responsiveClasses.responsivePadding,
           isIOS && "safe-area"
         )}>
