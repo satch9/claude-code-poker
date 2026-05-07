@@ -1,4 +1,4 @@
-import { mutation, query, internalMutation } from "./_generated/server"; // query + internalMutation used in Tasks 5 & 6
+import { mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireUserId } from "./shared/auth";
