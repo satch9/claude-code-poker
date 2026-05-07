@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       screens: {
+        // 'xs' ajouté pour cibler les petits écrans (320 px). Les autres
+        // breakpoints (sm/md/lg/xl/2xl) restent aux valeurs Tailwind par défaut
+        // (640/768/1024/1280/1536) pour ne pas casser le code legacy qui en
+        // dépend. Le breakpoint design "sm: 375" du spec mobile-first est
+        // implicitement couvert par le base mobile-first sans préfixe.
         'xs': '320px',
-        'sm': '375px',
-        'md': '768px',
-        'lg': '1024px',
-        'xl': '1280px',
-        '2xl': '1536px',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
