@@ -4,6 +4,7 @@ import { Player } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
 import { PlayerTimer } from "./PlayerTimer";
 import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
+import { BlindBadge } from "./BlindBadge";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
 
@@ -136,21 +137,8 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
         )}
       >
         {/* Blind indicators */}
-        {(isSmallBlind || isBigBlind) && (
-          <div
-            className={cn(
-              "absolute -top-2 -left-2 text-white rounded-full flex items-center justify-center font-bold shadow-lg whitespace-nowrap border-2 border-white",
-              isSmallBlind 
-                ? "bg-orange-500" // Orange pour Small Blind
-                : "bg-red-600",   // Rouge pour Big Blind
-              isMobile
-                ? "min-w-[24px] h-5 text-xs px-1.5"
-                : "min-w-[28px] h-6 text-xs px-2"
-            )}
-          >
-            {isSmallBlind ? "SB" : "BB"}
-          </div>
-        )}
+        {isSmallBlind && <BlindBadge type="small" />}
+        {isBigBlind && <BlindBadge type="big" />}
 
         {/* Player avatar and info */}
         <div
