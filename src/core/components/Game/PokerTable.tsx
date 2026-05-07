@@ -5,8 +5,7 @@ import { Card } from "../UI/Card";
 import { BettingControls } from "./BettingControls";
 import { ShowdownResults } from "./ShowdownResults";
 import { HeaderActionIcons } from "./HeaderActionIcons";
-import { ActionFeedDrawer } from "./ActionFeedDrawer";
-import { ChatDrawer } from "./ChatDrawer";
+import { Drawer } from "../UI/Drawer";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { TournamentInfo } from "./TournamentInfo";
 import { Button } from "../UI/Button";
@@ -22,6 +21,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrientation } from "@/shared/hooks/useOrientation";
+import { TableRightPanel } from './TableRightPanel';
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -218,14 +218,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   onLeaveTable,
   onJoinSeat,
 }) => {
-  const [showGameInfo, setShowGameInfo] = useState(false);
   // (showMobileMenu / showMobileSidebar retirés — remplacés par le top
   // header mobile + drawers communs au desktop)
+  // (showGameInfo retiré : les infos partie — joueurs, phase, mise, blinds,
+  // type, pot — sont déjà visibles directement à l'écran de jeu.)
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [showChatDrawer, setShowChatDrawer] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-  const [showActionsDrawer, setShowActionsDrawer] = useState(false);
+  // Drawer unifié contenant 3 onglets : Joueurs / Historique / Chat.
+  // Remplace les anciens drawers ChatDrawer + ActionFeedDrawer.
+  const [showTablePanelDrawer, setShowTablePanelDrawer] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
   const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
@@ -273,6 +275,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   const isLoading = !tableId || !gameState || !players || !table;
 
+  // Résumé des joueurs pour le panneau latéral desktop
+  const playersForPanel = (players ?? []).map((p) => ({
+    userId: String(p.userId),
+    name: (p as any).user?.name || 'Joueur',
+    chips: p.chips ?? 0,
+    isFolded: !!p.isFolded,
+    isAllIn: !!p.isAllIn,
+    isCurrent: p.userId === currentPlayer?.userId,
+  }));
+
   // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
   // on appelle joinTable pour reset le flag (il vient de revenir).
   useEffect(() => {
@@ -290,7 +302,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const potOdds = getPotOdds();
   const handStrength = getHandStrength();
   void getGameStats; // hook conservé pour usage futur
-  const currentBet = gameState?.currentBet || 0;
 
   // Rotation à appliquer pour que le viewer (currentPlayer) soit toujours en bas
   // (angle = Math.PI / 2). Si pas de currentPlayer, pas de rotation.
@@ -621,11 +632,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </Button>
               )}
             <HeaderActionIcons
-              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onTogglePanel={() => setShowTablePanelDrawer((v) => !v)}
               onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
-              onToggleGameInfo={() => setShowGameInfo((v) => !v)}
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
-              onToggleActions={() => setShowActionsDrawer((v) => !v)}
               showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
             />
             <Button variant="secondary" size="sm" onClick={onLeaveTable}>
@@ -666,11 +675,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )}
 
             <HeaderActionIcons
-              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onTogglePanel={() => setShowTablePanelDrawer((v) => !v)}
               onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
-              onToggleGameInfo={() => setShowGameInfo((v) => !v)}
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
-              onToggleActions={() => setShowActionsDrawer((v) => !v)}
               showInvite={
                 !!table.inviteCode && authUser?._id === table.creatorId
               }
@@ -909,8 +916,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Right sidebar desktop supprimée — Chat / Paramètres / Actions rapides
-            sont désormais accessibles via les icônes du header (drawers). */}
+        {/* Panneau Joueurs / Historique / Chat — désormais un drawer
+            unifié sur toutes les tailles d'écran, ouvert via l'icône 👥
+            du header. */}
 
         {/* Mobile : la navbar verticale et le menu modal ont été retirés.
             Le top header mobile (plus haut) + les drawers (Chat/Paramètres/
@@ -939,126 +947,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           />
         ) : null}
 
-        {/* Game info modal */}
-        {showGameInfo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowGameInfo(false)}
-            />
-
-            {/* Modal content */}
-            <div className="relative bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 min-w-80 max-w-md mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Informations de la partie
-                </h3>
-                <button
-                  onClick={() => setShowGameInfo(false)}
-                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {/* Players count */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600 font-medium">
-                    Joueurs connectés
-                  </span>
-                  <span className="font-semibold text-gray-900">
-                    {players.length}/{table.maxPlayers}
-                  </span>
-                </div>
-
-                {/* Game phase */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600 font-medium">
-                    Phase actuelle
-                  </span>
-                  <span
-                    className={cn(
-                      "font-semibold px-3 py-1 rounded-full text-sm",
-                      gameState.phase === "waiting" &&
-                      "bg-gray-200 text-gray-700",
-                      gameState.phase === "preflop" &&
-                      "bg-blue-200 text-blue-700",
-                      gameState.phase === "flop" &&
-                      "bg-green-200 text-green-700",
-                      gameState.phase === "turn" &&
-                      "bg-yellow-200 text-yellow-700",
-                      gameState.phase === "river" &&
-                      "bg-orange-200 text-orange-700",
-                      gameState.phase === "showdown" &&
-                      "bg-purple-200 text-purple-700"
-                    )}
-                  >
-                    {gameState.phase.toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Current bet */}
-                {currentBet > 0 && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium">
-                      Mise actuelle
-                    </span>
-                    <span className="font-semibold text-red-600">
-                      {currentBet.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
-                {/* Blinds */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600 font-medium">Blinds</span>
-                  <span className="font-semibold text-gray-900">
-                    {table.smallBlind}/{table.bigBlind}
-                  </span>
-                </div>
-
-                {/* Table type */}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600 font-medium">
-                    Type de partie
-                  </span>
-                  <span
-                    className={cn(
-                      "font-semibold px-3 py-1 rounded-full text-sm",
-                      table.gameType === "tournament"
-                        ? "bg-purple-200 text-purple-700"
-                        : "bg-green-200 text-green-700"
-                    )}
-                  >
-                    {table.gameType === "tournament" ? "TOURNOI" : "CASH GAME"}
-                  </span>
-                </div>
-
-                {/* Pot amount */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Pot total</span>
-                  <span className="font-bold text-green-600 text-lg">
-                    {gameState.pot.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Rebuy Dialog */}
         {showRebuyDialog && currentPlayer && authUser && (
@@ -1087,15 +975,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         )}
 
         {/* Drawers déclenchés par les icônes du header */}
-        <ActionFeedDrawer
-          isOpen={showActionsDrawer}
-          onClose={() => setShowActionsDrawer(false)}
-          actions={actionHistory}
-        />
-        <ChatDrawer
-          isOpen={showChatDrawer}
-          onClose={() => setShowChatDrawer(false)}
-        />
+        <Drawer
+          isOpen={showTablePanelDrawer}
+          onClose={() => setShowTablePanelDrawer(false)}
+          title="Joueurs / Historique / Chat"
+        >
+          <TableRightPanel
+            actions={actionHistory as unknown[] ?? []}
+            players={playersForPanel}
+          />
+        </Drawer>
         <SettingsDrawer
           isOpen={showSettingsDrawer}
           onClose={() => setShowSettingsDrawer(false)}
