@@ -2,63 +2,87 @@ import React, { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
-import { Button } from '../UI/Button';
+import { Button } from '../../../shared/ui/Button';
 import { isValidUserId } from '../../../shared/utils/validation';
+import { cn } from '../../../shared/utils/cn';
 
 interface PlayerStatsProps {
   userId: Id<'users'>;
   showDetailed?: boolean;
 }
 
+const StatTile: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  variant?: 'accent' | 'success' | 'purple' | 'warning' | 'danger' | 'muted';
+}> = ({ label, value, variant = 'muted' }) => (
+  <div
+    className={cn(
+      'rounded-lg p-3 text-center border',
+      variant === 'accent' && 'bg-accent/10 border-accent/30',
+      variant === 'success' && 'bg-sem-success/10 border-sem-success/30',
+      variant === 'purple' && 'bg-purple-500/10 border-purple-500/30',
+      variant === 'warning' && 'bg-sem-warning/10 border-sem-warning/30',
+      variant === 'danger' && 'bg-sem-danger/10 border-sem-danger/30',
+      variant === 'muted' && 'bg-bg-elevated border-border-default',
+    )}
+  >
+    <div
+      className={cn(
+        'text-xl font-bold',
+        variant === 'accent' && 'text-accent',
+        variant === 'success' && 'text-sem-success',
+        variant === 'purple' && 'text-purple-300',
+        variant === 'warning' && 'text-sem-warning',
+        variant === 'danger' && 'text-sem-danger',
+        variant === 'muted' && 'text-text-primary',
+      )}
+    >
+      {value}
+    </div>
+    <div className="text-xs text-text-muted">{label}</div>
+  </div>
+);
+
 export const PlayerStats: React.FC<PlayerStatsProps> = ({
   userId,
   showDetailed = false,
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  
-  // Validate userId
+
   const userIdValid = isValidUserId(userId);
 
   const userStats = useQuery(
     api.users.stats.getUserStats,
-    userIdValid ? { userId } : "skip"
+    userIdValid ? { userId } : 'skip',
   );
   const userRanking = useQuery(
     api.users.stats.getUserRanking,
-    userIdValid ? { userId } : "skip"
+    userIdValid ? { userId } : 'skip',
   );
 
   if (!userStats) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-        </div>
+      <div className="bg-bg-surface border border-border-default rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-bg-elevated rounded w-3/4 mb-4" />
+        <div className="h-8 bg-bg-elevated rounded w-1/2 mb-2" />
+        <div className="h-4 bg-bg-elevated rounded w-full" />
       </div>
     );
   }
 
   if (!showDetailed) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Mes statistiques</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-poker-green-50 rounded-lg">
-            <div className="text-xl font-bold text-poker-green-600">{userStats.gamesWon}</div>
-            <div className="text-sm text-gray-600">Victoires</div>
-          </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-xl font-bold text-blue-600">{userStats.gamesPlayed}</div>
-            <div className="text-sm text-gray-600">Parties</div>
-          </div>
+      <div className="bg-bg-surface border border-border-default rounded-lg p-4">
+        <h3 className="text-base font-semibold text-text-primary mb-3">Mes statistiques</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <StatTile label="Victoires" value={userStats.gamesWon} variant="success" />
+          <StatTile label="Parties" value={userStats.gamesPlayed} variant="accent" />
         </div>
         {userStats.gamesPlayed > 0 && (
-          <div className="mt-4 text-center">
-            <div className="text-sm text-gray-600">
-              Taux de victoire: <span className="font-bold text-poker-green-600">{userStats.winRate}%</span>
-            </div>
+          <div className="mt-3 text-center text-sm text-text-muted">
+            Taux de victoire :{' '}
+            <span className="font-bold text-sem-success">{userStats.winRate}%</span>
           </div>
         )}
       </div>
@@ -66,196 +90,189 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">Statistiques détaillées</h3>
+    <div className="bg-bg-surface border border-border-default rounded-lg p-4 md:p-6 text-text-primary">
+      <header className="flex justify-between items-center mb-5 gap-2">
+        <h3 className="text-lg font-semibold">Statistiques détaillées</h3>
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setShowLeaderboard(!showLeaderboard)}
+          onClick={() => setShowLeaderboard((v) => !v)}
         >
           {showLeaderboard ? 'Mes stats' : 'Classement'}
         </Button>
-      </div>
+      </header>
 
       {showLeaderboard && userRanking ? (
         <div>
-          <h4 className="text-lg font-medium text-gray-800 mb-4">Classement des joueurs</h4>
-          
-          {/* User's current position */}
-          <div className="mb-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-            <div className="text-center">
-              <div className="text-lg font-bold text-orange-600">
-                Votre position: #{userRanking.userRank}
-              </div>
-              <div className="text-sm text-orange-500">
-                sur {userRanking.totalPlayers} joueurs
-              </div>
+          <h4 className="text-base font-medium text-text-primary mb-3">
+            Classement des joueurs
+          </h4>
+
+          <div className="mb-4 p-3 rounded-lg bg-gold/10 border border-gold/30 text-center">
+            <div className="text-lg font-bold text-gold">
+              Votre position : #{userRanking.userRank}
+            </div>
+            <div className="text-sm text-text-muted">
+              sur {userRanking.totalPlayers} joueurs
             </div>
           </div>
 
-          {/* Top players */}
-          <div className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {userRanking.topPlayers.map((player, index) => (
-              <div 
+              <li
                 key={index}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  index === 0 ? 'bg-yellow-50 border border-yellow-200' :
-                  index === 1 ? 'bg-gray-50 border border-gray-200' :
-                  index === 2 ? 'bg-orange-50 border border-orange-200' :
-                  'bg-white border border-gray-100'
-                }`}
+                className={cn(
+                  'flex items-center justify-between p-3 rounded-lg border',
+                  index === 0 && 'bg-gold/10 border-gold/30',
+                  index === 1 && 'bg-bg-elevated border-border-default',
+                  index === 2 && 'bg-sem-warning/10 border-sem-warning/30',
+                  index > 2 && 'bg-bg-surface border-border-default',
+                )}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    index === 0 ? 'bg-yellow-500 text-white' :
-                    index === 1 ? 'bg-gray-400 text-white' :
-                    index === 2 ? 'bg-orange-500 text-white' :
-                    'bg-gray-200 text-gray-600'
-                  }`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0',
+                      index === 0 && 'bg-gold text-black',
+                      index === 1 && 'bg-text-muted text-bg-base',
+                      index === 2 && 'bg-sem-warning text-black',
+                      index > 2 && 'bg-bg-elevated text-text-muted',
+                    )}
+                  >
                     {player.rank}
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{player.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {player.gamesPlayed} parties • {player.winRate}% victoires
+                  <div className="min-w-0">
+                    <div className="font-medium text-text-primary truncate">
+                      {player.name}
+                    </div>
+                    <div className="text-xs text-text-muted">
+                      {player.gamesPlayed} parties · {player.winRate}% victoires
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-poker-green-600">
+                <div className="text-right flex-shrink-0">
+                  <div className="font-bold text-sem-success">
                     {player.totalWinnings.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-500">jetons</div>
+                  <div className="text-xs text-text-muted">jetons</div>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       ) : (
         <div>
-          {/* Overall performance */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="text-center p-4 bg-poker-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-poker-green-600">{userStats.gamesWon}</div>
-              <div className="text-sm text-gray-600">Victoires</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{userStats.gamesPlayed}</div>
-              <div className="text-sm text-gray-600">Parties</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{userStats.winRate}%</div>
-              <div className="text-sm text-gray-600">Taux victoire</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{userStats.totalWinnings.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">Jetons gagnés</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <StatTile label="Victoires" value={userStats.gamesWon} variant="success" />
+            <StatTile label="Parties" value={userStats.gamesPlayed} variant="accent" />
+            <StatTile label="Taux victoire" value={`${userStats.winRate}%`} variant="purple" />
+            <StatTile
+              label="Jetons gagnés"
+              value={userStats.totalWinnings.toLocaleString()}
+              variant="success"
+            />
           </div>
 
-          {/* Detailed metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-lg font-bold text-orange-600">{userStats.biggestWin.toLocaleString()}</div>
-              <div className="text-xs text-gray-600">Plus gros gain</div>
-            </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-lg font-bold text-red-600">{userStats.tournamentWins}</div>
-              <div className="text-xs text-gray-600">Tournois gagnés</div>
-            </div>
-            <div className="text-center p-3 bg-indigo-50 rounded-lg">
-              <div className="text-lg font-bold text-indigo-600">{userStats.handsPlayed}</div>
-              <div className="text-xs text-gray-600">Mains jouées</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+            <StatTile label="Plus gros gain" value={userStats.biggestWin.toLocaleString()} variant="warning" />
+            <StatTile label="Tournois gagnés" value={userStats.tournamentWins} variant="danger" />
+            <StatTile label="Mains jouées" value={userStats.handsPlayed} variant="muted" />
           </div>
 
-          {/* Playing style */}
-          <div className="mb-6">
-            <h4 className="text-lg font-medium text-gray-800 mb-3">Style de jeu</h4>
-            <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="mb-5">
+            <h4 className="text-sm font-medium text-text-primary mb-2">Style de jeu</h4>
+            <div className="bg-bg-elevated border border-border-default p-3 rounded-lg">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-sm">
                 <div>
-                  <div className="font-bold text-red-600">{userStats.actionBreakdown.fold}</div>
-                  <div className="text-gray-600">Fold</div>
+                  <div className="font-bold text-sem-danger">{userStats.actionBreakdown.fold}</div>
+                  <div className="text-xs text-text-muted">Fold</div>
                 </div>
                 <div>
-                  <div className="font-bold text-gray-600">{userStats.actionBreakdown.check}</div>
-                  <div className="text-gray-600">Check</div>
+                  <div className="font-bold text-text-muted">{userStats.actionBreakdown.check}</div>
+                  <div className="text-xs text-text-muted">Check</div>
                 </div>
                 <div>
-                  <div className="font-bold text-blue-600">{userStats.actionBreakdown.call}</div>
-                  <div className="text-gray-600">Call</div>
+                  <div className="font-bold text-accent">{userStats.actionBreakdown.call}</div>
+                  <div className="text-xs text-text-muted">Call</div>
                 </div>
                 <div>
-                  <div className="font-bold text-green-600">{userStats.actionBreakdown.raise}</div>
-                  <div className="text-gray-600">Raise</div>
+                  <div className="font-bold text-sem-success">{userStats.actionBreakdown.raise}</div>
+                  <div className="text-xs text-text-muted">Raise</div>
                 </div>
                 <div>
-                  <div className="font-bold text-purple-600">{userStats.actionBreakdown.allIn}</div>
-                  <div className="text-gray-600">All-in</div>
+                  <div className="font-bold text-purple-300">{userStats.actionBreakdown.allIn}</div>
+                  <div className="text-xs text-text-muted">All-in</div>
                 </div>
               </div>
-              <div className="mt-3 text-center">
-                <div className="text-sm text-gray-600">
-                  Action favorite: <span className="font-bold capitalize text-poker-green-600">{userStats.mostFrequentAction}</span>
-                </div>
+              <div className="mt-3 text-center text-xs text-text-muted">
+                Action favorite :{' '}
+                <span className="font-bold capitalize text-sem-success">
+                  {userStats.mostFrequentAction}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Win streaks */}
           {(userStats.currentWinStreak > 0 || userStats.longestWinStreak > 0) && (
-            <div className="mb-6">
-              <h4 className="text-lg font-medium text-gray-800 mb-3">Séries de victoires</h4>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="mb-5">
+              <h4 className="text-sm font-medium text-text-primary mb-2">Séries de victoires</h4>
+              <div className="grid grid-cols-2 gap-3">
                 {userStats.currentWinStreak > 0 && (
-                  <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-xl font-bold text-green-600">🔥 {userStats.currentWinStreak}</div>
-                    <div className="text-sm text-green-600">Série actuelle</div>
-                  </div>
+                  <StatTile
+                    label="Série actuelle"
+                    value={`🔥 ${userStats.currentWinStreak}`}
+                    variant="success"
+                  />
                 )}
                 {userStats.longestWinStreak > 0 && (
-                  <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div className="text-xl font-bold text-yellow-600">🏆 {userStats.longestWinStreak}</div>
-                    <div className="text-sm text-yellow-600">Meilleure série</div>
-                  </div>
+                  <StatTile
+                    label="Meilleure série"
+                    value={`🏆 ${userStats.longestWinStreak}`}
+                    variant="warning"
+                  />
                 )}
               </div>
             </div>
           )}
 
-          {/* Recent activity */}
           {userStats.recentActivity.length > 0 && (
             <div>
-              <h4 className="text-lg font-medium text-gray-800 mb-3">Activité récente</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <h4 className="text-sm font-medium text-text-primary mb-2">Activité récente</h4>
+              <ul className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
                 {userStats.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-gray-900">
+                  <li
+                    key={index}
+                    className="flex justify-between items-center p-2 bg-bg-elevated border border-border-default rounded-lg text-sm"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className={`inline-block w-2 h-2 rounded-full ${
-                        activity.action === 'win' ? 'bg-green-500' :
-                        activity.action === 'all-in' ? 'bg-purple-500' :
-                        'bg-blue-500'
-                      }`}></span>
-                      <span className="text-sm font-medium capitalize text-gray-900">{activity.action}</span>
+                      <span
+                        className={cn(
+                          'inline-block w-2 h-2 rounded-full',
+                          activity.action === 'win' && 'bg-sem-success',
+                          activity.action === 'all-in' && 'bg-purple-300',
+                          activity.action !== 'win' && activity.action !== 'all-in' && 'bg-accent',
+                        )}
+                      />
+                      <span className="font-medium capitalize text-text-primary">
+                        {activity.action}
+                      </span>
                       {activity.phase && (
-                        <span className="text-xs text-gray-500">({activity.phase})</span>
+                        <span className="text-xs text-text-muted">({activity.phase})</span>
                       )}
                     </div>
                     <div className="text-right">
                       {activity.amount && (
-                        <div className="text-sm font-bold text-poker-green-700">
+                        <div className="text-sm font-bold text-sem-success">
                           {activity.amount.toLocaleString()}
                         </div>
                       )}
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-text-muted">
                         {new Date(activity.timestamp).toLocaleDateString()}
                       </div>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </div>
