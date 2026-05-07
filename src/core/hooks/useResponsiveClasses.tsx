@@ -60,9 +60,12 @@ export const useResponsiveClasses = () => {
     // radiusY agrandi (45 mobile, 50 desktop) pour pousser les sièges N/S
     // quasiment hors du feutre (qui est scaleY(0.7) ≈ centre vertical 70%),
     // libérant de la place au centre pour le pot + community cards.
+    // Pas d'override iOS (radiusX=0 empilait tous les sièges au centre) :
+    // le heads-up portrait iOS a sa branche dédiée dans PokerTable.tsx,
+    // les autres cas iOS doivent utiliser le même layout que mobile non-iOS.
     positioning: {
-      radiusX: isMobile ? (isIOS ? 0 : 50) : 50,
-      radiusY: isMobile ? (isIOS ? 42 : 45) : 50,
+      radiusX: 50,
+      radiusY: isMobile ? 45 : 50,
     },
     
     // Classes d'état des joueurs
