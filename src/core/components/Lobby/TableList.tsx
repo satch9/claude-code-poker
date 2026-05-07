@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { TableCard } from "./TableCard";
-import { Button } from "../UI/Button";
 import { Table } from "../../../shared/types";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { cn } from "../../../shared/utils/cn";
+
+type Filter = "all" | "cash" | "tournament";
 
 interface TableListProps {
   tables: Table[];
@@ -10,115 +12,92 @@ interface TableListProps {
   loading?: boolean;
 }
 
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: "all", label: "Toutes" },
+  { id: "cash", label: "Cash" },
+  { id: "tournament", label: "Tournois" },
+];
+
+const SkeletonCard: React.FC = () => (
+  <div className="bg-bg-surface border border-border-default rounded-lg p-4 animate-pulse">
+    <div className="h-4 bg-bg-elevated rounded w-1/2 mb-2" />
+    <div className="h-3 bg-bg-elevated rounded w-1/3 mb-4" />
+    <div className="h-3 bg-bg-elevated rounded w-2/3 mb-2" />
+    <div className="h-3 bg-bg-elevated rounded w-1/2 mb-4" />
+    <div className="flex justify-between items-center">
+      <div className="h-3 bg-bg-elevated rounded w-1/4" />
+      <div className="h-8 bg-bg-elevated rounded w-20" />
+    </div>
+  </div>
+);
+
 export const TableList: React.FC<TableListProps> = ({
   tables,
   onJoinTable,
   loading = false,
 }) => {
-  const [filter, setFilter] = useState<"all" | "cash" | "tournament">("all");
-
-  // Note: la checkbox "Tables privées" a été retirée — depuis le fix
-  // B-runtime.2 (1.B), getPublicTables filtre déjà isPrivate=false côté
-  // serveur, donc la liste ne contient plus que des tables publiques.
-  const filteredTables = tables.filter((table) => {
-    return filter === "all" || table.gameType === filter;
-  });
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="flex justify-between">
-              <div className="h-3 bg-gray-200 rounded w-1/6"></div>
-              <div className="h-8 bg-gray-200 rounded w-20"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const [filter, setFilter] = useState<Filter>("all");
+  const filtered = tables.filter((t) => filter === "all" || t.gameType === filter);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header — titre + filtres. Le bouton "Créer une table" est maintenant
-          dans le header global du lobby (Lobby.tsx). */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <section className="space-y-3">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-base md:text-lg font-bold text-text-primary">
           Tables disponibles
         </h2>
-
-        {/* Filtres — scrollable horizontalement si nécessaire sur mobile */}
-        <div className="flex items-center gap-2 overflow-x-auto -mx-1 px-1 pb-1 sm:overflow-visible">
-          <Button
-            variant={filter === "all" ? "primary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("all")}
-          >
-            Toutes
-          </Button>
-          <Button
-            variant={filter === "cash" ? "primary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("cash")}
-          >
-            Cash
-          </Button>
-          <Button
-            variant={filter === "tournament" ? "primary" : "ghost"}
-            size="sm"
-            onClick={() => setFilter("tournament")}
-          >
-            Tournois
-          </Button>
+        <div
+          role="tablist"
+          aria-label="Filtre par type de partie"
+          className="inline-flex rounded-lg bg-bg-elevated p-1 border border-border-default"
+        >
+          {FILTERS.map((f) => {
+            const isActive = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "min-h-tap px-3 rounded-md text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-text-primary",
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </header>
 
-      {/* Tables grid */}
-      {filteredTables.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTables.map((table) => (
-            <TableCard key={table._id} table={table} onJoin={onJoinTable} />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : filtered.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((t) => (
+            <TableCard key={t._id} table={t} onJoin={onJoinTable} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-lg mb-4">
-            Aucune table disponible
+        <div className="text-center py-10 px-4 bg-bg-surface border border-border-default rounded-lg">
+          <div className="text-3xl mb-2" aria-hidden>
+            🃏
           </div>
-          <p className="text-gray-500 mb-6">
+          <p className="text-text-primary font-medium">Aucune table disponible</p>
+          <p className="mt-1 text-sm text-text-muted">
             {filter !== "all"
-              ? `Aucune table ${filter} trouvée. Essayez de changer les filtres.`
-              : "Soyez le premier à créer une table !"}
+              ? `Aucune table ${filter === "cash" ? "cash" : "tournoi"} pour le moment.`
+              : "Sois le premier à en créer une !"}
           </p>
         </div>
       )}
-
-      {/* Quick stats */}
-      <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-          <div>
-            <div className="text-lg sm:text-2xl font-bold text-gray-900">
-              {tables.length}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500">Tables</div>
-          </div>
-          <div>
-            <div className="text-lg sm:text-2xl font-bold text-poker-green-600">
-              {tables.filter((t) => t.gameType === "cash").length}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500">Cash</div>
-          </div>
-          <div>
-            <div className="text-lg sm:text-2xl font-bold text-purple-600">
-              {tables.filter((t) => t.gameType === "tournament").length}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500">Tournois</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 };
