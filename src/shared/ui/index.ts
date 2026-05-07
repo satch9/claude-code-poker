@@ -15,3 +15,5 @@ export type { TabBarProps, TabItem } from './TabBar';
 
 export { AppShell } from './AppShell';
 export type { AppShellProps } from './AppShell';
+
+export { ToastProvider, useToast } from './Toast';
