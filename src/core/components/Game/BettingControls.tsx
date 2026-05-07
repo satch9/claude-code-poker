@@ -31,6 +31,8 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   onAction,
   disabled = false,
   className,
+  potOdds,
+  handStrength,
 }) => {
   const getAction = (type: GameAction['action']) =>
     availableActions.find((a) => a.action === type);
@@ -145,6 +147,28 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
   return (
     <>
+      {(potOdds || handStrength) && (
+        <div className="flex flex-wrap gap-2 px-2 pb-1 text-xs">
+          {potOdds && (
+            <span className="px-2 py-0.5 rounded-full bg-bg-elevated text-text-muted">
+              Odds <span className="text-gold font-semibold">{potOdds}</span>
+            </span>
+          )}
+          {handStrength && (
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full bg-bg-elevated font-semibold',
+                handStrength === 'Strong' && 'text-sem-success',
+                handStrength === 'Good' && 'text-accent',
+                handStrength === 'Medium' && 'text-sem-warning',
+                handStrength === 'Weak' && 'text-sem-danger',
+              )}
+            >
+              Hand: {handStrength}
+            </span>
+          )}
+        </div>
+      )}
       <div className={cn('flex gap-2 p-2', className)}>
         {foldAction && (
           <Button

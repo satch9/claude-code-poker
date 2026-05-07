@@ -272,3 +272,26 @@ describe('BettingControls — Desktop (inline)', () => {
     expect(onAction).toHaveBeenCalledWith({ action: 'raise', amount: 100 });
   });
 });
+
+describe('BettingControls — info badges', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockMatchMedia(false);
+  });
+
+  it('renders pot odds when provided', () => {
+    render(<BettingControls {...baseProps} potOdds="2.5:1" />);
+    expect(screen.getByText(/2\.5:1/)).toBeInTheDocument();
+  });
+
+  it('renders hand strength when provided', () => {
+    render(<BettingControls {...baseProps} handStrength="Strong" />);
+    expect(screen.getByText(/strong/i)).toBeInTheDocument();
+  });
+
+  it('does not render badges when props are missing', () => {
+    render(<BettingControls {...baseProps} />);
+    expect(screen.queryByText(/odds/i)).toBeNull();
+    expect(screen.queryByText(/hand:/i)).toBeNull();
+  });
+});
