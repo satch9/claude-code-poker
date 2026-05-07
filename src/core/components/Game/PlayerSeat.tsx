@@ -3,6 +3,7 @@ import { Card } from "../UI/Card";
 import { Player } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
 import { PlayerTimer } from "./PlayerTimer";
+import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
 
@@ -74,52 +75,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   }, [player?.currentBet]);
 
   if (isEmpty) {
-    return (
-      <div
-        className={cn(
-          "bg-gray-700/50 border-2 border-dashed border-gray-500 rounded-2xl hover:bg-gray-600/50 cursor-pointer transition-all duration-200 ",
-          isMobile ? "p-2" : "p-3",
-          className
-        )}
-        onClick={onSeatClick}
-      >
-        <div className="text-center">
-          <div
-            className={cn(
-              "bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-gray-300",
-              isMobile ? "w-8 h-8" : "w-12 h-12"
-            )}
-          >
-            <svg
-              className={cn(isMobile ? "w-4 h-4" : "w-6 h-6")}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-          </div>
-          <div
-            className={cn(
-              "font-medium text-gray-300",
-              isMobile ? "text-xs" : "text-sm"
-            )}
-          >
-            {isMobile ? "Libre" : "Siège libre"}
-          </div>
-          <div
-            className={cn("text-gray-400", isMobile ? "text-xs" : "text-xs")}
-          >
-            {isMobile ? "Rejoindre" : "Cliquez pour rejoindre"}
-          </div>
-        </div>
-      </div>
-    );
+    return <PlayerSeatEmpty onClick={onSeatClick ?? (() => {})} className={className} />;
   }
 
   if (!player) return null;
