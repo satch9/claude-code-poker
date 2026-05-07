@@ -111,16 +111,20 @@ export const useResponsiveClasses = () => {
 // Hook spécialisé pour les positions des sièges
 export const useSeatPositioning = () => {
   const { values: { isMobile }, positioning } = useResponsiveClasses();
-  
+
   return {
     // Contraintes de positionnement.
-    // minY/maxY relâchés (3/97) pour permettre aux sièges N/S avec
-    // radiusY 45-50 de se placer en bordure et libérer le centre.
+    // Sur mobile, les seats font 8rem (128px) ; sur 375px de viewport,
+    // un seat centré à x=5% déborde à gauche (5%×375 - 64 = -45px). On
+    // resserre minX/maxX à 18/82 pour que le seat reste entièrement
+    // dans le viewport (18%×375 = 67.5px > 64px de demi-largeur).
+    // minY/maxY également resserrés mobile pour éviter qu'un seat de
+    // 48px de haut ne sorte du conteneur en haut/bas.
     constraints: {
-      minX: 5,
-      maxX: 95,
-      minY: 3,
-      maxY: 97,
+      minX: isMobile ? 18 : 5,
+      maxX: isMobile ? 82 : 95,
+      minY: isMobile ? 8 : 3,
+      maxY: isMobile ? 92 : 97,
     },
     
     // Radius selon l'écran
