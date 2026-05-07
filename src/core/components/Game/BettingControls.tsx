@@ -32,6 +32,11 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
   const foldAction = getAction('fold');
   const checkAction = getAction('check');
+  const callAction = getAction('call');
+  const allInAction = getAction('all-in');
+
+  const formatAmount = (n?: number) =>
+    n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
 
   return (
     <div className={cn('flex gap-2 p-2', className)}>
@@ -55,6 +60,32 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           className="flex-1"
         >
           Check
+        </Button>
+      )}
+      {callAction && (
+        <Button
+          variant="primary"
+          size="md"
+          disabled={disabled}
+          onClick={() =>
+            onAction({ action: 'call', amount: callAction.amount })
+          }
+          className="flex-1"
+        >
+          Call {formatAmount(callAction.amount)}
+        </Button>
+      )}
+      {allInAction && (
+        <Button
+          variant="danger"
+          size="md"
+          disabled={disabled}
+          onClick={() =>
+            onAction({ action: 'all-in', amount: allInAction.amount })
+          }
+          className="flex-1"
+        >
+          All-in {formatAmount(allInAction.amount)}
         </Button>
       )}
     </div>

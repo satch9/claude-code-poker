@@ -57,4 +57,45 @@ describe('BettingControls — render', () => {
     await userEvent.click(screen.getByRole('button', { name: /check/i }));
     expect(onAction).toHaveBeenCalledWith({ action: 'check' });
   });
+
+  it('renders Call X with the call amount', () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        availableActions={[
+          { action: 'fold' },
+          { action: 'call', amount: 40 },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /call 40/i })).toBeInTheDocument();
+  });
+
+  it('triggers call onAction with amount', async () => {
+    const onAction = vi.fn();
+    render(
+      <BettingControls
+        {...baseProps}
+        onAction={onAction}
+        availableActions={[{ action: 'call', amount: 40 }]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /call 40/i }));
+    expect(onAction).toHaveBeenCalledWith({ action: 'call', amount: 40 });
+  });
+
+  it('renders All-in with amount and triggers correctly', async () => {
+    const onAction = vi.fn();
+    render(
+      <BettingControls
+        {...baseProps}
+        onAction={onAction}
+        availableActions={[{ action: 'all-in', amount: 1000 }]}
+      />,
+    );
+    const btn = screen.getByRole('button', { name: /all-in/i });
+    expect(btn).toBeInTheDocument();
+    await userEvent.click(btn);
+    expect(onAction).toHaveBeenCalledWith({ action: 'all-in', amount: 1000 });
+  });
 });
