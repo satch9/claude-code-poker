@@ -4,7 +4,6 @@ import { cn } from "../../../shared/utils/cn";
 interface HeaderActionIconsProps {
   onToggleChat: () => void;
   onToggleSettings: () => void;
-  onToggleGameInfo: () => void;
   onToggleInvite: () => void;
   onToggleActions: () => void;
   showInvite: boolean; // false si user pas créateur (icône cachée)
@@ -33,7 +32,6 @@ const IconButton: React.FC<{
 export const HeaderActionIcons: React.FC<HeaderActionIconsProps> = ({
   onToggleChat,
   onToggleSettings,
-  onToggleGameInfo,
   onToggleInvite,
   onToggleActions,
   showInvite,
@@ -44,7 +42,6 @@ export const HeaderActionIcons: React.FC<HeaderActionIconsProps> = ({
     <div className={cn("flex items-center gap-1", className)}>
       {!hideRedundantTabs && <IconButton label="Chat" emoji="💬" onClick={onToggleChat} />}
       <IconButton label="Paramètres" emoji="⚙️" onClick={onToggleSettings} />
-      <IconButton label="Infos partie" emoji="ℹ️" onClick={onToggleGameInfo} />
       {showInvite && (
         <IconButton label="Inviter" emoji="📤" onClick={onToggleInvite} />
       )}
