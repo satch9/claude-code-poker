@@ -58,13 +58,18 @@ export function evaluateGameConditions(
   // intervention humaine. Couvre :
   //  - tout le monde all-in (cas classique)
   //  - 1 seul joueur encore en lice peut miser, mais TOUS les autres actifs
-  //    sont all-in : aucune mise utile possible (pas d'opposant à payer pour
-  //    ce qui dépasse le tapis du moins fortuné), on déroule jusqu'au
-  //    showdown automatiquement.
+  //    sont all-in ET ce joueur a déjà agi en matchant la mise courante :
+  //    aucune décision utile ne reste, on déroule jusqu'au showdown.
+  // Le check `hasActed && currentBet >= currentBet courant` est crucial :
+  // sans lui, dès qu'un joueur fait tapis face à un adversaire qui n'a pas
+  // encore parlé sur ce round, le moteur saute son tour et révèle ses cartes.
   // (≥ 2 actifs requis : sinon onlyOnePlayerLeft prend le relais.)
   const allPlayersAllIn =
     activePlayers.length > 1 &&
-    (playersNotAllIn.length === 0 || playersNotAllIn.length === 1);
+    (playersNotAllIn.length === 0 ||
+      (playersNotAllIn.length === 1 &&
+        playersNotAllIn[0].hasActed &&
+        playersNotAllIn[0].currentBet >= currentBet));
   
   // Only one player left (others folded)
   const onlyOnePlayerLeft = activePlayers.length <= 1;
