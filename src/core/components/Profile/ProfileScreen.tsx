@@ -1,19 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "../../../shared/ui/Button";
 import { Card } from "../../../shared/ui/Card";
 import { UserProfile } from "../Auth/UserProfile";
 
 /**
- * Écran Profil minimal pour l'onglet AppShell.
+ * Écran Profil pour l'onglet AppShell.
  * - Identité (avatar initiale + nom + email)
- * - Préférences (placeholder pour Sprint 6+)
- * - Compte (bouton Modifier le profil → ouvre l'ancien dialog UserProfile)
- * - Déconnexion
+ * - Préférences (placeholder pour itération future)
+ * - Compte : <UserProfile compact /> qui ouvre son propre dialog (avatar
+ *   selector + édition nom + image upload). On le rend tel quel — la
+ *   refonte profonde du dialog legacy reste à faire (UserProfile
+ *   compact branch fait 318 lignes, hors scope Sprint 5).
+ * - Déconnexion (bouton dédié dark Sprint 0).
  */
 export const ProfileScreen: React.FC = () => {
   const { user, logout } = useAuth();
-  const [showEditDialog, setShowEditDialog] = useState(false);
 
   if (!user) return null;
 
@@ -56,34 +58,15 @@ export const ProfileScreen: React.FC = () => {
           Compte
         </h2>
         <div className="flex flex-col gap-2">
-          <Button variant="secondary" onClick={() => setShowEditDialog(true)}>
-            Modifier le profil
-          </Button>
+          {/* UserProfile compact : bouton qui ouvre un dialog legacy avec
+              édition complète (avatar, nom, image upload). Dialog encore
+              en theme light — refonte profonde laissée pour itération. */}
+          <UserProfile compact />
           <Button variant="danger" onClick={logout}>
             Se déconnecter
           </Button>
         </div>
       </Card>
-
-      {/* Dialog UserProfile complet (legacy, monté à la demande) */}
-      {showEditDialog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-          onClick={() => setShowEditDialog(false)}
-        >
-          <div
-            className="w-full max-w-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <UserProfile showLogout={false} />
-            <div className="mt-2 text-right">
-              <Button variant="ghost" size="sm" onClick={() => setShowEditDialog(false)}>
-                Fermer
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
