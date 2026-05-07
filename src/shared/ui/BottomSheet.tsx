@@ -51,7 +51,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         aria-label={title}
         style={{ maxHeight }}
         className={cn(
+          // Mobile / tablette portrait : pleine largeur en bas.
           'fixed bottom-0 left-0 right-0 z-50',
+          // Desktop ≥ lg : centré horizontalement avec largeur bornée
+          // (sinon le formulaire s'étire absurdement). Bordures latérales
+          // ajoutées pour fermer la card.
+          'lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:w-full lg:max-w-2xl lg:border-x lg:border-border-default',
           'bg-bg-surface text-text-primary',
           'rounded-t-xl border-t border-border-default',
           'shadow-2xl',
