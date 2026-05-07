@@ -5,6 +5,21 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 1C panneau droit desktop
+
+### Ajouté
+- `TableRightPanel` (`src/core/components/Game/`) : panneau latéral 320 px avec 3 onglets (Joueurs / Historique / Chat) monté en desktop ≥ 1024 px.
+- `PlayersListPanel` : liste compacte des joueurs assis (avatar, nom, chips, statut Couché/All-in, mise en évidence du joueur courant).
+- `ChatPanel` : squelette du Chat (le module reste backlog), réutilisable inline ou dans un drawer.
+- 10 tests UI (`PlayersListPanel`, `TableRightPanel`).
+
+### Modifié
+- `PokerTable` : monte `TableRightPanel` à droite sur desktop. Comportement mobile/tablette inchangé (drawers via icônes header).
+
+### Notes
+- Mini-carte des sièges supprimée du périmètre (jugée non utile).
+- L'envoi/réception de messages dans le Chat reste backlog (cf. CLAUDE.md "Chat system: future").
+
 ## [Unreleased] — Sprint 1B sièges + cartes communes
 
 ### Modifié
