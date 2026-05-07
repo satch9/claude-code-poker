@@ -114,17 +114,16 @@ export const useSeatPositioning = () => {
 
   return {
     // Contraintes de positionnement.
-    // Sur mobile, les seats font 8rem (128px) ; sur 375px de viewport,
-    // un seat centré à x=5% déborde à gauche (5%×375 - 64 = -45px). On
-    // resserre minX/maxX à 18/82 pour que le seat reste entièrement
-    // dans le viewport (18%×375 = 67.5px > 64px de demi-largeur).
-    // minY/maxY également resserrés mobile pour éviter qu'un seat de
-    // 48px de haut ne sorte du conteneur en haut/bas.
+    // Mobile resserré (par moitié seulement par rapport au desktop) :
+    // 11/89 et 5/95. Cela laisse les seats hugger le bord du feutre
+    // sans les pousser vers l'intérieur. Avec un seat 8rem, certains
+    // peuvent légèrement déborder visuellement du feutre (mais pas du
+    // viewport contenant), c'est l'effet PokerStars recherché.
     constraints: {
-      minX: isMobile ? 18 : 5,
-      maxX: isMobile ? 82 : 95,
-      minY: isMobile ? 8 : 3,
-      maxY: isMobile ? 92 : 97,
+      minX: isMobile ? 11 : 5,
+      maxX: isMobile ? 89 : 95,
+      minY: isMobile ? 5 : 3,
+      maxY: isMobile ? 95 : 97,
     },
     
     // Radius selon l'écran
