@@ -5,6 +5,18 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 4 Refonte Stats
+
+### Modifié
+- `PlayerStats` réécrit visuellement : tokens Sprint 0 dark (`bg-bg-surface`, `bg-bg-elevated`, `text-text-primary`), composant pur `StatTile` facteur pour les pavés (Victoires / Parties / Taux victoire / Jetons gagnés / etc.), badges classement (or, argent, bronze) avec tokens sémantiques. Logique inchangée (queries, leaderboard toggle).
+- `StatsPage` réécrit : drop du header custom (gradient + Bouton Retour + UserProfile), tokens dark, `SegmentedControl` période (`7j` / `30j` / `90j` / `Tout`) qui filtre la liste des mains côté client, layout cards mobile-first au lieu d'une table HTML rigide. Prop `onBack` retirée — AppShell gère la navigation. Nouvelle prop `onExportRequest` qui expose le handler d'export à AppMain.
+- `AppMain` : `headerAction` "Exporter" affiché sur la vue Stats (icône 📥), déclenche le téléchargement JSON via le handler exposé par StatsPage. Cohérent avec "Créer" sur lobby/tournois.
+
+### Notes
+- Pas de graphique recharts dans ce sprint (laissé pour itération future ou Sprint 6 polish).
+- Pas de replay des mains (laissé pour itération).
+- L'API publique des composants Stats est légèrement modifiée : `StatsPage.onBack` retiré, ajout de `StatsPage.onExportRequest`.
+
 ## [Unreleased] — Sprint 3 Écran Tournois
 
 ### Ajouté

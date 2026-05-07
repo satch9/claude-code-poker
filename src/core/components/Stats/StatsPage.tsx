@@ -1,36 +1,42 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { PlayerStats } from "./PlayerStats";
-import { Button } from "../UI/Button";
-import { UserProfile } from "../Auth/UserProfile";
+import { cn } from "../../../shared/utils/cn";
+
+type Period = "7d" | "30d" | "90d" | "all";
+
+const PERIODS: { id: Period; label: string; days: number | null }[] = [
+  { id: "7d", label: "7j", days: 7 },
+  { id: "30d", label: "30j", days: 30 },
+  { id: "90d", label: "90j", days: 90 },
+  { id: "all", label: "Tout", days: null },
+];
 
 interface StatsPageProps {
-  onBack: () => void;
+  /** Handler exposé pour permettre à AppShell de déclencher l'export
+   *  via headerAction. Appelé sans argument côté UI. */
+  onExportRequest?: (handler: () => void) => void;
+  /** @deprecated AppShell handles navigation via tabs. Kept for backward compat during the migration. */
+  onBack?: () => void;
 }
 
-// Page dédiée /stats : agrège PlayerStats (carrière) + un export brut
-// orienté IA (JSON des actions filtrées par user) à venir. Conçu pour pouvoir
-// grandir avec graphiques et filtres.
-export const StatsPage: React.FC<StatsPageProps> = ({ onBack }) => {
+export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _onBack }) => {
   const { user } = useAuth();
+  const [period, setPeriod] = useState<Period>("30d");
 
-  // On récupère les stats détaillées pour l'export. Le composant PlayerStats
-  // les requête déjà — ici on duplique pour avoir la donnée à exporter.
   const detailedStats = useQuery(
     api.users.stats.getUserStats,
-    user ? { userId: user._id } : "skip"
+    user ? { userId: user._id } : "skip",
   );
   const handsHistory = useQuery(
     api.users.stats.getUserHandsHistory,
-    user ? { userId: user._id, limit: 100 } : "skip"
+    user ? { userId: user._id, limit: 100 } : "skip",
   );
 
-  if (!user) return null;
-
-  const handleExportJson = () => {
-    if (!detailedStats) return;
+  const handleExportJson = React.useCallback(() => {
+    if (!detailedStats || !user) return;
     const payload = {
       exportedAt: new Date().toISOString(),
       userId: user._id,
@@ -48,117 +54,139 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onBack }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [detailedStats, user]);
+
+  // Expose le handler à AppMain pour l'utiliser dans headerAction.
+  React.useEffect(() => {
+    onExportRequest?.(handleExportJson);
+  }, [onExportRequest, handleExportJson]);
+
+  // Filtre période côté client pour l'historique des mains.
+  const filteredHands = useMemo(() => {
+    if (!handsHistory) return [];
+    const period_ = PERIODS.find((p) => p.id === period);
+    if (!period_ || period_.days === null) return handsHistory;
+    const cutoff = Date.now() - period_.days * 24 * 60 * 60 * 1000;
+    return handsHistory.filter((h) => h.endTs >= cutoff);
+  }, [handsHistory, period]);
+
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-poker-green-50 to-poker-green-100">
-      <header className="bg-poker-green-100 backdrop-blur-sm border-b border-poker-green-300 sticky top-0 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex justify-between items-center gap-2">
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
-              📊 Mes statistiques
-            </h1>
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" onClick={handleExportJson}>
-                Exporter JSON
-              </Button>
-              <Button variant="secondary" size="sm" onClick={onBack}>
-                Retour
-              </Button>
-              <UserProfile compact />
-            </div>
+    <div className="container mx-auto max-w-5xl px-3 md:px-4 py-4 md:py-6 space-y-4">
+      {/* Filtre période */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base md:text-lg font-bold text-text-primary">
+          Période
+        </h2>
+        <div
+          role="tablist"
+          aria-label="Filtre par période"
+          className="inline-flex rounded-lg bg-bg-elevated p-1 border border-border-default"
+        >
+          {PERIODS.map((p) => {
+            const isActive = period === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setPeriod(p.id)}
+                className={cn(
+                  "min-h-tap px-3 rounded-md text-sm font-medium transition-colors",
+                  isActive ? "bg-accent text-white" : "text-text-muted hover:text-text-primary",
+                )}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stats détaillées (carrière) */}
+      <PlayerStats userId={user._id} showDetailed />
+
+      {/* Mains jouées */}
+      <section className="bg-bg-surface border border-border-default rounded-lg p-3 md:p-5 text-text-primary">
+        <header className="flex items-center justify-between mb-3">
+          <h2 className="text-base md:text-lg font-bold">
+            Mains jouées
+          </h2>
+          <span className="text-xs md:text-sm text-text-muted">
+            {filteredHands.length} {filteredHands.length > 1 ? "mains" : "main"}
+          </span>
+        </header>
+
+        {handsHistory === undefined && (
+          <div className="text-sm text-text-muted">Chargement…</div>
+        )}
+        {handsHistory && filteredHands.length === 0 && (
+          <div className="text-sm text-text-muted">
+            Aucune main jouée sur cette période.
           </div>
-        </div>
-      </header>
+        )}
+        {filteredHands.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {filteredHands.map((h) => (
+              <li
+                key={`${h.tableId}-${h.handNumber}`}
+                className="bg-bg-elevated border border-border-default rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-text-primary truncate">
+                      {h.tableName}
+                    </span>
+                    {h.gameType === "tournament" && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-medium">
+                        Tournoi
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-text-muted flex flex-wrap gap-x-3 gap-y-1">
+                    <span>{new Date(h.endTs).toLocaleString()}</span>
+                    <span>Main #{h.handNumber}</span>
+                    {h.finalAction && (
+                      <span className="capitalize">Action : {h.finalAction}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                  {h.won ? (
+                    <span className="px-2 py-0.5 rounded-full bg-sem-success/20 text-sem-success text-xs font-medium">
+                      Gagnée
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-bg-surface text-text-muted text-xs font-medium border border-border-default">
+                      Perdue
+                    </span>
+                  )}
+                  {h.won && (
+                    <span className="font-bold text-sem-success">
+                      +{h.amountWon.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <PlayerStats userId={user._id} showDetailed />
-
-          <section className="bg-white rounded-lg shadow p-4 sm:p-6 text-gray-900">
-            <h2 className="text-lg font-semibold mb-3">
-              Mains jouées ({handsHistory?.length ?? 0})
-            </h2>
-            {handsHistory === undefined && (
-              <div className="text-sm text-gray-500">Chargement…</div>
-            )}
-            {handsHistory && handsHistory.length === 0 && (
-              <div className="text-sm text-gray-500">
-                Aucune main jouée pour l&apos;instant.
-              </div>
-            )}
-            {handsHistory && handsHistory.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs uppercase text-gray-500 border-b border-gray-200">
-                      <th className="py-2 pr-2">Date</th>
-                      <th className="py-2 pr-2">Table</th>
-                      <th className="py-2 pr-2">Main</th>
-                      <th className="py-2 pr-2">Action finale</th>
-                      <th className="py-2 pr-2">Résultat</th>
-                      <th className="py-2 pr-2 text-right">Gain</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {handsHistory.map((h) => (
-                      <tr
-                        key={`${h.tableId}-${h.handNumber}`}
-                        className="border-b border-gray-100 hover:bg-gray-50"
-                      >
-                        <td className="py-2 pr-2 text-gray-600">
-                          {new Date(h.endTs).toLocaleString()}
-                        </td>
-                        <td className="py-2 pr-2 truncate max-w-[160px]">
-                          {h.tableName}
-                          {h.gameType === "tournament" && (
-                            <span className="ml-1 text-xs text-purple-700">[T]</span>
-                          )}
-                        </td>
-                        <td className="py-2 pr-2 text-gray-600">#{h.handNumber}</td>
-                        <td className="py-2 pr-2 capitalize text-gray-700">
-                          {h.finalAction ?? "—"}
-                        </td>
-                        <td className="py-2 pr-2">
-                          {h.won ? (
-                            <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
-                              Gagnée
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                              Perdue
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2 pr-2 text-right font-medium">
-                          {h.won ? (
-                            <span className="text-green-700">
-                              +{h.amountWon.toLocaleString()}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          <section className="bg-white rounded-lg shadow p-4 sm:p-6 text-sm text-gray-600">
-            <h2 className="text-base font-semibold text-gray-900 mb-2">
-              Données brutes &amp; IA
-            </h2>
-            <p>
-              L&apos;export JSON ci-dessus contient toutes les statistiques agrégées.
-              L&apos;historique main-par-main ci-dessus servira de base à l&apos;analyse /
-              entraînement IA — graphiques et filtres viendront enrichir cette page.
-            </p>
-          </section>
-        </div>
-      </main>
+      {/* Note IA */}
+      <section className="bg-bg-elevated border border-border-default rounded-lg p-3 md:p-5 text-sm text-text-muted">
+        <h2 className="text-base font-semibold text-text-primary mb-2">
+          Données brutes &amp; IA
+        </h2>
+        <p>
+          Le bouton « Exporter » du header télécharge un JSON contenant toutes
+          les statistiques agrégées. L&apos;historique main-par-main ci-dessus
+          servira de base à l&apos;analyse / entraînement IA — graphiques et
+          replay viendront enrichir cette page dans une itération future.
+        </p>
+      </section>
     </div>
   );
 };
