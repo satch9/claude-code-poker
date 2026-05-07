@@ -99,3 +99,51 @@ describe('BettingControls — render', () => {
     expect(onAction).toHaveBeenCalledWith({ action: 'all-in', amount: 1000 });
   });
 });
+
+describe('BettingControls — Raise (mobile)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockMatchMedia(false); // mobile
+  });
+
+  it('shows Raise button when raise action is available', () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        availableActions={[
+          { action: 'fold' },
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /^raise$/i })).toBeInTheDocument();
+  });
+
+  it('opens BottomSheet when Raise is clicked', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    expect(screen.getByRole('dialog', { name: /relance|raise/i })).toBeInTheDocument();
+  });
+
+  it('closes BottomSheet on Cancel', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /annuler/i }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});

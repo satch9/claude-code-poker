@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../../shared/ui/Button';
+import { BottomSheet } from '../../../shared/ui/BottomSheet';
 import { cn } from '../../../shared/utils/cn';
 
 export interface GameAction {
@@ -33,61 +34,95 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   const foldAction = getAction('fold');
   const checkAction = getAction('check');
   const callAction = getAction('call');
+  const raiseAction = getAction('raise');
   const allInAction = getAction('all-in');
+  const [isRaiseOpen, setIsRaiseOpen] = useState(false);
 
   const formatAmount = (n?: number) =>
     n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
 
   return (
-    <div className={cn('flex gap-2 p-2', className)}>
-      {foldAction && (
-        <Button
-          variant="danger"
-          size="md"
-          disabled={disabled}
-          onClick={() => onAction({ action: 'fold' })}
-          className="flex-1"
+    <>
+      <div className={cn('flex gap-2 p-2', className)}>
+        {foldAction && (
+          <Button
+            variant="danger"
+            size="md"
+            disabled={disabled}
+            onClick={() => onAction({ action: 'fold' })}
+            className="flex-1"
+          >
+            Fold
+          </Button>
+        )}
+        {checkAction && (
+          <Button
+            variant="primary"
+            size="md"
+            disabled={disabled}
+            onClick={() => onAction({ action: 'check' })}
+            className="flex-1"
+          >
+            Check
+          </Button>
+        )}
+        {callAction && (
+          <Button
+            variant="primary"
+            size="md"
+            disabled={disabled}
+            onClick={() =>
+              onAction({ action: 'call', amount: callAction.amount })
+            }
+            className="flex-1"
+          >
+            Call {formatAmount(callAction.amount)}
+          </Button>
+        )}
+        {raiseAction && (
+          <Button
+            variant="success"
+            size="md"
+            disabled={disabled}
+            onClick={() => setIsRaiseOpen(true)}
+            className="flex-1"
+          >
+            Raise
+          </Button>
+        )}
+        {allInAction && (
+          <Button
+            variant="danger"
+            size="md"
+            disabled={disabled}
+            onClick={() =>
+              onAction({ action: 'all-in', amount: allInAction.amount })
+            }
+            className="flex-1"
+          >
+            All-in {formatAmount(allInAction.amount)}
+          </Button>
+        )}
+      </div>
+
+      {raiseAction && (
+        <BottomSheet
+          isOpen={isRaiseOpen}
+          onClose={() => setIsRaiseOpen(false)}
+          title="Relance"
         >
-          Fold
-        </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => setIsRaiseOpen(false)}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+          </div>
+        </BottomSheet>
       )}
-      {checkAction && (
-        <Button
-          variant="primary"
-          size="md"
-          disabled={disabled}
-          onClick={() => onAction({ action: 'check' })}
-          className="flex-1"
-        >
-          Check
-        </Button>
-      )}
-      {callAction && (
-        <Button
-          variant="primary"
-          size="md"
-          disabled={disabled}
-          onClick={() =>
-            onAction({ action: 'call', amount: callAction.amount })
-          }
-          className="flex-1"
-        >
-          Call {formatAmount(callAction.amount)}
-        </Button>
-      )}
-      {allInAction && (
-        <Button
-          variant="danger"
-          size="md"
-          disabled={disabled}
-          onClick={() =>
-            onAction({ action: 'all-in', amount: allInAction.amount })
-          }
-          className="flex-1"
-        >
-          All-in {formatAmount(allInAction.amount)}
-        </Button>
-      )}
-    </div>
+    </>
   );
 };
