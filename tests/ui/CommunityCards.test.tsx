@@ -28,7 +28,7 @@ describe('CommunityCards', () => {
 
   it('formats large pots in K on mobile', () => {
     render(<CommunityCards cards={[]} phase="flop" pot={2400} />);
-    expect(screen.getByText(/2[\.,]?4K|2400|2 400/i)).toBeInTheDocument();
+    expect(screen.getByText(/2[.,]?4K|2400|2 400/i)).toBeInTheDocument();
   });
 
   it('shows nothing instead of cards in waiting / preflop', () => {

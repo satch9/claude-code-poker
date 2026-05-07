@@ -5,6 +5,22 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 1B sièges + cartes communes
+
+### Modifié
+- `CommunityCards` réécrit selon le spec mobile-first (TDD) : `useMediaQuery` (Sprint 0) au lieu du legacy `useBreakpoint`, montant du pot en doré, libellés de phase plus discrets en preflop, format compact `K` plus précis.
+- `PlayerSeat` décomposé en sous-composants ciblés sans toucher à la logique : `PlayerSeatEmpty`, `BlindBadge`, `PlayerAvatar`. Animations / push-to-pot / dealer / timer / blinds inchangés.
+
+### Ajouté
+- `src/core/components/Game/PlayerSeatEmpty.tsx` (siège libre, tap target 44px, label adaptatif).
+- `src/core/components/Game/BlindBadge.tsx` (badge SB/BB pur).
+- `src/core/components/Game/PlayerAvatar.tsx` (initiale, ring active, taille adaptative).
+- 20 tests UI (`tests/ui/CommunityCards.test.tsx`, `PlayerSeatEmpty.test.tsx`, `BlindBadge.test.tsx`, `PlayerAvatar.test.tsx`).
+
+### Notes
+- L'API publique de `PlayerSeat` est inchangée : aucun changement requis dans `PokerTable.tsx`.
+- Le calcul de positionnement (`useSeatPositioning`) et le moteur de jeu Convex sont intacts.
+
 ## [Unreleased] — Sprint 1A zone d'action mobile-first
 
 ### Modifié
