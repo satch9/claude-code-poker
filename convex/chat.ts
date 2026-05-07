@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireUserId } from "./shared/auth";
@@ -48,5 +48,29 @@ export const sendMessage = mutation({
     });
 
     return id;
+  },
+});
+
+export const listMessages = query({
+  args: {
+    tableId: v.id("tables"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { tableId, limit }) => {
+    const userId = await requireUserId(ctx).catch(() => null);
+    if (!userId) return [];
+
+    const seated = await findSeatedPlayer(ctx, tableId, userId);
+    if (!seated) return [];
+
+    const take = Math.min(Math.max(limit ?? 50, 1), 100);
+
+    const rows = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_table", (q) => q.eq("tableId", tableId))
+      .order("desc")
+      .take(take);
+
+    return rows.reverse();
   },
 });
