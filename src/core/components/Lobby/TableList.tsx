@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Spade } from "lucide-react";
 import { TableCard } from "./TableCard";
 import { Table } from "../../../shared/types";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -87,9 +88,11 @@ export const TableList: React.FC<TableListProps> = ({
         </div>
       ) : (
         <div className="text-center py-10 px-4 bg-bg-surface border border-border-default rounded-lg">
-          <div className="text-3xl mb-2" aria-hidden>
-            🃏
-          </div>
+          <Spade
+            size={32}
+            className="mx-auto mb-2 text-text-muted"
+            aria-hidden
+          />
           <p className="text-text-primary font-medium">Aucune table disponible</p>
           <p className="mt-1 text-sm text-text-muted">
             {filter !== "all"
