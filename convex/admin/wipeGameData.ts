@@ -12,6 +12,7 @@ export const wipeGameData = mutation({
       "players",
       "invitations",
       "tables",
+      "chatMessages",
     ] as const;
 
     const counts: Record<string, number> = {};
