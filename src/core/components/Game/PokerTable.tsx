@@ -86,6 +86,22 @@ function computeBaseAngle(position: number, maxPlayers: number, isMobile: boolea
       -5 * Math.PI / 6
     ];
     angle = angles[position % 6];
+  } else if (maxPlayers === 9) {
+    // Layout PokerStars 9-max : pos 0 viewer en bas-centre, 8 autres
+    // sièges concentrés vers le haut avec symétrie gauche/droite. Le bas
+    // (autour du viewer) reste libre, comme sur la référence PokerStars.
+    const angles = [
+      -Math.PI / 2,                 // 0 : bottom-center (viewer)
+      -Math.PI / 2 - 0.55,          // 1 : bottom-right
+      -Math.PI / 2 - 1.10,          // 2 : right-mid
+      -Math.PI / 2 - 1.65,          // 3 : top-right corner
+      -Math.PI / 2 - 2.20,          // 4 : top-right of center
+      -Math.PI / 2 + Math.PI,       // 5 : top-center (opposite viewer)
+      -Math.PI / 2 + 2.20,          // 6 : top-left of center (mirror of 4)
+      -Math.PI / 2 + 1.65,          // 7 : top-left corner (mirror of 3)
+      -Math.PI / 2 + 1.10,          // 8 : left-mid (mirror of 2)
+    ];
+    angle = angles[position % 9];
   } else {
     angle = (position / maxPlayers) * 2 * Math.PI - Math.PI / 2;
   }
