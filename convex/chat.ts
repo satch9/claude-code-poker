@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireUserId } from "./shared/auth";
@@ -72,5 +72,21 @@ export const listMessages = query({
       .take(take);
 
     return rows.reverse();
+  },
+});
+
+export const purgeTableMessages = internalMutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, { tableId }) => {
+    const rows = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_table", (q) => q.eq("tableId", tableId))
+      .collect();
+
+    for (const row of rows) {
+      await ctx.db.delete(row._id);
+    }
+
+    return rows.length;
   },
 });
