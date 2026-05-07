@@ -4,6 +4,7 @@ import { LoginForm } from "../Auth/LoginForm";
 import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
 import { TournamentsScreen } from "../Tournament/TournamentsScreen";
+import { ProfileScreen } from "../Profile/ProfileScreen";
 import { CreateTableForm } from "../Table/CreateTableForm";
 import type { CreateTableData } from "../Table/CreateTableForm";
 import { SuspenseFallback } from "../UI/SuspenseFallback";
@@ -25,7 +26,7 @@ const StatsPage = lazy(() =>
   import("../Stats/StatsPage").then((m) => ({ default: m.StatsPage }))
 );
 
-type AppView = "lobby" | "table" | "stats" | "tournois";
+type AppView = "lobby" | "table" | "stats" | "tournois" | "profil";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -213,6 +214,7 @@ const AppContent: React.FC = () => {
   const viewToTab = (v: AppView): TabId => {
     if (v === "stats") return "stats";
     if (v === "tournois") return "tournois";
+    if (v === "profil") return "profil";
     return "lobby";
   };
 
@@ -220,10 +222,7 @@ const AppContent: React.FC = () => {
     if (id === "stats") setCurrentView("stats");
     else if (id === "lobby") setCurrentView("lobby");
     else if (id === "tournois") setCurrentView("tournois");
-    else if (id === "profil") {
-      setCurrentView("lobby");
-      alert("La refonte Profil arrive au Sprint 5.");
-    }
+    else if (id === "profil") setCurrentView("profil");
   };
 
   const headerTitle = (() => {
@@ -231,6 +230,7 @@ const AppContent: React.FC = () => {
       case "lobby": return title;
       case "tournois": return "Tournois";
       case "stats": return "Stats";
+      case "profil": return "Profil";
       case "table": return title;
       default: return title;
     }
@@ -287,6 +287,9 @@ const AppContent: React.FC = () => {
             />
           </Suspense>
         );
+
+      case "profil":
+        return <ProfileScreen />;
 
       default:
         return <Lobby onJoinTable={handleJoinTable} />;
