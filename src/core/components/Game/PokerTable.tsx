@@ -13,6 +13,7 @@ import { Button } from "../UI/Button";
 import { LandscapeWarning } from "../UI/LandscapeWarning";
 import { cn } from "@/shared/utils/cn";
 import { useGameLogic } from "../../hooks/useGameLogic";
+import { useTableChat } from "../../hooks/useTableChat";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses, useSeatPositioning } from "../../hooks/useResponsiveClasses";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -232,6 +233,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const rebuyMutation = useMutation(api.players.rebuy);
   const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
+  const { unreadCount: unreadChatCount } = useTableChat(tableId);
+  const headerUnreadChat = showTablePanelDrawer ? 0 : unreadChatCount;
 
   // Détection portrait pour layout mobile heads-up
   const [isPortrait, setIsPortrait] = useState(() =>
@@ -637,6 +640,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
               showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
+              unreadChat={headerUnreadChat}
             />
             <Button variant="secondary" size="sm" onClick={onLeaveTable}>
               Quitter
@@ -682,6 +686,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               showInvite={
                 !!table.inviteCode && authUser?._id === table.creatorId
               }
+              unreadChat={headerUnreadChat}
             />
 
             <Button variant="secondary" onClick={onLeaveTable}>
