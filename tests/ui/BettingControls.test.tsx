@@ -295,3 +295,27 @@ describe('BettingControls — info badges', () => {
     expect(screen.queryByText(/hand:/i)).toBeNull();
   });
 });
+
+describe('BettingControls — disabled', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockMatchMedia(false);
+  });
+
+  it('disables all action buttons when disabled is true', () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        disabled
+        availableActions={[
+          { action: 'fold' },
+          { action: 'call', amount: 40 },
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /fold/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /call/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^raise$/i })).toBeDisabled();
+  });
+});
