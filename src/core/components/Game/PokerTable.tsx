@@ -984,9 +984,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           <TableRightPanel
             actions={actionHistory as unknown[] ?? []}
             players={playersForPanel}
-            tableId={"" as any} // TODO: wired in Task 11
-            currentUserId={null} // TODO: wired in Task 11
-            isSeated={false} // TODO: wired in Task 11
+            tableId={table._id}
+            currentUserId={authUser?._id ?? null}
+            isSeated={!!currentPlayer}
           />
         </Drawer>
         <SettingsDrawer
