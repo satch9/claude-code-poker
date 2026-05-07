@@ -5,6 +5,19 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 6 Polish, a11y, perf
+
+### Ajouté
+- `Toast` primitive (`src/shared/ui/Toast.tsx`) avec `ToastProvider` + hook `useToast` (méthodes `success`/`error`/`info`). Auto-dismiss 5s, fermeture manuelle, `role="status"` ou `role="alert"` selon le type. Monté à la racine de l'app dans `main.tsx`.
+- 6 tests UI (`Toast`).
+
+### Modifié
+- `AppMain` : `CreateTableForm` re-lazifié avec `<Suspense>` à l'intérieur du BottomSheet (chunk séparé restauré, ~7 kB sortis du bundle initial).
+- `PlayerSeat` : wrappé dans `React.memo` avec comparateur ciblé sur les props "visibles" (avatar / chips / folded / allIn / currentBet / cards / blinds / dealer / timer). Réduit le coût de re-render quand un seul siège change pendant une partie 9-max.
+
+### Notes
+- Hors scope : focus trap complet sur BottomSheet/Drawer, suppression de tous les `console.log`/`alert()` legacy, audit Lighthouse formel, captures de référence automatisées.
+
 ## [Unreleased] — Sprint 5 Refonte Profil + Auth + Invitations
 
 ### Ajouté
