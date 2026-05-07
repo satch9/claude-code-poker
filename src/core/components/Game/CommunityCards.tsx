@@ -93,12 +93,12 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
       </div>
 
       {cardsToShow.length > 0 ? (
-        <div className={cn('flex justify-center flex-wrap', compact ? 'gap-0.5' : 'gap-2')}>
+        <div className={cn('flex justify-center flex-wrap', compact ? 'gap-1' : 'gap-2')}>
           {cardsToShow.map((cardStr, index) => (
             <div key={index} data-card>
               <Card
                 card={parseCard(cardStr)}
-                size={compact ? 'xs' : 'md'}
+                size={compact ? 'sm' : 'lg'}
                 animation="deal"
                 animationDelay={index * 300}
                 className="shadow-xl"

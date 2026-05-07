@@ -56,10 +56,13 @@ export const useResponsiveClasses = () => {
       isMobile && 'scale-75'
     ),
     
-    // Radius pour positioning
+    // Radius pour positioning.
+    // radiusY agrandi (45 mobile, 50 desktop) pour pousser les sièges N/S
+    // quasiment hors du feutre (qui est scaleY(0.7) ≈ centre vertical 70%),
+    // libérant de la place au centre pour le pot + community cards.
     positioning: {
       radiusX: isMobile ? (isIOS ? 0 : 50) : 50,
-      radiusY: isMobile ? (isIOS ? 42 : 35) : 42,
+      radiusY: isMobile ? (isIOS ? 42 : 45) : 50,
     },
     
     // Classes d'état des joueurs
@@ -107,12 +110,14 @@ export const useSeatPositioning = () => {
   const { values: { isMobile }, positioning } = useResponsiveClasses();
   
   return {
-    // Contraintes de positionnement
+    // Contraintes de positionnement.
+    // minY/maxY relâchés (3/97) pour permettre aux sièges N/S avec
+    // radiusY 45-50 de se placer en bordure et libérer le centre.
     constraints: {
       minX: 5,
       maxX: 95,
-      minY: 10,
-      maxY: 90,
+      minY: 3,
+      maxY: 97,
     },
     
     // Radius selon l'écran

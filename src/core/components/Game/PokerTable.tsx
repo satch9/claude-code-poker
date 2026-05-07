@@ -760,10 +760,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}
               ></div>
 
-              {/* Center area with community cards */}
+              {/* Center area with community cards.
+                  scaleY(1.43) compense le scaleY(0.7) du feutre.
+                  On retire le scale(0.75) mobile qui rapetissait inutilement
+                  les cartes communes (déjà petites en xs). Maintenant que les
+                  sièges N/S sont poussés vers l'extérieur, on a la place. */}
               <div className={responsiveClasses.tableCenter}
                 style={{
-                  transform: isMobile ? 'translate(-50%, -50%) scaleY(1.43) scale(0.75)' : 'translate(-50%, -50%) scaleY(1.43)'
+                  transform: 'translate(-50%, -50%) scaleY(1.43)'
                 }}>
                 {/* Community cards */}
                 <CommunityCards
