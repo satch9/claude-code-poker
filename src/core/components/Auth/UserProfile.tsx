@@ -591,17 +591,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     >
                       Fermer
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        logout();
-                        setShowDialog(false);
-                      }}
-                      className="flex-1"
-                    >
-                      Se déconnecter
-                    </Button>
+                    {showLogout && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          logout();
+                          setShowDialog(false);
+                        }}
+                        className="flex-1"
+                      >
+                        Se déconnecter
+                      </Button>
+                    )}
                   </>
                 )}
               </div>

@@ -60,8 +60,10 @@ export const ProfileScreen: React.FC = () => {
         <div className="flex flex-col gap-2">
           {/* UserProfile compact : bouton qui ouvre un dialog legacy avec
               édition complète (avatar, nom, image upload). Dialog encore
-              en theme light — refonte profonde laissée pour itération. */}
-          <UserProfile compact />
+              en theme light — refonte profonde laissée pour itération.
+              showLogout={false} : on évite le doublon, le bouton de
+              déconnexion juste en dessous suffit. */}
+          <UserProfile compact showLogout={false} />
           <Button variant="danger" onClick={logout}>
             Se déconnecter
           </Button>
