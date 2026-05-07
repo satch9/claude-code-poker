@@ -5,6 +5,29 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 7 Chat temps réel par table
+
+### Ajouté
+- Table Convex `chatMessages` (`tableId`, `userId`, `playerName` dénormalisé, `body`, `createdAt`) avec index composite `by_table` sur `(tableId, createdAt)`.
+- `convex/chat.ts` : mutation publique `sendMessage` (auth + check siège + validation `validateChatBody` + rate-limit serveur 5 messages / 10 s par couple `userId:tableId`), query publique `listMessages` (siège requis, retourne `[]` pour spectateur, bornée à 50 messages), internal mutation `purgeTableMessages` appelée à chaque transition `tables.status → "finished"` dans le moteur de jeu.
+- `convex/shared/chatValidation.ts` : fonction pure `validateChatBody` (trim + bornes 1..280) avec 6 tests unitaires.
+- Entrée `chatMessage` (token bucket, 5/10 s) ajoutée à `convex/shared/rateLimit.ts`.
+- Hook React `useTableChat(tableId)` (`src/core/hooks/useTableChat.ts`) : subscription Convex temps réel, `sendMessage` avec mapping d'erreurs serveur (`RATE_LIMIT` / `TOO_LONG` / `EMPTY` / `NOT_SEATED` + fallback) vers `useToast`, compteur `unreadCount` calculé à partir d'un `lastReadAt` persisté en `localStorage` (clé `chat:lastRead:<tableId>`), `markRead()` pour reset.
+- 5 tests unitaires `useTableChat`.
+- `ChatPanel` (`src/core/components/Game/ChatPanel.tsx`) entièrement réécrit (le placeholder a disparu) : liste scrollable en `role="log" aria-live="polite"`, état "non assis", état vide, formulaire d'envoi (Enter envoie, bouton `Send`, compteur `length/280`, désactivation pendant `sending`), auto-scroll intelligent vers le bas (sticky-bottom à 24 px). 6 tests UI.
+- Badge non-lu sur l'onglet Chat de `TableRightPanel` (visible uniquement si `unreadCount > 0` ET onglet inactif), capé à `9+`, `aria-label` pluralisé.
+
+### Modifié
+- `convex/core/gameEngine.ts` : appel à `internal.chat.purgeTableMessages` ajouté aux deux endroits qui marquent `tables.status = "finished"` (`endGame` et `endTournament`).
+- `TableRightPanel` reçoit désormais `tableId`, `currentUserId`, `isSeated` ; ces props sont propagées à `ChatPanel`.
+- `PokerTable` propage `table._id`, `authUser?._id ?? null`, `!!currentPlayer` au `TableRightPanel` (drawer mobile).
+- Bundle `PokerTable` passe de 83.90 kB à 88.24 kB (+4.34 kB, +1.39 kB gzip) — le chat reste embarqué dans le chunk lazy existant, pas de nouveau chunk.
+
+### Notes
+- Persistance volontairement éphémère : aucune rétention longue durée des messages.
+- Hors scope : édition/suppression d'un message, mentions @user, indicateur "en train d'écrire", liens cliquables, mute, signalement, chat global, DM, persistance post-partie.
+- Le hook `useTableChat` est instancié à la fois dans `TableRightPanel` (pour le badge) et dans `ChatPanel` (pour la liste/envoi). Convex déduplique les subscriptions au niveau réseau ; les états React `sending` restent locaux à chaque consommateur, ce qui n'a pas d'incidence fonctionnelle.
+
 ## [Unreleased] — Sprint 6 Polish, a11y, perf
 
 ### Ajouté
