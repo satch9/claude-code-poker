@@ -8,6 +8,8 @@ import { cn } from '../../../shared/utils/cn';
 interface CreateTableFormProps {
   onSubmit: (tableData: CreateTableData) => void;
   onCancel: () => void;
+  /** Type de partie pré-sélectionné. Défaut: 'cash'. */
+  defaultGameType?: GameType;
 }
 
 export type TournamentPreset = 'turbo' | 'standard' | 'long' | 'custom';
@@ -31,16 +33,23 @@ const SELECT_CLASS =
 export const CreateTableForm: React.FC<CreateTableFormProps> = ({
   onSubmit,
   onCancel,
+  defaultGameType = 'cash',
 }) => {
   const { user } = useAuth();
-  const [formData, setFormData] = useState<CreateTableData>({
-    name: `Table de ${user?.name || 'Joueur'}`,
-    maxPlayers: 6,
-    gameType: 'cash',
-    startingStack: 1000,
-    smallBlind: 10,
-    bigBlind: 20,
-    isPrivate: false,
+  const [formData, setFormData] = useState<CreateTableData>(() => {
+    const isTournament = defaultGameType === 'tournament';
+    return {
+      name: `Table de ${user?.name || 'Joueur'}`,
+      maxPlayers: 6,
+      gameType: defaultGameType,
+      startingStack: isTournament ? 1500 : 1000,
+      smallBlind: 10,
+      bigBlind: 20,
+      isPrivate: false,
+      buyIn: isTournament ? 0 : undefined,
+      preset: isTournament ? 'standard' : undefined,
+      levelDurationMin: isTournament ? 10 : undefined,
+    };
   });
 
   // Tournament preset → auto level duration mapping

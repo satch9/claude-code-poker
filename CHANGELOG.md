@@ -5,6 +5,16 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 3 Écran Tournois
+
+### Ajouté
+- `TournamentsScreen` (`src/core/components/Tournament/`) : nouvel écran filtrant les tables `gameType === 'tournament'` avec un SegmentedControl `À venir / En cours / Historique`. Réutilise `TableCard` pour la grille. Skeleton de chargement, états vides par filtre, dédup myTables/publicTables.
+- `CreateTableForm` : nouvelle prop optionnelle `defaultGameType` (`'cash' | 'tournament'`) pour pré-sélectionner le type de partie à l'ouverture du form.
+- 7 tests UI (`TournamentsScreen`).
+
+### Modifié
+- `AppMain` : ajout de la vue `"tournois"` dans `AppView`, navigation depuis l'onglet AppShell (au lieu de l'alert placeholder), `headerAction` "Créer" sur lobby ET tournois, `BottomSheet` titre dynamique ("Créer une nouvelle table" / "Créer un nouveau tournoi") et `defaultGameType` passé selon la vue courante.
+
 ## [Unreleased] — Sprint 2B BottomSheet "Créer une table"
 
 ### Modifié

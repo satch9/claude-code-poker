@@ -3,6 +3,7 @@ import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
+import { TournamentsScreen } from "../Tournament/TournamentsScreen";
 import { CreateTableForm } from "../Table/CreateTableForm";
 import type { CreateTableData } from "../Table/CreateTableForm";
 import { SuspenseFallback } from "../UI/SuspenseFallback";
@@ -24,7 +25,7 @@ const StatsPage = lazy(() =>
   import("../Stats/StatsPage").then((m) => ({ default: m.StatsPage }))
 );
 
-type AppView = "lobby" | "table" | "stats";
+type AppView = "lobby" | "table" | "stats" | "tournois";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -210,16 +211,15 @@ const AppContent: React.FC = () => {
 
   const viewToTab = (v: AppView): TabId => {
     if (v === "stats") return "stats";
+    if (v === "tournois") return "tournois";
     return "lobby";
   };
 
   const onTabChange = (id: string) => {
     if (id === "stats") setCurrentView("stats");
     else if (id === "lobby") setCurrentView("lobby");
-    else if (id === "tournois") {
-      setCurrentView("lobby");
-      alert("La refonte Tournois arrive au Sprint 3.");
-    } else if (id === "profil") {
+    else if (id === "tournois") setCurrentView("tournois");
+    else if (id === "profil") {
       setCurrentView("lobby");
       alert("La refonte Profil arrive au Sprint 5.");
     }
@@ -228,6 +228,7 @@ const AppContent: React.FC = () => {
   const headerTitle = (() => {
     switch (currentView) {
       case "lobby": return title;
+      case "tournois": return "Tournois";
       case "stats": return "Stats";
       case "table": return title;
       default: return title;
@@ -272,6 +273,9 @@ const AppContent: React.FC = () => {
           </Suspense>
         );
 
+      case "tournois":
+        return <TournamentsScreen onJoinTable={handleJoinTable} />;
+
       case "stats":
         return (
           <Suspense fallback={<SuspenseFallback />}>
@@ -284,14 +288,16 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const headerAction =
-    currentView === "lobby"
-      ? {
-          label: "Créer",
-          onClick: handleCreateTable,
-          icon: <span aria-hidden>+</span>,
-        }
-      : undefined;
+  const headerAction = (() => {
+    if (currentView === "lobby" || currentView === "tournois") {
+      return {
+        label: "Créer",
+        onClick: handleCreateTable,
+        icon: <span aria-hidden>+</span>,
+      };
+    }
+    return undefined;
+  })();
 
   return (
     <>
@@ -308,11 +314,12 @@ const AppContent: React.FC = () => {
       <BottomSheet
         isOpen={showCreateSheet}
         onClose={() => setShowCreateSheet(false)}
-        title="Créer une nouvelle table"
+        title={currentView === "tournois" ? "Créer un nouveau tournoi" : "Créer une nouvelle table"}
       >
         <CreateTableForm
           onSubmit={handleTableCreated}
           onCancel={handleCancelCreateTable}
+          defaultGameType={currentView === "tournois" ? "tournament" : "cash"}
         />
       </BottomSheet>
     </>
