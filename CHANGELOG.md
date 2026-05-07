@@ -5,6 +5,16 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 2B BottomSheet "Créer une table"
+
+### Modifié
+- `CreateTableForm` réécrit visuellement : drop le wrapper plein écran (gradient + white card), tokens Sprint 0 dark, primitives `Input` et `Button` Sprint 0, sélecteurs natifs restylés. Toute la logique (validation, preset map tournoi, handleGameTypeChange) est préservée.
+- `AppMain` : suppression du case `"create-table"` du switch de vues. `CreateTableForm` est désormais monté dans un `BottomSheet` Sprint 0 ouvert via le bouton "Créer" du header AppShell, fermé sur cancel/submit/escape/backdrop. Plus de navigation vers une vue dédiée.
+
+### Notes
+- Le composant `CreateTableForm` n'est plus lazy-loaded (~6.9 kB intégrés au bundle initial). Si jugé gênant, re-lazifier via `<Suspense>` à l'intérieur de la sheet.
+- L'ancienne route conceptuelle "create-table" disparaît du type `AppView`.
+
 ## [Unreleased] — Sprint 2A Lobby cards + segmented control
 
 ### Modifié
