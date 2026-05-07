@@ -45,7 +45,22 @@ export function useTableActions() {
     levelDurationMin?: number;
   }) => {
     try {
-      const tableId = await createTable(tableData);
+      // Whitelist explicite des champs envoyés au serveur. Évite qu'un
+      // champ "extra" (ajouté par erreur côté UI ou en cache) ne fasse
+      // jeter ArgumentValidationError par le validator strict de Convex.
+      const payload = {
+        name: tableData.name,
+        maxPlayers: tableData.maxPlayers,
+        gameType: tableData.gameType,
+        buyIn: tableData.buyIn,
+        startingStack: tableData.startingStack,
+        smallBlind: tableData.smallBlind,
+        bigBlind: tableData.bigBlind,
+        isPrivate: tableData.isPrivate,
+        preset: tableData.preset,
+        levelDurationMin: tableData.levelDurationMin,
+      };
+      const tableId = await createTable(payload);
       return tableId;
     } catch (error) {
       console.error("Error creating table:", error);

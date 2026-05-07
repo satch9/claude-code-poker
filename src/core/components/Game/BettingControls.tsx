@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { Button } from '../UI/Button';
+import React, { useState, useEffect } from 'react';
+import { Button } from '../../../shared/ui/Button';
+import { BottomSheet } from '../../../shared/ui/BottomSheet';
 import { cn } from '../../../shared/utils/cn';
-import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { useMediaQuery } from '../../../shared/hooks/useMediaQuery';
+import { BREAKPOINTS } from '../../../shared/constants/breakpoints';
 
-interface GameAction {
+export interface GameAction {
   action: 'fold' | 'check' | 'call' | 'raise' | 'all-in';
   amount?: number;
   minAmount?: number;
   maxAmount?: number;
 }
 
-interface BettingControlsProps {
+export interface BettingControlsProps {
   availableActions: GameAction[];
   playerChips: number;
   currentBet: number;
@@ -32,249 +34,241 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   potOdds,
   handStrength,
 }) => {
-  const { isMobile } = useBreakpoint();
-  const [raiseAmount, setRaiseAmount] = useState(0);
-  const [showRaiseSlider, setShowRaiseSlider] = useState(false);
+  const getAction = (type: GameAction['action']) =>
+    availableActions.find((a) => a.action === type);
 
-  // Get action helpers
-  const getAction = (actionType: string) => availableActions.find(a => a.action === actionType);
-  const raiseAction = getAction('raise');
+  const foldAction = getAction('fold');
+  const checkAction = getAction('check');
   const callAction = getAction('call');
+  const raiseAction = getAction('raise');
   const allInAction = getAction('all-in');
+  const [isRaiseOpen, setIsRaiseOpen] = useState(false);
+  const isDesktop = useMediaQuery(BREAKPOINTS.lg);
 
-  const minRaise = raiseAction?.minAmount || 0;
-  const maxRaise = raiseAction?.maxAmount || playerChips;
+  // Garde anti-double-clic : une fois une action envoyée au serveur,
+  // on désactive les boutons jusqu'à ce que le set d'availableActions
+  // change (signal que le serveur a pris en compte l'action et qu'on
+  // est sur un nouveau tour, ou que ce n'est plus à nous de jouer).
+  // Évite les "You have already folded this hand" en cas de double-tap.
+  const [submitting, setSubmitting] = useState(false);
+  const actionsKey = availableActions
+    .map((a) => `${a.action}:${a.amount ?? ''}:${a.minAmount ?? ''}:${a.maxAmount ?? ''}`)
+    .join('|');
+  useEffect(() => {
+    setSubmitting(false);
+  }, [actionsKey]);
 
-  React.useEffect(() => {
-    if (raiseAction && raiseAmount === 0) {
-      setRaiseAmount(minRaise);
-    }
-  }, [raiseAction, minRaise, raiseAmount]);
-
-  const handleRaiseAmountChange = (value: number) => {
-    const clampedValue = Math.max(minRaise, Math.min(maxRaise, value));
-    setRaiseAmount(clampedValue);
+  const dispatch = (a: GameAction) => {
+    if (submitting || disabled) return;
+    setSubmitting(true);
+    onAction(a);
   };
 
-  const quickRaiseAmounts = [
-    { label: isMobile ? 'Min' : 'Min', value: minRaise },
-    { label: isMobile ? '½P' : '1/2 Pot', value: Math.min(maxRaise, Math.floor(potSize * 0.5)) },
-    { label: isMobile ? 'P' : 'Pot', value: Math.min(maxRaise, potSize) },
-    { label: isMobile ? '2P' : '2x Pot', value: Math.min(maxRaise, potSize * 2) },
-  ].filter(amount => amount.value >= minRaise && amount.value <= maxRaise && raiseAction);
+  const isLocked = disabled || submitting;
 
-  return (
-    <div className={cn(
-      'bg-gray-800 rounded-2xl shadow-2xl border border-gray-700',
-      isMobile ? 'p-2' : 'p-6',
-      className
-    )}>
-      <div className={cn(isMobile ? "space-y-2" : "space-y-4")}>
-        {/* Game info - simplified on mobile */}
-        {!isMobile && (
-          <div className="flex justify-between items-center text-gray-300 text-sm">
-            <div className="flex gap-4">
-              <span className="truncate">
-                Pot: <span className="text-green-400 font-bold">{potSize.toLocaleString()}</span>
-              </span>
-              <span className="truncate">
-                Your chips: <span className="text-blue-400 font-bold">{playerChips.toLocaleString()}</span>
-              </span>
-              {potOdds && (
-                <span className="truncate">
-                  Odds: <span className="text-yellow-400 font-bold">{potOdds}</span>
-                </span>
-              )}
-            </div>
-            {handStrength && (
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-gray-400 text-sm">Hand:</span>
-                <span className={cn(
-                  'font-bold text-sm truncate',
-                  handStrength === 'Strong' && 'text-green-400',
-                  handStrength === 'Good' && 'text-blue-400',
-                  handStrength === 'Medium' && 'text-yellow-400',
-                  handStrength === 'Weak' && 'text-red-400'
-                )}>
-                  {handStrength}
-                </span>
-              </div>
-            )}
-          </div>
+  const minRaise = raiseAction?.minAmount ?? 0;
+  const maxRaise = raiseAction?.maxAmount ?? playerChips;
+  const [raiseAmount, setRaiseAmount] = useState<number>(minRaise);
+
+  // Re-init when sheet opens, or when on desktop and bounds change
+  useEffect(() => {
+    if (isRaiseOpen || isDesktop) setRaiseAmount(minRaise);
+  }, [isRaiseOpen, isDesktop, minRaise]);
+
+  const clamp = (n: number) => Math.max(minRaise, Math.min(maxRaise, n));
+
+  const presets = [
+    { label: 'Min', value: minRaise },
+    { label: '½ pot', value: clamp(Math.floor(potSize * 0.5)) },
+    { label: '¾ pot', value: clamp(Math.floor(potSize * 0.75)) },
+    { label: 'Pot', value: clamp(potSize) },
+    { label: 'All-in', value: maxRaise },
+  ];
+
+  const formatAmount = (n?: number) =>
+    n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
+
+  const raisePanel = raiseAction ? (
+    <div className="flex flex-col gap-4">
+      {/* Presets */}
+      <div className="flex flex-wrap gap-2">
+        {presets.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            onClick={() => setRaiseAmount(p.value)}
+            className="min-h-tap px-3 rounded-lg border border-border-default bg-bg-elevated text-text-primary hover:border-accent text-sm font-medium"
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Slider */}
+      <input
+        type="range"
+        min={minRaise}
+        max={maxRaise}
+        step={Math.max(1, Math.floor(minRaise / 10) || 1)}
+        value={raiseAmount}
+        onChange={(e) => setRaiseAmount(clamp(parseInt(e.target.value, 10)))}
+        aria-label="Slider de relance"
+        className="w-full h-2 bg-bg-elevated rounded-lg appearance-none cursor-pointer"
+      />
+
+      {/* Min / Max labels */}
+      <div className="flex justify-between text-xs text-text-muted">
+        <span>Min: {minRaise.toLocaleString()}</span>
+        <span>Max: {maxRaise.toLocaleString()}</span>
+      </div>
+
+      {/* Numeric input */}
+      <label className="flex items-center gap-2">
+        <span className="text-sm text-text-muted">Montant</span>
+        <input
+          type="number"
+          min={minRaise}
+          max={maxRaise}
+          value={raiseAmount}
+          onChange={(e) =>
+            setRaiseAmount(clamp(parseInt(e.target.value, 10) || minRaise))
+          }
+          aria-label="Montant de la relance"
+          className="flex-1 min-h-tap rounded-lg px-3 bg-bg-elevated text-text-primary border border-border-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        />
+      </label>
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-2">
+        {!isDesktop && (
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={() => setIsRaiseOpen(false)}
+            className="flex-1"
+          >
+            Annuler
+          </Button>
         )}
-        
-        {/* Mobile compact info */}
-        {isMobile && (
-          <div className="flex justify-between items-center text-gray-300 text-xs">
-            <span className="truncate">
-              Pot: <span className="text-green-400 font-bold">
-                {potSize >= 1000 ? `${Math.floor(potSize/1000)}K` : potSize}
-              </span>
-            </span>
-            <span className="truncate">
-              Chips: <span className="text-blue-400 font-bold">
-                {playerChips >= 1000 ? `${Math.floor(playerChips/1000)}K` : playerChips}
-              </span>
-            </span>
-          </div>
-        )}
-
-        {/* Primary actions */}
-        <div className={cn(
-          "flex",
-          isMobile ? "gap-1" : "gap-2"
-        )}>
-          {getAction('fold') && (
-            <Button
-              variant="danger"
-              onClick={() => onAction({ action: 'fold' })}
-              disabled={disabled}
-              className={cn(
-                "flex-1 min-w-0",
-                isMobile && "text-xs py-1 px-1"
-              )}
-            >
-              Fold
-            </Button>
-          )}
-
-          {getAction('check') && (
-            <Button
-              variant="secondary"
-              onClick={() => onAction({ action: 'check' })}
-              disabled={disabled}
-              className={cn(
-                "flex-1 min-w-0",
-                isMobile && "text-xs py-1 px-1"
-              )}
-            >
-              Check
-            </Button>
-          )}
-
-          {callAction && (
-            <Button
-              variant="primary"
-              onClick={() => onAction({ action: 'call', amount: callAction.amount })}
-              disabled={disabled}
-              className={cn(
-                "flex-1 min-w-0",
-                isMobile && "text-xs py-1 px-1"
-              )}
-            >
-              <span className="truncate">
-                Call {callAction.amount && callAction.amount >= 1000
-                  ? `${Math.floor(callAction.amount / 1000)}K`
-                  : callAction.amount?.toLocaleString()}
-              </span>
-            </Button>
-          )}
-
-          {raiseAction && (
-            <Button
-              variant="success"
-              onClick={() => setShowRaiseSlider(!showRaiseSlider)}
-              disabled={disabled}
-              className={cn(
-                "flex-1 min-w-0",
-                isMobile && "text-xs py-1 px-1"
-              )}
-            >
-              Raise
-            </Button>
-          )}
-
-          {allInAction && (
-            <Button
-              variant="danger"
-              onClick={() => onAction({ action: 'all-in', amount: allInAction.amount })}
-              disabled={disabled}
-              className={cn(
-                "flex-1 min-w-0",
-                isMobile && "text-xs py-1 px-1"
-              )}
-            >
-              <span className="truncate">
-                {isMobile ? "Tapis" : `All-In (${allInAction.amount?.toLocaleString()})`}
-              </span>
-            </Button>
-          )}
-        </div>
-
-        {/* Raise controls */}
-        {showRaiseSlider && !disabled && raiseAction && (
-          <div className={cn(
-            "border-t border-gray-600 pt-4 space-y-3",
-            isMobile && "pt-2 space-y-2"
-          )}>
-            {/* Quick raise buttons */}
-            <div className={cn(
-              "grid grid-cols-4 gap-2",
-              isMobile && "gap-1"
-            )}>
-              {quickRaiseAmounts.map((amount) => (
-                <Button
-                  key={amount.label}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRaiseAmountChange(amount.value)}
-                  className="text-xs text-gray-300 hover:text-white"
-                >
-                  {amount.label}
-                </Button>
-              ))}
-            </div>
-
-            {/* Raise slider */}
-            <div className={cn(
-              "space-y-2",
-              isMobile && "space-y-1"
-            )}>
-              <div className="flex justify-between text-sm text-gray-400">
-                <span>Min: {minRaise.toLocaleString()}</span>
-                <span>Max: {maxRaise.toLocaleString()}</span>
-              </div>
-              
-              <input
-                type="range"
-                min={minRaise}
-                max={maxRaise}
-                step={Math.max(1, Math.floor(minRaise / 10))}
-                value={raiseAmount}
-                onChange={(e) => handleRaiseAmountChange(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider-thumb"
-              />
-              
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={minRaise}
-                  max={maxRaise}
-                  value={raiseAmount}
-                  onChange={(e) => handleRaiseAmountChange(parseInt(e.target.value) || minRaise)}
-                  className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-center text-white"
-                />
-                <Button
-                  variant="success"
-                  onClick={() => onAction({ action: 'raise', amount: raiseAmount })}
-                  disabled={raiseAmount < minRaise || raiseAmount > maxRaise}
-                >
-                  Raise to {raiseAmount.toLocaleString()}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Action timeout indicator - hidden on mobile */}
-        {!disabled && !isMobile && (
-          <div className="text-center">
-            <div className="text-xs text-gray-400">
-              {availableActions.length > 0 ? 'Your turn - choose an action' : 'Waiting for other players...'}
-            </div>
-          </div>
-        )}
+        <Button
+          variant="success"
+          size="md"
+          onClick={() => {
+            dispatch({ action: 'raise', amount: raiseAmount });
+            setIsRaiseOpen(false);
+          }}
+          disabled={isLocked || raiseAmount < minRaise || raiseAmount > maxRaise}
+          className="flex-1"
+        >
+          Relancer à {raiseAmount.toLocaleString()}
+        </Button>
       </div>
     </div>
+  ) : null;
+
+  return (
+    <>
+      {(potOdds || handStrength) && (
+        <div className="flex flex-wrap gap-2 px-2 pb-1 text-xs">
+          {potOdds && (
+            <span className="px-2 py-0.5 rounded-full bg-bg-elevated text-text-muted">
+              Odds <span className="text-gold font-semibold">{potOdds}</span>
+            </span>
+          )}
+          {handStrength && (
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full bg-bg-elevated font-semibold',
+                handStrength === 'Strong' && 'text-sem-success',
+                handStrength === 'Good' && 'text-accent',
+                handStrength === 'Medium' && 'text-sem-warning',
+                handStrength === 'Weak' && 'text-sem-danger',
+              )}
+            >
+              Hand: {handStrength}
+            </span>
+          )}
+        </div>
+      )}
+      <div className={cn('flex gap-2 p-2', className)}>
+        {foldAction && (
+          <Button
+            variant="danger"
+            size="md"
+            disabled={isLocked}
+            onClick={() => dispatch({ action: 'fold' })}
+            className="flex-1"
+          >
+            Fold
+          </Button>
+        )}
+        {checkAction && (
+          <Button
+            variant="primary"
+            size="md"
+            disabled={isLocked}
+            onClick={() => dispatch({ action: 'check' })}
+            className="flex-1"
+          >
+            Check
+          </Button>
+        )}
+        {callAction && (
+          <Button
+            variant="primary"
+            size="md"
+            disabled={isLocked}
+            onClick={() =>
+              dispatch({ action: 'call', amount: callAction.amount })
+            }
+            className="flex-1"
+          >
+            Call {formatAmount(callAction.amount)}
+          </Button>
+        )}
+        {raiseAction && !isDesktop && (
+          <Button
+            variant="success"
+            size="md"
+            disabled={isLocked}
+            onClick={() => setIsRaiseOpen(true)}
+            className="flex-1"
+          >
+            Raise
+          </Button>
+        )}
+        {allInAction && (
+          <Button
+            variant="danger"
+            size="md"
+            disabled={isLocked}
+            onClick={() =>
+              dispatch({ action: 'all-in', amount: allInAction.amount })
+            }
+            className="flex-1"
+          >
+            All-in {formatAmount(allInAction.amount)}
+          </Button>
+        )}
+      </div>
+
+      {/* Desktop: inline panel */}
+      {isDesktop && raiseAction && (
+        <div className="mt-2 p-4 bg-bg-surface border border-border-default rounded-lg">
+          {raisePanel}
+        </div>
+      )}
+
+      {/* Mobile/Tablette: panel inside BottomSheet */}
+      {!isDesktop && raiseAction && (
+        <BottomSheet
+          isOpen={isRaiseOpen}
+          onClose={() => setIsRaiseOpen(false)}
+          title="Relance"
+        >
+          {raisePanel}
+        </BottomSheet>
+      )}
+    </>
   );
 };

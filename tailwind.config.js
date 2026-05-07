@@ -24,7 +24,7 @@ export default {
         'table-radius-desktop': '42%',
         'card-offset': '16px',
         'card-offset-current': '24px',
-        'seat-mobile': '10rem',
+        'seat-mobile': '8rem',
         'seat-desktop': '13rem',
       },
       
@@ -121,9 +121,12 @@ export default {
         'gold': 'var(--gold)',
       },
       
-      // Tailles standardisées
+      // Tailles standardisées.
+      // seat-mobile: 8rem (128px) pour rentrer sur iPhone SE (375px) avec
+      // seats placés en bordure (radiusX=50). Combiné aux contraintes
+      // minX/maxX resserrées sur mobile dans useSeatPositioning.
       width: {
-        'seat-mobile': '10rem',
+        'seat-mobile': '8rem',
         'seat-desktop': '13rem',
       },
       height: {

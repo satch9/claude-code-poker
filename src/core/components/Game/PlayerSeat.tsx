@@ -3,8 +3,11 @@ import { Card } from "../UI/Card";
 import { Player } from "../../../shared/types";
 import { cn } from "../../../shared/utils/cn";
 import { PlayerTimer } from "./PlayerTimer";
+import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
+import { BlindBadge } from "./BlindBadge";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
+import { PlayerAvatar } from "./PlayerAvatar";
 
 interface PlayerSeatProps {
   player?: Player;
@@ -74,52 +77,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   }, [player?.currentBet]);
 
   if (isEmpty) {
-    return (
-      <div
-        className={cn(
-          "bg-gray-700/50 border-2 border-dashed border-gray-500 rounded-2xl hover:bg-gray-600/50 cursor-pointer transition-all duration-200 ",
-          isMobile ? "p-2" : "p-3",
-          className
-        )}
-        onClick={onSeatClick}
-      >
-        <div className="text-center">
-          <div
-            className={cn(
-              "bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center text-gray-300",
-              isMobile ? "w-8 h-8" : "w-12 h-12"
-            )}
-          >
-            <svg
-              className={cn(isMobile ? "w-4 h-4" : "w-6 h-6")}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-          </div>
-          <div
-            className={cn(
-              "font-medium text-gray-300",
-              isMobile ? "text-xs" : "text-sm"
-            )}
-          >
-            {isMobile ? "Libre" : "Siège libre"}
-          </div>
-          <div
-            className={cn("text-gray-400", isMobile ? "text-xs" : "text-xs")}
-          >
-            {isMobile ? "Rejoindre" : "Cliquez pour rejoindre"}
-          </div>
-        </div>
-      </div>
-    );
+    return <PlayerSeatEmpty onClick={onSeatClick ?? (() => {})} className={className} />;
   }
 
   if (!player) return null;
@@ -180,21 +138,8 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
         )}
       >
         {/* Blind indicators */}
-        {(isSmallBlind || isBigBlind) && (
-          <div
-            className={cn(
-              "absolute -top-2 -left-2 text-white rounded-full flex items-center justify-center font-bold shadow-lg whitespace-nowrap border-2 border-white",
-              isSmallBlind 
-                ? "bg-orange-500" // Orange pour Small Blind
-                : "bg-red-600",   // Rouge pour Big Blind
-              isMobile
-                ? "min-w-[24px] h-5 text-xs px-1.5"
-                : "min-w-[28px] h-6 text-xs px-2"
-            )}
-          >
-            {isSmallBlind ? "SB" : "BB"}
-          </div>
-        )}
+        {isSmallBlind && <BlindBadge type="small" />}
+        {isBigBlind && <BlindBadge type="big" />}
 
         {/* Player avatar and info */}
         <div
@@ -203,17 +148,11 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
             isMobile ? "gap-1.5" : "gap-2"
           )}
         >
-          <div
-            className={cn(
-              "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold ring-2 transition-all",
-              isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm",
-              isActivePlayer && !player.isFolded
-                ? "ring-red-500 avatar-active-pulse"
-                : "ring-blue-300/40"
-            )}
-          >
-            {(player.user?.name || "Player").charAt(0).toUpperCase()}
-          </div>
+          <PlayerAvatar
+            name={player.user?.name || 'Player'}
+            isActive={isActivePlayer}
+            isFolded={player.isFolded}
+          />
           <div className="flex-1 min-w-0">
             <div
               className={cn(

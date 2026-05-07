@@ -21,6 +21,7 @@ import { InviteDialog } from "./InviteDialog";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
+import { useOrientation } from "@/shared/hooks/useOrientation";
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -246,6 +247,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Use hooks
   const { isMobile, isIOS } = useBreakpoint();
+  const orientation = useOrientation();
+  const isLandscape = orientation === "landscape";
   const responsiveClasses = useResponsiveClasses();
   const seatPositioning = useSeatPositioning();
 
@@ -593,7 +596,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       <LandscapeWarning />
       {/* Header mobile (non heads-up portrait) — version compacte du header
           desktop, avec la même rangée d'icônes dans le drawer system. */}
-      {isMobile && !isIOS && (
+      {isMobile && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-2 py-2 gap-1">
           <div className="text-white min-w-0 flex-1">
             <div className="text-sm font-bold truncate">{table.name}</div>
@@ -633,7 +636,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       )}
 
       {/* Header desktop */}
-      {(!isMobile && !isIOS) && (
+      {!isMobile && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-3 lg:px-4 py-3 lg:py-4 gap-2">
           <div className="text-white min-w-0 flex-1">
             <h1 className="text-base md:text-xl lg:text-2xl font-bold truncate">
@@ -713,9 +716,13 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         isMobile ? "overflow-hidden" : "overflow-x-auto"
       )}>
 
-        {/* Center - Table (full width après refactor) */}
+        {/* Center - Table (full width après refactor)
+            justify-center : centre verticalement la table quand sa
+            hauteur est inférieure au parent (cas desktop h-[700px]
+            dans un viewport plus grand). Sinon le 700px était collé
+            en haut avec un vide visible en dessous. */}
         <div className={cn(
-          "flex-1 flex flex-col items-center",
+          "flex-1 flex flex-col items-center justify-center",
           responsiveClasses.responsivePadding,
           isIOS && "safe-area"
         )}>
@@ -753,10 +760,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}
               ></div>
 
-              {/* Center area with community cards */}
+              {/* Center area with community cards.
+                  scaleY(1.43) compense le scaleY(0.7) du feutre.
+                  On retire le scale(0.75) mobile qui rapetissait inutilement
+                  les cartes communes (déjà petites en xs). Maintenant que les
+                  sièges N/S sont poussés vers l'extérieur, on a la place. */}
               <div className={responsiveClasses.tableCenter}
                 style={{
-                  transform: isMobile ? 'translate(-50%, -50%) scaleY(1.43) scale(0.75)' : 'translate(-50%, -50%) scaleY(1.43)'
+                  transform: 'translate(-50%, -50%) scaleY(1.43)'
                 }}>
                 {/* Community cards */}
                 <CommunityCards
@@ -871,15 +882,18 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             </div>
           </div>
 
-          {/* Betting controls below table (outside of table container) */}
-          {/* Betting controls below table (outside of table container) */}
+          {/* Betting controls
+              - Portrait : flow normal sous la table
+              - Paysage  : overlay fixe en bas (drawer-like) pour ne pas
+                rapetisser la table en hauteur déjà contrainte */}
           {currentPlayer &&
             isMyTurn &&
             gameState.phase !== "waiting" &&
             availableActions.length > 0 && (
               <div className={cn(
-                "w-full",
-                isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl"
+                isLandscape
+                  ? "fixed bottom-0 left-0 right-0 z-30 px-2 pb-[env(safe-area-inset-bottom)] bg-black/50 backdrop-blur-sm border-t border-poker-green-700"
+                  : cn("w-full", isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl")
               )}>
                 <BettingControls
                   availableActions={availableActions as any}

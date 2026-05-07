@@ -56,10 +56,16 @@ export const useResponsiveClasses = () => {
       isMobile && 'scale-75'
     ),
     
-    // Radius pour positioning
+    // Radius pour positioning.
+    // radiusY agrandi (45 mobile, 50 desktop) pour pousser les sièges N/S
+    // quasiment hors du feutre (qui est scaleY(0.7) ≈ centre vertical 70%),
+    // libérant de la place au centre pour le pot + community cards.
+    // Pas d'override iOS (radiusX=0 empilait tous les sièges au centre) :
+    // le heads-up portrait iOS a sa branche dédiée dans PokerTable.tsx,
+    // les autres cas iOS doivent utiliser le même layout que mobile non-iOS.
     positioning: {
-      radiusX: isMobile ? (isIOS ? 0 : 50) : 50,
-      radiusY: isMobile ? (isIOS ? 42 : 35) : 42,
+      radiusX: 50,
+      radiusY: isMobile ? 45 : 50,
     },
     
     // Classes d'état des joueurs
@@ -105,14 +111,19 @@ export const useResponsiveClasses = () => {
 // Hook spécialisé pour les positions des sièges
 export const useSeatPositioning = () => {
   const { values: { isMobile }, positioning } = useResponsiveClasses();
-  
+
   return {
-    // Contraintes de positionnement
+    // Contraintes de positionnement.
+    // Mobile resserré (par moitié seulement par rapport au desktop) :
+    // 11/89 et 5/95. Cela laisse les seats hugger le bord du feutre
+    // sans les pousser vers l'intérieur. Avec un seat 8rem, certains
+    // peuvent légèrement déborder visuellement du feutre (mais pas du
+    // viewport contenant), c'est l'effet PokerStars recherché.
     constraints: {
-      minX: 5,
-      maxX: 95,
-      minY: 10,
-      maxY: 90,
+      minX: isMobile ? 11 : 5,
+      maxX: isMobile ? 89 : 95,
+      minY: isMobile ? 5 : 3,
+      maxY: isMobile ? 95 : 97,
     },
     
     // Radius selon l'écran
