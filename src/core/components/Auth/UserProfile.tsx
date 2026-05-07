@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Flame } from "lucide-react";
 import { Button } from "../UI/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
@@ -484,8 +485,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         Action favorite: <span className="font-bold capitalize">{userStats.mostFrequentAction}</span>
                       </div>
                       {userStats.currentWinStreak > 0 && (
-                        <div className="text-xs text-green-600 mt-1">
-                          🔥 Série de {userStats.currentWinStreak} victoire{userStats.currentWinStreak > 1 ? 's' : ''}
+                        <div className="text-xs text-green-600 mt-1 inline-flex items-center gap-1">
+                          <Flame size={12} aria-hidden /> Série de {userStats.currentWinStreak} victoire{userStats.currentWinStreak > 1 ? 's' : ''}
                         </div>
                       )}
                     </div>

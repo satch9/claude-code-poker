@@ -1,4 +1,5 @@
 import React from 'react';
+import { Hourglass, Spade, Target, RotateCw, Waves, Eye, type LucideIcon } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface TurnIndicatorProps {
@@ -20,16 +21,16 @@ export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
   className,
   compact = false,
 }) => {
-  const getPhaseDisplay = (phase: string) => {
+  const getPhaseDisplay = (phase: string): { name: string; color: string; Icon: LucideIcon } => {
     const phases = {
-      'waiting': { name: 'En Attente', color: 'bg-gray-500', icon: '⏳' },
-      'preflop': { name: 'Pré-Flop', color: 'bg-blue-500', icon: '🃏' },
-      'flop': { name: 'Flop', color: 'bg-green-500', icon: '🎯' },
-      'turn': { name: 'Turn', color: 'bg-yellow-500', icon: '🔄' },
-      'river': { name: 'River', color: 'bg-orange-500', icon: '🌊' },
-      'showdown': { name: 'Abattage', color: 'bg-purple-500', icon: '👁️' },
+      'waiting': { name: 'En Attente', color: 'bg-gray-500', Icon: Hourglass },
+      'preflop': { name: 'Pré-Flop', color: 'bg-blue-500', Icon: Spade },
+      'flop': { name: 'Flop', color: 'bg-green-500', Icon: Target },
+      'turn': { name: 'Turn', color: 'bg-yellow-500', Icon: RotateCw },
+      'river': { name: 'River', color: 'bg-orange-500', Icon: Waves },
+      'showdown': { name: 'Abattage', color: 'bg-purple-500', Icon: Eye },
     };
-    
+
     return phases[phase as keyof typeof phases] || phases.waiting;
   };
 
@@ -44,7 +45,7 @@ export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
             'flex items-center gap-2 px-2 py-1 rounded-full text-white text-xs font-medium',
             phaseInfo.color
           )}>
-            <span>{phaseInfo.icon}</span>
+            <phaseInfo.Icon size={14} aria-hidden />
             <span>{phaseInfo.name}</span>
           </div>
           
@@ -78,7 +79,7 @@ export const TurnIndicator: React.FC<TurnIndicatorProps> = ({
             'flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-medium',
             phaseInfo.color
           )}>
-            <span>{phaseInfo.icon}</span>
+            <phaseInfo.Icon size={16} aria-hidden />
             <span>{phaseInfo.name}</span>
           </div>
         </div>

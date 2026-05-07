@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Flame, Trophy } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from '../../../../convex/_generated/dataModel';
@@ -220,14 +221,22 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
                 {userStats.currentWinStreak > 0 && (
                   <StatTile
                     label="Série actuelle"
-                    value={`🔥 ${userStats.currentWinStreak}`}
+                    value={
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <Flame size={18} aria-hidden /> {userStats.currentWinStreak}
+                      </span>
+                    }
                     variant="success"
                   />
                 )}
                 {userStats.longestWinStreak > 0 && (
                   <StatTile
                     label="Meilleure série"
-                    value={`🏆 ${userStats.longestWinStreak}`}
+                    value={
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <Trophy size={18} aria-hidden /> {userStats.longestWinStreak}
+                      </span>
+                    }
                     variant="warning"
                   />
                 )}

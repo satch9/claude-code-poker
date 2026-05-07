@@ -200,3 +200,17 @@ export const MODULE_CONFIG = {
 - **Synchronization**: 99.9% real-time updates
 - **Stability**: <1% unhandled disconnections
 - **Invitation Delivery**: 98% invitation success rate
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->

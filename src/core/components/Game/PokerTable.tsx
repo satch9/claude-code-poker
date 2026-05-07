@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Send } from "lucide-react";
 import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { Card } from "../UI/Card";
@@ -405,10 +406,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             <button
               onClick={() => setShowInviteDialog(true)}
               title={`Code d'invitation : ${table.inviteCode}`}
-              className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded text-base flex-shrink-0"
+              className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded flex-shrink-0 inline-flex items-center justify-center"
               aria-label="Inviter des joueurs"
             >
-              📤
+              <Send size={16} aria-hidden />
             </button>
           )}
           <Button variant="secondary" size="sm" onClick={onLeaveTable} className="flex-shrink-0">
@@ -917,7 +918,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         </div>
 
         {/* Panneau Joueurs / Historique / Chat — désormais un drawer
-            unifié sur toutes les tailles d'écran, ouvert via l'icône 👥
+            unifié sur toutes les tailles d'écran, ouvert via l'icône Users
             du header. */}
 
         {/* Mobile : la navbar verticale et le menu modal ont été retirés.

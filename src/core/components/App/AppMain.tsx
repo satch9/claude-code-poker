@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
+import { Spade, Trophy, BarChart3, User, Plus, Download } from "lucide-react";
 import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { PasswordResetForm } from "../Auth/PasswordResetForm";
@@ -207,10 +208,10 @@ const AppContent: React.FC = () => {
   type TabId = "lobby" | "tournois" | "stats" | "profil";
 
   const tabs: TabItem[] = [
-    { id: "lobby", label: "Lobby", icon: <span aria-hidden>🃏</span> },
-    { id: "tournois", label: "Tournois", icon: <span aria-hidden>🏆</span> },
-    { id: "stats", label: "Stats", icon: <span aria-hidden>📊</span> },
-    { id: "profil", label: "Profil", icon: <span aria-hidden>👤</span> },
+    { id: "lobby", label: "Lobby", icon: <Spade size={18} aria-hidden /> },
+    { id: "tournois", label: "Tournois", icon: <Trophy size={18} aria-hidden /> },
+    { id: "stats", label: "Stats", icon: <BarChart3 size={18} aria-hidden /> },
+    { id: "profil", label: "Profil", icon: <User size={18} aria-hidden /> },
   ];
 
   const viewToTab = (v: AppView): TabId => {
@@ -303,14 +304,14 @@ const AppContent: React.FC = () => {
       return {
         label: "Créer",
         onClick: handleCreateTable,
-        icon: <span aria-hidden>+</span>,
+        icon: <Plus size={18} aria-hidden />,
       };
     }
     if (currentView === "stats") {
       return {
         label: "Exporter",
         onClick: () => exportHandlerRef.current?.(),
-        icon: <span aria-hidden>📥</span>,
+        icon: <Download size={18} aria-hidden />,
       };
     }
     return undefined;

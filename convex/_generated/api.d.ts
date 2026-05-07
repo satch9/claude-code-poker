@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as admin_advanceTurn from "../admin/advanceTurn.js";
+import type * as admin_wipeGameData from "../admin/wipeGameData.js";
 import type * as auth from "../auth.js";
 import type * as core_gameEngine from "../core/gameEngine.js";
 import type * as http from "../http.js";
@@ -19,8 +21,8 @@ import type * as shared_rateLimit from "../shared/rateLimit.js";
 import type * as shared_sanitize from "../shared/sanitize.js";
 import type * as shared_validation from "../shared/validation.js";
 import type * as tables from "../tables.js";
-import type * as users_stats from "../users/stats.js";
 import type * as users from "../users.js";
+import type * as users_stats from "../users/stats.js";
 import type * as utils_blindStructure from "../utils/blindStructure.js";
 import type * as utils_gameStateMachine from "../utils/gameStateMachine.js";
 import type * as utils_handEvaluator from "../utils/handEvaluator.js";
@@ -34,15 +36,9 @@ import type {
   FunctionReference,
 } from "convex/server";
 
-/**
- * A utility for referencing Convex functions in your app's API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 declare const fullApi: ApiFromModules<{
+  "admin/advanceTurn": typeof admin_advanceTurn;
+  "admin/wipeGameData": typeof admin_wipeGameData;
   auth: typeof auth;
   "core/gameEngine": typeof core_gameEngine;
   http: typeof http;
@@ -54,8 +50,8 @@ declare const fullApi: ApiFromModules<{
   "shared/sanitize": typeof shared_sanitize;
   "shared/validation": typeof shared_validation;
   tables: typeof tables;
-  "users/stats": typeof users_stats;
   users: typeof users;
+  "users/stats": typeof users_stats;
   "utils/blindStructure": typeof utils_blindStructure;
   "utils/gameStateMachine": typeof utils_gameStateMachine;
   "utils/handEvaluator": typeof utils_handEvaluator;
@@ -63,150 +59,33 @@ declare const fullApi: ApiFromModules<{
   "utils/prizeStructure": typeof utils_prizeStructure;
   "utils/turnManager": typeof utils_turnManager;
 }>;
-declare const fullApiWithMounts: typeof fullApi;
 
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 export declare const api: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "internal">
 >;
 
 export declare const components: {
-  rateLimiter: {
-    lib: {
-      checkRateLimit: FunctionReference<
-        "query",
-        "internal",
-        {
-          config:
-            | {
-                capacity?: number;
-                kind: "token bucket";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: null;
-              }
-            | {
-                capacity?: number;
-                kind: "fixed window";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: number;
-              };
-          count?: number;
-          key?: string;
-          name: string;
-          reserve?: boolean;
-          throws?: boolean;
-        },
-        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
-      >;
-      clearAll: FunctionReference<
-        "mutation",
-        "internal",
-        { before?: number },
-        null
-      >;
-      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
-      getValue: FunctionReference<
-        "query",
-        "internal",
-        {
-          config:
-            | {
-                capacity?: number;
-                kind: "token bucket";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: null;
-              }
-            | {
-                capacity?: number;
-                kind: "fixed window";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: number;
-              };
-          key?: string;
-          name: string;
-          sampleShards?: number;
-        },
-        {
-          config:
-            | {
-                capacity?: number;
-                kind: "token bucket";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: null;
-              }
-            | {
-                capacity?: number;
-                kind: "fixed window";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: number;
-              };
-          shard: number;
-          ts: number;
-          value: number;
-        }
-      >;
-      rateLimit: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          config:
-            | {
-                capacity?: number;
-                kind: "token bucket";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: null;
-              }
-            | {
-                capacity?: number;
-                kind: "fixed window";
-                maxReserved?: number;
-                period: number;
-                rate: number;
-                shards?: number;
-                start?: number;
-              };
-          count?: number;
-          key?: string;
-          name: string;
-          reserve?: boolean;
-          throws?: boolean;
-        },
-        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
-      >;
-      resetRateLimit: FunctionReference<
-        "mutation",
-        "internal",
-        { key?: string; name: string },
-        null
-      >;
-    };
-    time: {
-      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
-    };
-  };
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
 };

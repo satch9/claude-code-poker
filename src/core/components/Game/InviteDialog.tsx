@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Copy, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "../../../shared/ui/Button";
 import { Input } from "../../../shared/ui/Input";
@@ -102,8 +103,9 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
               size="sm"
               onClick={handleCopy}
               title="Copier le lien"
+              aria-label="Copier le lien"
             >
-              📋
+              <Copy size={16} aria-hidden />
             </Button>
           </div>
           {copyFeedback && (
@@ -113,8 +115,8 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
 
         {/* Partager natif */}
         {canShare && (
-          <Button variant="primary" onClick={handleShare} className="w-full">
-            📲 Partager
+          <Button variant="primary" onClick={handleShare} className="w-full inline-flex items-center justify-center gap-2">
+            <Share2 size={16} aria-hidden /> Partager
           </Button>
         )}
 

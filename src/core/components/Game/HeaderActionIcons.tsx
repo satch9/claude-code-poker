@@ -1,4 +1,5 @@
 import React from "react";
+import { Users, Settings, Send } from "lucide-react";
 import { cn } from "../../../shared/utils/cn";
 
 interface HeaderActionIconsProps {
@@ -11,17 +12,17 @@ interface HeaderActionIconsProps {
 
 const IconButton: React.FC<{
   label: string;
-  emoji: string;
+  icon: React.ReactNode;
   onClick: () => void;
-}> = ({ label, emoji, onClick }) => (
+}> = ({ label, icon, onClick }) => (
   <button
     type="button"
     onClick={onClick}
     title={label}
     aria-label={label}
-    className="min-h-tap min-w-tap h-10 px-3 inline-flex items-center justify-center rounded-md bg-bg-elevated hover:bg-bg-surface text-text-primary border border-border-default text-base leading-none transition-colors"
+    className="min-h-tap min-w-tap h-10 px-3 inline-flex items-center justify-center rounded-md bg-bg-elevated hover:bg-bg-surface text-text-primary border border-border-default transition-colors"
   >
-    <span aria-hidden>{emoji}</span>
+    {icon}
   </button>
 );
 
@@ -34,10 +35,10 @@ export const HeaderActionIcons: React.FC<HeaderActionIconsProps> = ({
 }) => {
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <IconButton label="Joueurs / Historique / Chat" emoji="👥" onClick={onTogglePanel} />
-      <IconButton label="Paramètres" emoji="⚙️" onClick={onToggleSettings} />
+      <IconButton label="Joueurs / Historique / Chat" icon={<Users size={18} aria-hidden />} onClick={onTogglePanel} />
+      <IconButton label="Paramètres" icon={<Settings size={18} aria-hidden />} onClick={onToggleSettings} />
       {showInvite && (
-        <IconButton label="Inviter" emoji="📤" onClick={onToggleInvite} />
+        <IconButton label="Inviter" icon={<Send size={18} aria-hidden />} onClick={onToggleInvite} />
       )}
     </div>
   );

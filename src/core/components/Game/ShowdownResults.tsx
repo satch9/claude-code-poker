@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trophy, Crown, PartyPopper } from 'lucide-react';
 import { Card } from '../UI/Card';
 import { cn } from '../../../shared/utils/cn';
 
@@ -56,7 +57,9 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
         className
       )}>
         <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-auto text-gray-900">
-          <h2 className="text-2xl font-bold mb-4 text-center">🏆 Tournoi terminé</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center inline-flex items-center justify-center gap-2 w-full">
+            <Trophy size={24} className="text-yellow-500" aria-hidden /> Tournoi terminé
+          </h2>
           <ol className="space-y-2">
             {finalRanking.map((row: any) => {
               const user = usersById[row.userId];
@@ -66,8 +69,9 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
               const isWinner = row.position === 1;
               return (
                 <li key={row.userId} className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className={cn('font-medium', isWinner && 'text-green-700')}>
-                    #{row.position} · {name}{isWinner && ' 👑'}
+                  <span className={cn('font-medium inline-flex items-center gap-1', isWinner && 'text-green-700')}>
+                    #{row.position} · {name}
+                    {isWinner && <Crown size={16} className="text-yellow-500" aria-hidden />}
                   </span>
                   {row.prize > 0 && (
                     <span className="text-green-700 font-bold">
@@ -128,8 +132,8 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
     )}>
       <div className="bg-white rounded-2xl p-3 sm:p-6 shadow-2xl border border-gray-200 max-w-4xl w-full max-h-[95vh] sm:max-h-[80vh] overflow-y-auto">
         <div className="text-center mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">
-            🎉 Résultats du Showdown
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 inline-flex items-center justify-center gap-2 w-full">
+            <PartyPopper size={22} className="text-yellow-500" aria-hidden /> Résultats du Showdown
           </h2>
           <p className="text-sm sm:text-base text-gray-600">
             {winners.length === 1 ?
@@ -179,9 +183,9 @@ export const ShowdownResults: React.FC<ShowdownResultsProps> = ({
                     {index + 1}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">
+                    <div className="font-semibold text-gray-900 truncate inline-flex items-center gap-1">
                       {result.playerName || 'Joueur'}
-                      {isWinner && ' 👑'}
+                      {isWinner && <Crown size={14} className="text-yellow-500" aria-hidden />}
                     </div>
                     <div className={cn(
                       'text-sm font-medium',

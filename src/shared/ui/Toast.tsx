@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 type ToastKind = 'success' | 'error' | 'info';
@@ -49,9 +50,9 @@ const ToastItem: React.FC<{ entry: ToastEntry; onClose: () => void }> = ({ entry
         type="button"
         onClick={onClose}
         aria-label="Fermer"
-        className="text-text-muted hover:text-text-primary text-base leading-none px-1"
+        className="text-text-muted hover:text-text-primary inline-flex items-center justify-center px-1"
       >
-        ✕
+        <X size={16} aria-hidden />
       </button>
     </div>
   );

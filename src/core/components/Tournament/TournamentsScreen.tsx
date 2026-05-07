@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Trophy } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
@@ -119,8 +120,8 @@ export const TournamentsScreen: React.FC<TournamentsScreenProps> = ({ onJoinTabl
         </div>
       ) : (
         <div className="text-center py-10 px-4 bg-bg-surface border border-border-default rounded-lg">
-          <div className="text-3xl mb-2" aria-hidden>
-            🏆
+          <div className="mb-2 flex justify-center" aria-hidden>
+            <Trophy size={32} className="text-yellow-500" />
           </div>
           <p className="text-text-primary font-medium">Aucun tournoi</p>
           <p className="mt-1 text-sm text-text-muted">

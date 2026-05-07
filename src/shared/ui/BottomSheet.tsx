@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 export interface BottomSheetProps {
@@ -73,9 +74,9 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="min-h-tap min-w-tap text-text-muted hover:text-text-primary"
+            className="min-h-tap min-w-tap text-text-muted hover:text-text-primary inline-flex items-center justify-center"
           >
-            ✕
+            <X size={18} aria-hidden />
           </button>
         </header>
         <div className="flex-1 overflow-y-auto p-4">{children}</div>
