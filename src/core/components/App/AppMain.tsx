@@ -237,14 +237,7 @@ const AppContent: React.FC = () => {
   const renderView = (): JSX.Element => {
     switch (currentView) {
       case "lobby":
-        return (
-          <Lobby
-            title={title}
-            onJoinTable={handleJoinTable}
-            onCreateTable={handleCreateTable}
-            onViewStats={() => setCurrentView("stats")}
-          />
-        );
+        return <Lobby onJoinTable={handleJoinTable} />;
 
       case "table":
         if (!user || !selectedTableId) {
@@ -297,16 +290,18 @@ const AppContent: React.FC = () => {
         );
 
       default:
-        return (
-          <Lobby
-            title={title}
-            onJoinTable={handleJoinTable}
-            onCreateTable={handleCreateTable}
-            onViewStats={() => setCurrentView("stats")}
-          />
-        );
+        return <Lobby onJoinTable={handleJoinTable} />;
     }
   };
+
+  const headerAction =
+    currentView === "lobby"
+      ? {
+          label: "Créer",
+          onClick: handleCreateTable,
+          icon: <span aria-hidden>+</span>,
+        }
+      : undefined;
 
   return (
     <AppShell
@@ -315,6 +310,7 @@ const AppContent: React.FC = () => {
       activeTabId={viewToTab(currentView)}
       onTabChange={onTabChange}
       fullscreen={currentView === "table"}
+      headerAction={headerAction}
     >
       {renderView()}
     </AppShell>
