@@ -1413,6 +1413,7 @@ async function endGame(ctx: any, tableId: string) {
 
     // Mark table as finished for tournament
     await ctx.db.patch(tableId, { status: "finished" });
+    await ctx.runMutation(internal.chat.purgeTableMessages, { tableId });
 
     // Reset game state for tournament end
     await ctx.db
@@ -1945,6 +1946,7 @@ async function endTournament(ctx: any, tableId: string) {
       },
     },
   });
+  await ctx.runMutation(internal.chat.purgeTableMessages, { tableId });
 
   const winnerUser = await ctx.db.get(winner.userId);
   await addActionToFeed(ctx, tableId, {
