@@ -518,7 +518,11 @@ export const playerAction = mutation({
       .collect();
 
     if (shouldEndHand(allPlayers)) {
-      await endHand(ctx, args.tableId);
+      // Un seul joueur encore actif (les autres ont foldé) : determineWinner
+      // crédite le pot au survivant, logge "remporte X jetons", patche la
+      // phase et planifie la main suivante. endHand seule (sans
+      // determineWinner) abandonnait le pot dans gameState.pot.
+      await determineWinner(ctx, args.tableId);
       return { success: true };
     }
 
@@ -739,7 +743,9 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
 
   // Check if hand is over (only one player left)
   if (shouldEndHand(players)) {
-    await endHand(ctx, tableId);
+    // Voir le commentaire dans playerAction : passer par determineWinner
+    // pour effectivement distribuer le pot, sinon les jetons disparaissent.
+    await determineWinner(ctx, tableId);
     return;
   }
 
