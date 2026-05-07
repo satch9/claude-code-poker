@@ -5,6 +5,23 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 5 Refonte Profil + Auth + Invitations
+
+### Ajouté
+- `ProfileScreen` (`src/core/components/Profile/`) : nouvel écran pour l'onglet Profil de l'AppShell. Identité (avatar initiale, nom, email), préférences placeholder, bouton "Modifier le profil" (ouvre l'ancien dialog UserProfile en modal), bouton "Se déconnecter".
+
+### Modifié
+- `LoginForm` : tokens Sprint 0 dark, wrapper via `Card variant="elevated"`.
+- `EmailPasswordForm` : tokens Sprint 0, primitives `Input` (avec `error` prop) et `Button`. Flow "Mot de passe oublié" inline préservé.
+- `PasswordResetForm` : tokens Sprint 0, primitives Sprint 0.
+- `InviteDialog` (game) : tokens dark.
+- `AppMain` : ajout de la vue `"profil"` dans `AppView`, l'onglet Profil de l'AppShell pointe désormais vers `ProfileScreen` (au lieu de l'alert placeholder).
+
+### Notes
+- Refonte profonde du `UserProfile` legacy (669 lignes — dialog avatar selector + stats détaillées intégrées) laissée pour une itération future. Il reste accessible via le bouton "Modifier le profil" du `ProfileScreen`.
+- Pas de wizard d'inscription multi-étapes — l'`EmailPasswordForm` reste un seul formulaire avec toggle Sign in / Sign up.
+- Le système de notifications (préférences) reste un placeholder — à câbler dans une itération future.
+
 ## [Unreleased] — Sprint 4 Refonte Stats
 
 ### Modifié
