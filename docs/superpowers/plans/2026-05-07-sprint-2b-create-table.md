@@ -1,3 +1,53 @@
+# Sprint 2B — BottomSheet "Créer une table" — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Sortir `CreateTableForm` (433 lignes, plein écran avec gradient + white card) du switch de vues d'`AppMain` et le monter dans un `BottomSheet` Sprint 0 ouvert depuis le bouton "Créer" du header AppShell. Visuel adopté aux tokens dark Sprint 0 et aux primitives `Input`/`Button`. Toute la logique de validation et d'état interne du formulaire est préservée.
+
+**Architecture:** Le composant garde son état local (`useState formData`, `errors`), sa validation et son `onSubmit`/`onCancel`. On retire uniquement le wrapper plein écran (`min-h-screen bg-gradient-... flex items-center justify-center`) et le contenu blanc (`bg-white rounded-lg shadow-xl ...`) — le BottomSheet fournit le container. Tous les `bg-white`, `border-gray-300`, `text-gray-700`, `bg-poker-green-50` deviennent les tokens Sprint 0. Les `<input type="text|number">` natifs sont remplacés par la primitive `Input` quand pertinent (avec `error` prop). Les sélecteurs natifs `<select>` restent (pas de primitive Select Sprint 0).
+
+`AppMain.tsx` : retrait du case `"create-table"` du switch, retrait de la lazy-load de `CreateTableForm` en module séparé, ajout d'un state `showCreateSheet`, et montage du `BottomSheet` à un endroit fixe dans le JSX (à côté de `AppShell`). `handleCreateTable` ouvre la sheet ; `handleTableCreated` (qui a déjà toute la logique) la ferme après succès.
+
+**Tech Stack:** Vite + React 18 + TS 6 + Tailwind 3.3.6 + tokens/primitives Sprint 0.
+
+---
+
+## File Structure
+
+### Files to modify
+
+| Path | Reason |
+|---|---|
+| `src/core/components/Table/CreateTableForm.tsx` | Rewrite visuel (drop fullscreen wrapper, dark tokens, primitives) ; logique préservée |
+| `src/core/components/App/AppMain.tsx` | Retrait du `case "create-table"` du switch + montage `BottomSheet` |
+
+### Files NOT touched
+
+- `convex/tables.ts` (mutation `createTable`).
+- `src/core/hooks/useTables.ts` (whitelist déjà en place).
+- Reste des composants Lobby (mergés Sprint 2A).
+
+---
+
+## Task 1 : Refondre le visuel de `CreateTableForm`
+
+**Files:**
+- Modify: `src/core/components/Table/CreateTableForm.tsx`
+
+### Goal
+
+Convertir le composant en un contenu prêt à être monté dans un `BottomSheet` :
+- Drop le wrapper `<div className="min-h-screen bg-gradient-...">` et la `<div className="bg-white rounded-lg shadow-xl ...">`.
+- Drop le titre "Créer une nouvelle table" / sous-titre (le BottomSheet a son propre titre).
+- Replace les inputs `<input className="...gray-300...">` par la primitive `Input` Sprint 0 (avec `label`, `error`, `hint`).
+- Replace tous les classNames de couleur avec les tokens Sprint 0 (`bg-bg-elevated`, `text-text-primary`, `text-text-muted`, `border-border-default`, `bg-accent`, `bg-sem-danger`, `text-sem-danger`, `bg-purple-500/20`).
+- Garde `<select>` (pas de primitive Select), restyles avec les tokens.
+- Garde le bouton submit (utilise `Button` Sprint 0 — déjà importé via `'../UI/Button'` legacy, à migrer vers `'../../shared/ui/Button'`).
+- Garde toute la logique interne intacte (state, useEffect preset map, validation, handleGameTypeChange, handleSubmit).
+
+### Step 1.1 — Replace ENTIRE content of `src/core/components/Table/CreateTableForm.tsx`
+
+```tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from '../../../shared/ui/Button';
 import { Input } from '../../../shared/ui/Input';
@@ -372,3 +422,236 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
     </form>
   );
 };
+```
+
+### Step 1.2 — Verify
+
+```bash
+npm run typecheck
+npm run build
+npx vitest run tests/ui   # tous les tests existants doivent passer
+```
+
+### Step 1.3 — Commit
+
+```bash
+git add src/core/components/Table/CreateTableForm.tsx
+git -c user.email="viny1976@gmail.com" -c user.name="satch9" commit -m "refactor(table): CreateTableForm sheet-friendly (dark tokens, primitives Sprint 0)"
+```
+
+---
+
+## Task 2 : Migrer `CreateTableForm` dans un BottomSheet via `AppMain`
+
+**Files:**
+- Modify: `src/core/components/App/AppMain.tsx`
+
+### Goal
+
+Retirer la vue `"create-table"` du switch, ajouter un state `showCreateSheet`, monter le `BottomSheet` (Sprint 0) contenant `CreateTableForm`. `handleCreateTable` ouvre la sheet ; `handleTableCreated` la ferme. `handleCancelCreateTable` la ferme aussi (sans nav).
+
+### Step 2.1 — Lire l'état actuel
+
+D'abord, lire `src/core/components/App/AppMain.tsx` pour repérer :
+- L'import lazy `CreateTableForm`
+- Le case `"create-table"` du `renderView()`
+- `handleCreateTable`, `handleTableCreated`, `handleCancelCreateTable`
+- Le type `AppView` qui inclut `"create-table"`
+
+### Step 2.2 — Modifier `AppMain.tsx`
+
+Appliquer les changements suivants :
+
+**a)** Remplacer l'import lazy `CreateTableForm` par un import direct (sera chargé seulement quand le formulaire est ouvert via la sheet) :
+
+```tsx
+// Avant :
+const CreateTableForm = lazy(() =>
+  import("../Table/CreateTableForm").then((m) => ({ default: m.CreateTableForm }))
+);
+
+// Après :
+import { CreateTableForm } from "../Table/CreateTableForm";
+import type { CreateTableData } from "../Table/CreateTableForm";
+```
+
+(Si le type `CreateTableData` est déjà importé via `import type { CreateTableData }`, vérifier la ligne et la conserver/dédupliquer.)
+
+**b)** Ajouter l'import du `BottomSheet` Sprint 0 :
+
+```tsx
+import { BottomSheet } from "../../../shared/ui/BottomSheet";
+```
+
+**c)** Réduire le type `AppView` : retirer `"create-table"` :
+
+```tsx
+type AppView = "lobby" | "table" | "stats";
+```
+
+**d)** Ajouter le state `showCreateSheet` :
+
+```tsx
+const [showCreateSheet, setShowCreateSheet] = useState(false);
+```
+
+**e)** Modifier `handleCreateTable` :
+
+```tsx
+const handleCreateTable = () => {
+  setShowCreateSheet(true);
+};
+```
+
+**f)** Modifier `handleCancelCreateTable` :
+
+```tsx
+const handleCancelCreateTable = () => {
+  setShowCreateSheet(false);
+};
+```
+
+**g)** Modifier `handleTableCreated` à la fin :
+
+À la fin (après `setSelectedTableId(tableId); setCurrentView("table");`), ajouter :
+
+```tsx
+setShowCreateSheet(false);
+```
+
+**h)** Retirer le `case "create-table":` du `renderView()` :
+
+```tsx
+// retirer entièrement le bloc case "create-table": ... return (...);
+```
+
+**i)** Monter le `BottomSheet` dans le JSX. Trouver le `return ( <AppShell ...>{renderView()}</AppShell> )` final. Wrap en fragment pour ajouter la sheet à côté :
+
+```tsx
+return (
+  <>
+    <AppShell
+      title={headerTitle}
+      tabs={tabs}
+      activeTabId={viewToTab(currentView)}
+      onTabChange={onTabChange}
+      fullscreen={currentView === "table"}
+      headerAction={headerAction}
+    >
+      {renderView()}
+    </AppShell>
+    <BottomSheet
+      isOpen={showCreateSheet}
+      onClose={() => setShowCreateSheet(false)}
+      title="Créer une nouvelle table"
+    >
+      <CreateTableForm
+        onSubmit={handleTableCreated}
+        onCancel={handleCancelCreateTable}
+      />
+    </BottomSheet>
+  </>
+);
+```
+
+**j)** `headerTitle` n'a plus besoin du case `"create-table"` :
+
+```tsx
+const headerTitle = (() => {
+  switch (currentView) {
+    case "lobby": return title;
+    case "stats": return "Stats";
+    case "table": return title;
+    default: return title;
+  }
+})();
+```
+
+**k)** `viewToTab` reste OK (n'utilisait pas `"create-table"`).
+
+### Step 2.3 — Verify
+
+```bash
+npm run typecheck
+npm run build
+npx vitest run tests/ui     # 98 tests
+npm run test -- --run       # full suite
+```
+
+Tester en local :
+- Clic "Créer" depuis le lobby → BottomSheet s'ouvre.
+- Annuler → sheet se ferme, retour lobby.
+- Créer une table valide → sheet se ferme, navigation vers la table.
+- Validation erreur (nom vide, blinds invalides) → erreurs affichées sans fermer la sheet.
+
+### Step 2.4 — Commit
+
+```bash
+git add src/core/components/App/AppMain.tsx
+git -c user.email="viny1976@gmail.com" -c user.name="satch9" commit -m "feat(lobby): CreateTableForm dans un BottomSheet (drop view create-table)"
+```
+
+---
+
+## Task 3 : Audit + CHANGELOG
+
+**Files:**
+- Modify: `CHANGELOG.md`
+
+### Step 3.1 — Audits
+
+```bash
+npm run typecheck
+npm run lint
+npx vitest run tests/ui
+npm run test -- --run
+npm run build
+```
+
+Tous OK (sauf 4 échecs pré-existants security-c1 + prizeStructure).
+
+### Step 3.2 — Update `CHANGELOG.md`
+
+Ajouter en haut :
+
+```markdown
+## [Unreleased] — Sprint 2B BottomSheet "Créer une table"
+
+### Modifié
+- `CreateTableForm` réécrit visuellement : drop le wrapper plein écran (gradient + white card), tokens Sprint 0 dark, primitives `Input` et `Button` Sprint 0, sélecteurs natifs restylés. Toute la logique (validation, preset map tournoi, handleGameTypeChange) est préservée.
+- `AppMain` : suppression du case `"create-table"` du switch de vues. `CreateTableForm` est désormais monté dans un `BottomSheet` Sprint 0 ouvert via le bouton "Créer" du header AppShell, fermé sur cancel/submit/escape/backdrop. Plus de navigation vers une vue dédiée.
+
+### Notes
+- Le bundle initial perd l'overhead du chunk lazy `CreateTableForm` (le composant est désormais en import statique mais affiché uniquement quand la sheet est ouverte).
+- L'ancienne route conceptuelle "create-table" disparaît du type `AppView`.
+```
+
+### Step 3.3 — Commit
+
+```bash
+git add CHANGELOG.md
+git -c user.email="viny1976@gmail.com" -c user.name="satch9" commit -m "docs(changelog): clore Sprint 2B BottomSheet créer une table"
+```
+
+---
+
+## Critères de "Done" du Sprint 2B
+
+- [ ] `npm run typecheck`, `npm run lint`, `npx vitest run tests/ui`, `npm run build` — tous OK.
+- [ ] L'écran "Créer une table" est désormais une `BottomSheet` ouverte depuis le bouton "Créer" du Lobby.
+- [ ] Annuler / submit / escape / backdrop ferment la sheet.
+- [ ] La validation d'erreur (nom court, BB ≤ SB, buy-in négatif) reste fonctionnelle.
+- [ ] Plus de `bg-white` / `text-gray-700` dans `CreateTableForm.tsx`.
+- [ ] CHANGELOG mis à jour.
+
+## Risques & mitigations
+
+- **Lazy loading retiré** : `CreateTableForm` était lazy-loaded. Maintenant en import statique → bundle initial légèrement plus lourd, mais le composant est petit (~250 lignes après refonte). Si le poids gêne, on peut re-lazifier le `<CreateTableForm>` à l'intérieur de la sheet via `<Suspense>` plus tard.
+- **Hauteur de la sheet sur petits écrans** : `BottomSheet` a `maxHeight: 85vh` par défaut. Le formulaire (8-10 sections) peut être long ; le scroll interne du BottomSheet (`flex-1 overflow-y-auto`) gère ce cas.
+- **Focus management** : la sheet n'a pas de focus trap complet (Sprint 6 polish). On accepte qu'un user puisse tabber hors de la sheet ; pas bloquant pour l'usage.
+
+## Hors scope
+
+- Sections collapsibles (un accordion par section). On garde tout déroulé pour Sprint 2B ; à itérer si demande utilisateur.
+- Refonte UX du formulaire (par exemple wizard multi-étape pour mobile). La structure reste un long formulaire.
+- Refonte de la mutation Convex `createTable` (déjà OK).
