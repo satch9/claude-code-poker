@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Button } from "../UI/Button";
+import { Button } from "../../../shared/ui/Button";
+import { Input } from "../../../shared/ui/Input";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { cn } from "@/shared/utils/cn";
 
@@ -57,15 +58,15 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5"
+        className="bg-bg-surface rounded-2xl shadow-2xl max-w-sm w-full p-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Inviter des joueurs</h2>
+          <h2 className="text-lg font-bold text-text-primary">Inviter des joueurs</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="text-text-muted hover:text-text-primary text-2xl leading-none"
             aria-label="Fermer"
           >
             ×
@@ -73,27 +74,27 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
         </div>
 
         {/* QR code */}
-        <div className="flex justify-center mb-4 p-3 bg-white border border-gray-200 rounded-xl">
+        <div className="flex justify-center mb-4 p-3 bg-bg-elevated border border-border-default rounded-xl">
           <QRCodeSVG value={inviteUrl} size={qrSize} level="M" marginSize={0} />
         </div>
 
         {/* Code lisible */}
         <div className="text-center mb-3">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Code</div>
-          <div className="text-2xl font-mono font-bold tracking-widest text-gray-900">
+          <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Code</div>
+          <div className="text-2xl font-mono font-bold tracking-widest text-text-primary">
             {inviteCode}
           </div>
         </div>
 
         {/* Lien + copie */}
         <div className="mb-3">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Lien</div>
-          <div className="flex gap-2">
-            <input
+          <div className="text-xs text-text-muted uppercase tracking-wider mb-1">Lien</div>
+          <div className="flex gap-2 items-start">
+            <Input
               type="text"
               readOnly
               value={inviteUrl}
-              className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-700 bg-gray-50"
+              className="flex-1 text-xs"
               onFocus={(e) => e.currentTarget.select()}
             />
             <Button
@@ -106,7 +107,7 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
             </Button>
           </div>
           {copyFeedback && (
-            <div className="text-xs text-green-600 mt-1">{copyFeedback}</div>
+            <div className="text-xs text-sem-success mt-1">{copyFeedback}</div>
           )}
         </div>
 
@@ -117,7 +118,7 @@ export const InviteDialog: React.FC<InviteDialogProps> = ({
           </Button>
         )}
 
-        <div className={cn("text-xs text-gray-500 text-center mt-3")}>
+        <div className={cn("text-xs text-text-muted text-center mt-3")}>
           Donne ce lien ou ce code aux personnes que tu veux inviter.
         </div>
       </div>
