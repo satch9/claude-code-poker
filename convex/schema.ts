@@ -195,4 +195,13 @@ export default defineSchema({
   })
     .index("by_table", ["tableId"])
     .index("by_player", ["playerId"]),
+
+  // Chat de table (volatile, purgé à la fin de la partie)
+  chatMessages: defineTable({
+    tableId: v.id("tables"),
+    userId: v.id("users"),
+    playerName: v.string(),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_table", ["tableId", "createdAt"]),
 });
