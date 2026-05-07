@@ -209,4 +209,23 @@ describe('BettingControls — Raise (mobile)', () => {
     const input = screen.getByRole('spinbutton', { name: /montant/i }) as HTMLInputElement;
     expect(input.value).toBe('1000');
   });
+
+  it('confirms raise: calls onAction with chosen amount and closes sheet', async () => {
+    const onAction = vi.fn();
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={120}
+        onAction={onAction}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^pot$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /relancer à 120/i }));
+    expect(onAction).toHaveBeenCalledWith({ action: 'raise', amount: 120 });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 });
