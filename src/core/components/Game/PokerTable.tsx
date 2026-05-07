@@ -5,8 +5,7 @@ import { Card } from "../UI/Card";
 import { BettingControls } from "./BettingControls";
 import { ShowdownResults } from "./ShowdownResults";
 import { HeaderActionIcons } from "./HeaderActionIcons";
-import { ActionFeedDrawer } from "./ActionFeedDrawer";
-import { ChatDrawer } from "./ChatDrawer";
+import { Drawer } from "../UI/Drawer";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { TournamentInfo } from "./TournamentInfo";
 import { Button } from "../UI/Button";
@@ -23,8 +22,6 @@ import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrientation } from "@/shared/hooks/useOrientation";
 import { TableRightPanel } from './TableRightPanel';
-import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
-import { BREAKPOINTS } from '@/shared/constants/breakpoints';
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -227,9 +224,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // type, pot — sont déjà visibles directement à l'écran de jeu.)
   const [showRebuyDialog, setShowRebuyDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [showChatDrawer, setShowChatDrawer] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-  const [showActionsDrawer, setShowActionsDrawer] = useState(false);
+  // Drawer unifié contenant 3 onglets : Joueurs / Historique / Chat.
+  // Remplace les anciens drawers ChatDrawer + ActionFeedDrawer.
+  const [showTablePanelDrawer, setShowTablePanelDrawer] = useState(false);
   const rebuyMutation = useMutation(api.players.rebuy);
   const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
@@ -251,7 +249,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Use hooks
   const { isMobile, isIOS } = useBreakpoint();
-  const isDesktop = useMediaQuery(BREAKPOINTS.lg);
   const orientation = useOrientation();
   const isLandscape = orientation === "landscape";
   const responsiveClasses = useResponsiveClasses();
@@ -635,12 +632,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </Button>
               )}
             <HeaderActionIcons
-              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onTogglePanel={() => setShowTablePanelDrawer((v) => !v)}
               onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
-              onToggleActions={() => setShowActionsDrawer((v) => !v)}
               showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
-              hideRedundantTabs={isDesktop}
             />
             <Button variant="secondary" size="sm" onClick={onLeaveTable}>
               Quitter
@@ -680,14 +675,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               )}
 
             <HeaderActionIcons
-              onToggleChat={() => setShowChatDrawer((v) => !v)}
+              onTogglePanel={() => setShowTablePanelDrawer((v) => !v)}
               onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
-              onToggleActions={() => setShowActionsDrawer((v) => !v)}
               showInvite={
                 !!table.inviteCode && authUser?._id === table.creatorId
               }
-              hideRedundantTabs={isDesktop}
             />
 
             <Button variant="secondary" onClick={onLeaveTable}>
@@ -923,14 +916,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Panneau latéral droit — desktop ≥1024px uniquement.
-            Sur mobile/tablette, les drawers (header icons) restent actifs. */}
-        {isDesktop && (
-          <TableRightPanel
-            actions={actionHistory as unknown[] ?? []}
-            players={playersForPanel}
-          />
-        )}
+        {/* Panneau Joueurs / Historique / Chat — désormais un drawer
+            unifié sur toutes les tailles d'écran, ouvert via l'icône 👥
+            du header. */}
 
         {/* Mobile : la navbar verticale et le menu modal ont été retirés.
             Le top header mobile (plus haut) + les drawers (Chat/Paramètres/
@@ -987,15 +975,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         )}
 
         {/* Drawers déclenchés par les icônes du header */}
-        <ActionFeedDrawer
-          isOpen={showActionsDrawer}
-          onClose={() => setShowActionsDrawer(false)}
-          actions={actionHistory}
-        />
-        <ChatDrawer
-          isOpen={showChatDrawer}
-          onClose={() => setShowChatDrawer(false)}
-        />
+        <Drawer
+          isOpen={showTablePanelDrawer}
+          onClose={() => setShowTablePanelDrawer(false)}
+          title="Joueurs / Historique / Chat"
+        >
+          <TableRightPanel
+            actions={actionHistory as unknown[] ?? []}
+            players={playersForPanel}
+          />
+        </Drawer>
         <SettingsDrawer
           isOpen={showSettingsDrawer}
           onClose={() => setShowSettingsDrawer(false)}

@@ -2,14 +2,10 @@ import React from "react";
 import { cn } from "../../../shared/utils/cn";
 
 interface HeaderActionIconsProps {
-  onToggleChat: () => void;
+  onTogglePanel: () => void; // Joueurs / Historique / Chat (drawer)
   onToggleSettings: () => void;
   onToggleInvite: () => void;
-  onToggleActions: () => void;
   showInvite: boolean; // false si user pas créateur (icône cachée)
-  /** Quand le TableRightPanel est monté, on cache les icônes redondantes
-   *  (Chat et Actions récentes — couvertes par les onglets du panneau). */
-  hideRedundantTabs?: boolean;
   className?: string;
 }
 
@@ -30,22 +26,19 @@ const IconButton: React.FC<{
 );
 
 export const HeaderActionIcons: React.FC<HeaderActionIconsProps> = ({
-  onToggleChat,
+  onTogglePanel,
   onToggleSettings,
   onToggleInvite,
-  onToggleActions,
   showInvite,
-  hideRedundantTabs = false,
   className,
 }) => {
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      {!hideRedundantTabs && <IconButton label="Chat" emoji="💬" onClick={onToggleChat} />}
+      <IconButton label="Joueurs / Historique / Chat" emoji="👥" onClick={onTogglePanel} />
       <IconButton label="Paramètres" emoji="⚙️" onClick={onToggleSettings} />
       {showInvite && (
         <IconButton label="Inviter" emoji="📤" onClick={onToggleInvite} />
       )}
-      {!hideRedundantTabs && <IconButton label="Actions récentes" emoji="📜" onClick={onToggleActions} />}
     </div>
   );
 };
