@@ -229,3 +229,46 @@ describe('BettingControls — Raise (mobile)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+describe('BettingControls — Desktop (inline)', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockMatchMedia(true); // desktop
+  });
+
+  it('shows inline raise slider on desktop without opening sheet', () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={100}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    // Raise button should NOT be present on desktop (slider is inline)
+    expect(screen.queryByRole('button', { name: /^raise$/i })).toBeNull();
+    // Slider and presets are visible without any click
+    expect(screen.getByRole('slider', { name: /relance/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^pot$/i })).toBeInTheDocument();
+    // No dialog
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('confirms raise inline on desktop', async () => {
+    const onAction = vi.fn();
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={100}
+        onAction={onAction}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^pot$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /relancer à 100/i }));
+    expect(onAction).toHaveBeenCalledWith({ action: 'raise', amount: 100 });
+  });
+});
