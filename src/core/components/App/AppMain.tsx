@@ -3,20 +3,12 @@ import { AuthProvider } from "../Auth/AuthProvider";
 import { LoginForm } from "../Auth/LoginForm";
 import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
+import { CreateTableForm } from "../Table/CreateTableForm";
 import type { CreateTableData } from "../Table/CreateTableForm";
 import { SuspenseFallback } from "../UI/SuspenseFallback";
 import { AppShell } from "../../../shared/ui/AppShell";
+import { BottomSheet } from "../../../shared/ui/BottomSheet";
 import type { TabItem } from "../../../shared/ui/TabBar";
-
-const PokerTable = lazy(() =>
-  import("../Game/PokerTable").then((m) => ({ default: m.PokerTable }))
-);
-const CreateTableForm = lazy(() =>
-  import("../Table/CreateTableForm").then((m) => ({ default: m.CreateTableForm }))
-);
-const StatsPage = lazy(() =>
-  import("../Stats/StatsPage").then((m) => ({ default: m.StatsPage }))
-);
 import { useAuth } from "../../hooks/useAuth";
 import { useTableActions } from "../../hooks/useTables";
 import { usePendingJoin } from "../../hooks/usePendingJoin";
@@ -25,7 +17,14 @@ import { api } from "../../../../convex/_generated/api";
 // Table, Player, GameState plus nécessaires ici
 import { Id } from "../../../../convex/_generated/dataModel";
 
-type AppView = "lobby" | "table" | "create-table" | "stats";
+const PokerTable = lazy(() =>
+  import("../Game/PokerTable").then((m) => ({ default: m.PokerTable }))
+);
+const StatsPage = lazy(() =>
+  import("../Stats/StatsPage").then((m) => ({ default: m.StatsPage }))
+);
+
+type AppView = "lobby" | "table" | "stats";
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -36,6 +35,7 @@ const AppContent: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<Id<"tables"> | null>(
     null
   );
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const { pendingCode, clearPending } = usePendingJoin();
 
@@ -102,7 +102,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleCreateTable = () => {
-    setCurrentView("create-table");
+    setShowCreateSheet(true);
   };
 
   const handleTableCreated = async (tableData: CreateTableData) => {
@@ -130,6 +130,7 @@ const AppContent: React.FC = () => {
       // Automatically open the created table
       setSelectedTableId(tableId);
       setCurrentView("table");
+      setShowCreateSheet(false);
     } catch (error) {
       console.error("Error creating table:", error);
       // TODO: Show error to user
@@ -137,7 +138,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleCancelCreateTable = () => {
-    setCurrentView("lobby");
+    setShowCreateSheet(false);
   };
 
   const handleLeaveTable = async () => {
@@ -227,7 +228,6 @@ const AppContent: React.FC = () => {
   const headerTitle = (() => {
     switch (currentView) {
       case "lobby": return title;
-      case "create-table": return "Créer une table";
       case "stats": return "Stats";
       case "table": return title;
       default: return title;
@@ -272,16 +272,6 @@ const AppContent: React.FC = () => {
           </Suspense>
         );
 
-      case "create-table":
-        return (
-          <Suspense fallback={<SuspenseFallback />}>
-            <CreateTableForm
-              onSubmit={handleTableCreated}
-              onCancel={handleCancelCreateTable}
-            />
-          </Suspense>
-        );
-
       case "stats":
         return (
           <Suspense fallback={<SuspenseFallback />}>
@@ -304,16 +294,28 @@ const AppContent: React.FC = () => {
       : undefined;
 
   return (
-    <AppShell
-      title={headerTitle}
-      tabs={tabs}
-      activeTabId={viewToTab(currentView)}
-      onTabChange={onTabChange}
-      fullscreen={currentView === "table"}
-      headerAction={headerAction}
-    >
-      {renderView()}
-    </AppShell>
+    <>
+      <AppShell
+        title={headerTitle}
+        tabs={tabs}
+        activeTabId={viewToTab(currentView)}
+        onTabChange={onTabChange}
+        fullscreen={currentView === "table"}
+        headerAction={headerAction}
+      >
+        {renderView()}
+      </AppShell>
+      <BottomSheet
+        isOpen={showCreateSheet}
+        onClose={() => setShowCreateSheet(false)}
+        title="Créer une nouvelle table"
+      >
+        <CreateTableForm
+          onSubmit={handleTableCreated}
+          onCancel={handleCancelCreateTable}
+        />
+      </BottomSheet>
+    </>
   );
 };
 
