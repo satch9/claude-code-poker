@@ -21,6 +21,7 @@ import { InviteDialog } from "./InviteDialog";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
+import { useOrientation } from "@/shared/hooks/useOrientation";
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -246,6 +247,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Use hooks
   const { isMobile, isIOS } = useBreakpoint();
+  const orientation = useOrientation();
+  const isLandscape = orientation === "landscape";
   const responsiveClasses = useResponsiveClasses();
   const seatPositioning = useSeatPositioning();
 
@@ -875,15 +878,18 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             </div>
           </div>
 
-          {/* Betting controls below table (outside of table container) */}
-          {/* Betting controls below table (outside of table container) */}
+          {/* Betting controls
+              - Portrait : flow normal sous la table
+              - Paysage  : overlay fixe en bas (drawer-like) pour ne pas
+                rapetisser la table en hauteur déjà contrainte */}
           {currentPlayer &&
             isMyTurn &&
             gameState.phase !== "waiting" &&
             availableActions.length > 0 && (
               <div className={cn(
-                "w-full",
-                isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl"
+                isLandscape
+                  ? "fixed bottom-0 left-0 right-0 z-30 px-2 pb-[env(safe-area-inset-bottom)] bg-black/50 backdrop-blur-sm border-t border-poker-green-700"
+                  : cn("w-full", isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl")
               )}>
                 <BettingControls
                   availableActions={availableActions as any}
