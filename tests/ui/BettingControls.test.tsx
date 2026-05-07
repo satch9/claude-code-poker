@@ -146,4 +146,67 @@ describe('BettingControls — Raise (mobile)', () => {
     await userEvent.click(screen.getByRole('button', { name: /annuler/i }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('shows raise amount input initialized to minAmount', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        availableActions={[
+          { action: 'raise', minAmount: 50, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    const input = screen.getByRole('spinbutton', { name: /montant/i }) as HTMLInputElement;
+    expect(input.value).toBe('50');
+  });
+
+  it('shows preset buttons inside BottomSheet', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={100}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    expect(screen.getByRole('button', { name: /^min$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /½ pot/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^pot$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /all-in/i })).toBeInTheDocument();
+  });
+
+  it('preset Pot sets amount to potSize', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={120}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^pot$/i }));
+    const input = screen.getByRole('spinbutton', { name: /montant/i }) as HTMLInputElement;
+    expect(input.value).toBe('120');
+  });
+
+  it('preset clamps to maxAmount when > max', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={2000}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^pot$/i }));
+    const input = screen.getByRole('spinbutton', { name: /montant/i }) as HTMLInputElement;
+    expect(input.value).toBe('1000');
+  });
 });
