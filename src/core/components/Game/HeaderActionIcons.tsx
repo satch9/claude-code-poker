@@ -8,6 +8,9 @@ interface HeaderActionIconsProps {
   onToggleInvite: () => void;
   onToggleActions: () => void;
   showInvite: boolean; // false si user pas créateur (icône cachée)
+  /** Quand le TableRightPanel est monté, on cache les icônes redondantes
+   *  (Chat et Actions récentes — couvertes par les onglets du panneau). */
+  hideRedundantTabs?: boolean;
   className?: string;
 }
 
@@ -21,7 +24,7 @@ const IconButton: React.FC<{
     onClick={onClick}
     title={label}
     aria-label={label}
-    className="h-10 px-3 inline-flex items-center justify-center rounded-md bg-poker-green-700 hover:bg-poker-green-600 text-base leading-none transition-colors"
+    className="min-h-tap min-w-tap h-10 px-3 inline-flex items-center justify-center rounded-md bg-bg-elevated hover:bg-bg-surface text-text-primary border border-border-default text-base leading-none transition-colors"
   >
     <span aria-hidden>{emoji}</span>
   </button>
@@ -34,17 +37,18 @@ export const HeaderActionIcons: React.FC<HeaderActionIconsProps> = ({
   onToggleInvite,
   onToggleActions,
   showInvite,
+  hideRedundantTabs = false,
   className,
 }) => {
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <IconButton label="Chat" emoji="💬" onClick={onToggleChat} />
+      {!hideRedundantTabs && <IconButton label="Chat" emoji="💬" onClick={onToggleChat} />}
       <IconButton label="Paramètres" emoji="⚙️" onClick={onToggleSettings} />
       <IconButton label="Infos partie" emoji="ℹ️" onClick={onToggleGameInfo} />
       {showInvite && (
         <IconButton label="Inviter" emoji="📤" onClick={onToggleInvite} />
       )}
-      <IconButton label="Actions récentes" emoji="📜" onClick={onToggleActions} />
+      {!hideRedundantTabs && <IconButton label="Actions récentes" emoji="📜" onClick={onToggleActions} />}
     </div>
   );
 };

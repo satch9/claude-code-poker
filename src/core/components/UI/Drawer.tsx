@@ -39,10 +39,11 @@ export const Drawer: React.FC<DrawerProps> = ({
         onClick={onClose}
         aria-hidden
       />
-      {/* Panneau */}
+      {/* Panneau — tokens Sprint 0 (dark) pour cohérence avec
+          TableRightPanel et le reste de l'UI. */}
       <aside
         className={cn(
-          "fixed right-0 top-0 h-full w-full max-w-full bg-white text-gray-900 shadow-2xl z-50 transition-transform duration-200 flex flex-col",
+          "fixed right-0 top-0 h-full w-full max-w-full bg-bg-surface text-text-primary border-l border-border-default shadow-2xl z-50 transition-transform duration-200 flex flex-col",
           width,
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
@@ -50,11 +51,11 @@ export const Drawer: React.FC<DrawerProps> = ({
         aria-modal="true"
         aria-label={title}
       >
-        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border-default">
           <h2 className="text-base font-semibold">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-900 text-lg leading-none px-2"
+            className="min-h-tap min-w-tap text-text-muted hover:text-text-primary text-lg leading-none px-2"
             aria-label="Fermer"
           >
             ✕

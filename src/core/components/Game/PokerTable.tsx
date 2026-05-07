@@ -641,6 +641,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               onToggleInvite={() => setShowInviteDialog((v) => !v)}
               onToggleActions={() => setShowActionsDrawer((v) => !v)}
               showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
+              hideRedundantTabs={isDesktop}
             />
             <Button variant="secondary" size="sm" onClick={onLeaveTable}>
               Quitter
@@ -688,6 +689,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               showInvite={
                 !!table.inviteCode && authUser?._id === table.creatorId
               }
+              hideRedundantTabs={isDesktop}
             />
 
             <Button variant="secondary" onClick={onLeaveTable}>
