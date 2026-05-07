@@ -22,9 +22,9 @@ describe('PlayerSeatEmpty', () => {
     mockMatchMedia(false);
   });
 
-  it('renders a button-like clickable region', () => {
+  it('renders a button-like clickable region with accessible name', () => {
     render(<PlayerSeatEmpty onClick={() => {}} />);
-    expect(screen.getByRole('button', { name: /rejoindre|siège libre/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /rejoindre/i })).toBeInTheDocument();
   });
 
   it('has min tap target', () => {
@@ -39,16 +39,22 @@ describe('PlayerSeatEmpty', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
-  it('shows shorter label on compact (mobile)', () => {
+  it('renders only an icon (no visible text labels) to save space on the felt', () => {
     render(<PlayerSeatEmpty onClick={() => {}} />);
-    // Mobile shows the short title "Libre" (not "Siège libre")
-    expect(screen.getByText('Libre')).toBeInTheDocument();
-    expect(screen.queryByText('Siège libre')).toBeNull();
+    // No "Libre", "Siège libre", "Rejoindre", "Cliquez pour rejoindre"
+    expect(screen.queryByText(/libre|rejoindre|cliquez/i)).toBeNull();
+    // But the icon (svg) is present
+    expect(screen.getByRole('button').querySelector('svg')).toBeTruthy();
   });
 
-  it('shows full label on desktop', () => {
+  it('uses a smaller compact size on mobile', () => {
+    render(<PlayerSeatEmpty onClick={() => {}} />);
+    expect(screen.getByRole('button').className).toMatch(/w-11/);
+  });
+
+  it('uses a larger size on desktop', () => {
     mockMatchMedia(true);
     render(<PlayerSeatEmpty onClick={() => {}} />);
-    expect(screen.getByText(/siège libre/i)).toBeInTheDocument();
+    expect(screen.getByRole('button').className).toMatch(/w-14/);
   });
 });
