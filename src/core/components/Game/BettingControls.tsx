@@ -45,6 +45,27 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   const [isRaiseOpen, setIsRaiseOpen] = useState(false);
   const isDesktop = useMediaQuery(BREAKPOINTS.lg);
 
+  // Garde anti-double-clic : une fois une action envoyée au serveur,
+  // on désactive les boutons jusqu'à ce que le set d'availableActions
+  // change (signal que le serveur a pris en compte l'action et qu'on
+  // est sur un nouveau tour, ou que ce n'est plus à nous de jouer).
+  // Évite les "You have already folded this hand" en cas de double-tap.
+  const [submitting, setSubmitting] = useState(false);
+  const actionsKey = availableActions
+    .map((a) => `${a.action}:${a.amount ?? ''}:${a.minAmount ?? ''}:${a.maxAmount ?? ''}`)
+    .join('|');
+  useEffect(() => {
+    setSubmitting(false);
+  }, [actionsKey]);
+
+  const dispatch = (a: GameAction) => {
+    if (submitting || disabled) return;
+    setSubmitting(true);
+    onAction(a);
+  };
+
+  const isLocked = disabled || submitting;
+
   const minRaise = raiseAction?.minAmount ?? 0;
   const maxRaise = raiseAction?.maxAmount ?? playerChips;
   const [raiseAmount, setRaiseAmount] = useState<number>(minRaise);
@@ -133,10 +154,10 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           variant="success"
           size="md"
           onClick={() => {
-            onAction({ action: 'raise', amount: raiseAmount });
+            dispatch({ action: 'raise', amount: raiseAmount });
             setIsRaiseOpen(false);
           }}
-          disabled={disabled || raiseAmount < minRaise || raiseAmount > maxRaise}
+          disabled={isLocked || raiseAmount < minRaise || raiseAmount > maxRaise}
           className="flex-1"
         >
           Relancer à {raiseAmount.toLocaleString()}
@@ -174,8 +195,8 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           <Button
             variant="danger"
             size="md"
-            disabled={disabled}
-            onClick={() => onAction({ action: 'fold' })}
+            disabled={isLocked}
+            onClick={() => dispatch({ action: 'fold' })}
             className="flex-1"
           >
             Fold
@@ -185,8 +206,8 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           <Button
             variant="primary"
             size="md"
-            disabled={disabled}
-            onClick={() => onAction({ action: 'check' })}
+            disabled={isLocked}
+            onClick={() => dispatch({ action: 'check' })}
             className="flex-1"
           >
             Check
@@ -196,9 +217,9 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           <Button
             variant="primary"
             size="md"
-            disabled={disabled}
+            disabled={isLocked}
             onClick={() =>
-              onAction({ action: 'call', amount: callAction.amount })
+              dispatch({ action: 'call', amount: callAction.amount })
             }
             className="flex-1"
           >
@@ -209,7 +230,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           <Button
             variant="success"
             size="md"
-            disabled={disabled}
+            disabled={isLocked}
             onClick={() => setIsRaiseOpen(true)}
             className="flex-1"
           >
@@ -220,9 +241,9 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           <Button
             variant="danger"
             size="md"
-            disabled={disabled}
+            disabled={isLocked}
             onClick={() =>
-              onAction({ action: 'all-in', amount: allInAction.amount })
+              dispatch({ action: 'all-in', amount: allInAction.amount })
             }
             className="flex-1"
           >
