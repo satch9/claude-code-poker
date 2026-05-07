@@ -304,17 +304,20 @@ export const getUserRanking = query({
         .query("players")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
         .collect();
-      
+
       const userPlayerIds = userPlayerRecords.map(p => p._id);
-      
-      // Get all actions for this user
-      const allActionsForUser = await ctx.db
-        .query("gameActions")
-        .collect();
-      
-      const actions = allActionsForUser.filter(action => 
-        userPlayerIds.includes(action.playerId as any)
+
+      // Fetch only this user's actions via the by_player index (avoid
+      // full-table scan that hit the 32k document read limit).
+      const actionsPerPlayer = await Promise.all(
+        userPlayerIds.map((pid) =>
+          ctx.db
+            .query("gameActions")
+            .withIndex("by_player", (q) => q.eq("playerId", pid))
+            .collect()
+        )
       );
+      const actions = actionsPerPlayer.flat();
 
       const wins = actions.filter(a => a.action === "win");
       const gamesWon = wins.length;

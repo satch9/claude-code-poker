@@ -192,5 +192,7 @@ export default defineSchema({
     handNumber: v.optional(v.number()),
     isSystem: v.boolean(),
     timestamp: v.number(),
-  }).index("by_table", ["tableId"]),
+  })
+    .index("by_table", ["tableId"])
+    .index("by_player", ["playerId"]),
 });
