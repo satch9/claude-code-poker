@@ -5,6 +5,14 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 1A zone d'action mobile-first
+
+### Modifié
+- `BettingControls` réécrit selon le spec mobile-first : barre fixe Fold / Check / Call / Raise / All-in (44px tap min) ; bouton Raise ouvre un `BottomSheet` avec slider, presets (Min / ½ pot / ¾ pot / Pot / All-in) et confirmation. Sur desktop ≥ 1024px : layout inline avec slider visible (pas de sheet). Badges pot odds + hand strength au-dessus des actions. API props inchangée (zéro changement dans `PokerTable.tsx`).
+
+### Ajouté
+- Suite de tests `tests/ui/BettingControls.test.tsx` (21 tests, render / actions / Raise sheet / desktop inline / badges / disabled).
+
 ## [Unreleased] — Sprint 0 fondations mobile-first
 
 ### Ajouté
