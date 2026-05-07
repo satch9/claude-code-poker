@@ -1750,6 +1750,18 @@ async function advanceToNextPhaseWithStateMachine(
 
   // Handle showdown specially
   if (nextPhaseInfo.nextPhase === "showdown") {
+    // Reset player bets pour la cohérence avec les autres transitions.
+    // Sans ça, calculateSidePots dans determineWinner lit le currentBet du
+    // dernier round comme si c'était la contribution totale, et perd les
+    // mises des rounds antérieurs (le gameState.pot cumulatif est ignoré
+    // car le fallback ne se déclenche que si sidePots est vide).
+    const playersToReset = resetPlayersForNewRound(players);
+    await Promise.all(
+      playersToReset.map(({ playerId, resetData }) =>
+        ctx.db.patch(playerId, resetData),
+      ),
+    );
+
     await ctx.db.patch(gameState._id, {
       phase: "showdown",
       currentPlayerPosition: -1,
