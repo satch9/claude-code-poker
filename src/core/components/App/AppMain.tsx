@@ -37,6 +37,7 @@ const AppContent: React.FC = () => {
     null
   );
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const exportHandlerRef = React.useRef<(() => void) | null>(null);
 
   const { pendingCode, clearPending } = usePendingJoin();
 
@@ -279,7 +280,11 @@ const AppContent: React.FC = () => {
       case "stats":
         return (
           <Suspense fallback={<SuspenseFallback />}>
-            <StatsPage onBack={() => setCurrentView("lobby")} />
+            <StatsPage
+              onExportRequest={(handler) => {
+                exportHandlerRef.current = handler;
+              }}
+            />
           </Suspense>
         );
 
@@ -294,6 +299,13 @@ const AppContent: React.FC = () => {
         label: "Créer",
         onClick: handleCreateTable,
         icon: <span aria-hidden>+</span>,
+      };
+    }
+    if (currentView === "stats") {
+      return {
+        label: "Exporter",
+        onClick: () => exportHandlerRef.current?.(),
+        icon: <span aria-hidden>📥</span>,
       };
     }
     return undefined;
