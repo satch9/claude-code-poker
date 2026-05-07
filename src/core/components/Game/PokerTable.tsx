@@ -596,7 +596,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       <LandscapeWarning />
       {/* Header mobile (non heads-up portrait) — version compacte du header
           desktop, avec la même rangée d'icônes dans le drawer system. */}
-      {isMobile && !isIOS && (
+      {isMobile && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-2 py-2 gap-1">
           <div className="text-white min-w-0 flex-1">
             <div className="text-sm font-bold truncate">{table.name}</div>
@@ -636,7 +636,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       )}
 
       {/* Header desktop */}
-      {(!isMobile && !isIOS) && (
+      {!isMobile && (
         <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-3 lg:px-4 py-3 lg:py-4 gap-2">
           <div className="text-white min-w-0 flex-1">
             <h1 className="text-base md:text-xl lg:text-2xl font-bold truncate">
