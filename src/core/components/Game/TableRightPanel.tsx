@@ -52,7 +52,7 @@ export const TableRightPanel: React.FC<TableRightPanelProps> = ({ actions, playe
       <div className="flex-1 overflow-y-auto -mx-4 px-2 pt-3">
         {active === 'joueurs' && <PlayersListPanel players={players} />}
         {active === 'historique' && <ActionFeed actions={actions as any} />}
-        {active === 'chat' && <ChatPanel />}
+        {active === 'chat' && <ChatPanel tableId={"" as any} currentUserId={null} isSeated={false} isActive={active === 'chat'} />}
       </div>
     </div>
   );
