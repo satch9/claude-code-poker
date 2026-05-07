@@ -22,6 +22,9 @@ import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrientation } from "@/shared/hooks/useOrientation";
+import { TableRightPanel } from './TableRightPanel';
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
+import { BREAKPOINTS } from '@/shared/constants/breakpoints';
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -247,6 +250,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Use hooks
   const { isMobile, isIOS } = useBreakpoint();
+  const isDesktop = useMediaQuery(BREAKPOINTS.lg);
   const orientation = useOrientation();
   const isLandscape = orientation === "landscape";
   const responsiveClasses = useResponsiveClasses();
@@ -272,6 +276,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   } = useGameLogic(tableId, onLeaveTable);
 
   const isLoading = !tableId || !gameState || !players || !table;
+
+  // Résumé des joueurs pour le panneau latéral desktop
+  const playersForPanel = (players ?? []).map((p) => ({
+    userId: String(p.userId),
+    name: (p as any).user?.name || 'Joueur',
+    chips: p.chips ?? 0,
+    isFolded: !!p.isFolded,
+    isAllIn: !!p.isAllIn,
+    isCurrent: p.userId === currentPlayer?.userId,
+  }));
 
   // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
   // on appelle joinTable pour reset le flag (il vient de revenir).
@@ -909,8 +923,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </div>
 
-        {/* Right sidebar desktop supprimée — Chat / Paramètres / Actions rapides
-            sont désormais accessibles via les icônes du header (drawers). */}
+        {/* Panneau latéral droit — desktop ≥1024px uniquement.
+            Sur mobile/tablette, les drawers (header icons) restent actifs. */}
+        {isDesktop && (
+          <TableRightPanel
+            actions={actionHistory as unknown[] ?? []}
+            players={playersForPanel}
+          />
+        )}
 
         {/* Mobile : la navbar verticale et le menu modal ont été retirés.
             Le top header mobile (plus haut) + les drawers (Chat/Paramètres/
