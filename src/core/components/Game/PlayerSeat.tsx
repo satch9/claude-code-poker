@@ -7,6 +7,7 @@ import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
 import { BlindBadge } from "./BlindBadge";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
+import { PlayerAvatar } from "./PlayerAvatar";
 
 interface PlayerSeatProps {
   player?: Player;
@@ -147,17 +148,11 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
             isMobile ? "gap-1.5" : "gap-2"
           )}
         >
-          <div
-            className={cn(
-              "bg-blue-500 rounded-full flex items-center justify-center text-white font-bold ring-2 transition-all",
-              isMobile ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm",
-              isActivePlayer && !player.isFolded
-                ? "ring-red-500 avatar-active-pulse"
-                : "ring-blue-300/40"
-            )}
-          >
-            {(player.user?.name || "Player").charAt(0).toUpperCase()}
-          </div>
+          <PlayerAvatar
+            name={player.user?.name || 'Player'}
+            isActive={isActivePlayer}
+            isFolded={player.isFolded}
+          />
           <div className="flex-1 min-w-0">
             <div
               className={cn(
