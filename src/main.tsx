@@ -7,6 +7,7 @@ import "./index.css";
 import "./shared/styles/poker-utilities.css";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
+import { ToastProvider } from "./shared/ui";
 
 // Import Inter font weights
 import '@fontsource/inter/400.css'; // Regular
@@ -20,7 +21,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ConvexProvider client={convex}>
       <ConvexAuthProvider client={convex}>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </ConvexAuthProvider>
     </ConvexProvider>
   </React.StrictMode>

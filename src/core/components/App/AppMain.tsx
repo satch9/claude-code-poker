@@ -5,7 +5,9 @@ import { PasswordResetForm } from "../Auth/PasswordResetForm";
 import { Lobby } from "../Lobby/Lobby";
 import { TournamentsScreen } from "../Tournament/TournamentsScreen";
 import { ProfileScreen } from "../Profile/ProfileScreen";
-import { CreateTableForm } from "../Table/CreateTableForm";
+const CreateTableForm = lazy(() =>
+  import("../Table/CreateTableForm").then((m) => ({ default: m.CreateTableForm }))
+);
 import type { CreateTableData } from "../Table/CreateTableForm";
 import { SuspenseFallback } from "../UI/SuspenseFallback";
 import { AppShell } from "../../../shared/ui/AppShell";
@@ -331,11 +333,13 @@ const AppContent: React.FC = () => {
         onClose={() => setShowCreateSheet(false)}
         title={currentView === "tournois" ? "Créer un nouveau tournoi" : "Créer une nouvelle table"}
       >
-        <CreateTableForm
-          onSubmit={handleTableCreated}
-          onCancel={handleCancelCreateTable}
-          defaultGameType={currentView === "tournois" ? "tournament" : "cash"}
-        />
+        <Suspense fallback={<div className="p-4 text-center text-text-muted">Chargement...</div>}>
+          <CreateTableForm
+            onSubmit={handleTableCreated}
+            onCancel={handleCancelCreateTable}
+            defaultGameType={currentView === "tournois" ? "tournament" : "cash"}
+          />
+        </Suspense>
       </BottomSheet>
     </>
   );

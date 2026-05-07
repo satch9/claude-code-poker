@@ -286,7 +286,51 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   );
 };
 
-export const PlayerSeat = React.memo(PlayerSeatComponent);
+export const PlayerSeat = React.memo(PlayerSeatComponent, (prev, next) => {
+  // Re-render uniquement si une prop "visible" change.
+  if (
+    prev.isEmpty !== next.isEmpty ||
+    prev.isDealer !== next.isDealer ||
+    prev.isCurrentPlayer !== next.isCurrentPlayer ||
+    prev.isActivePlayer !== next.isActivePlayer ||
+    prev.isSmallBlind !== next.isSmallBlind ||
+    prev.isBigBlind !== next.isBigBlind ||
+    prev.showCards !== next.showCards ||
+    prev.seatAngle !== next.seatAngle ||
+    prev.timeLimit !== next.timeLimit ||
+    prev.smallBlindAmount !== next.smallBlindAmount ||
+    prev.bigBlindAmount !== next.bigBlindAmount ||
+    prev.className !== next.className ||
+    prev.onSeatClick !== next.onSeatClick ||
+    prev.onTimeOut !== next.onTimeOut
+  ) {
+    return false; // re-render
+  }
+  // Player object: comparer les champs visibles
+  const a = prev.player;
+  const b = next.player;
+  if (!a && !b) return true; // both empty, equal
+  if (!a || !b) return false; // one empty, one not
+  if (
+    a.userId !== b.userId ||
+    a.chips !== b.chips ||
+    a.isFolded !== b.isFolded ||
+    a.isAllIn !== b.isAllIn ||
+    a.currentBet !== b.currentBet ||
+    a.lastAction !== b.lastAction ||
+    a.user?.name !== b.user?.name
+  ) {
+    return false;
+  }
+  // Cards array (length + content)
+  const ac = a.cards ?? [];
+  const bc = b.cards ?? [];
+  if (ac.length !== bc.length) return false;
+  for (let i = 0; i < ac.length; i++) {
+    if (ac[i] !== bc[i]) return false;
+  }
+  return true; // skip re-render
+});
 
 // Utility functions
 function parseCard(cardStr: string) {
