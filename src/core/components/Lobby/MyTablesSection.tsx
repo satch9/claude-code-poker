@@ -10,9 +10,8 @@ interface MyTablesSectionProps {
 
 /**
  * Section dédiée aux tables où l'utilisateur courant est créateur ou
- * joueur assis. Visible uniquement quand l'utilisateur a au moins
- * une table associée. Inclut les tables privées (contrairement à la
- * section publique).
+ * joueur assis. Visible uniquement quand non-vide. Inclut les tables
+ * privées (contrairement à la section publique).
  */
 export const MyTablesSection: React.FC<MyTablesSectionProps> = ({
   tables,
@@ -21,16 +20,16 @@ export const MyTablesSection: React.FC<MyTablesSectionProps> = ({
   if (tables.length === 0) return null;
 
   return (
-    <section className="bg-poker-green-50/60 border border-poker-green-200 rounded-xl p-3 sm:p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+    <section className="bg-bg-elevated border border-accent/30 rounded-xl p-3 md:p-5">
+      <header className="flex items-center justify-between mb-3">
+        <h2 className="text-base md:text-lg font-bold text-text-primary">
           Mes tables
         </h2>
-        <span className="text-xs sm:text-sm text-gray-600">
+        <span className="text-xs md:text-sm text-text-muted">
           {tables.length} {tables.length > 1 ? "tables" : "table"}
         </span>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {tables.map((table) => (
           <TableCard key={table._id} table={table} onJoin={onJoinTable} />
         ))}

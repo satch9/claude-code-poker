@@ -1,8 +1,8 @@
 import React from "react";
-import { Button } from "../UI/Button";
-import { Table } from "../../../shared/types";
+import { Button } from "../../../shared/ui/Button";
 import { cn } from "../../../shared/utils/cn";
-import { Id } from "../../../../convex/_generated/dataModel";
+import type { Table } from "../../../shared/types";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 interface TableCardProps {
   table: Table;
@@ -10,124 +10,128 @@ interface TableCardProps {
   className?: string;
 }
 
+const formatChips = (n?: number) =>
+  n === undefined
+    ? "—"
+    : n >= 1000
+      ? `${Math.floor(n / 1000)}K`
+      : n.toLocaleString();
+
+const Badge: React.FC<{
+  variant: "info" | "warning" | "success" | "purple" | "muted";
+  children: React.ReactNode;
+}> = ({ variant, children }) => (
+  <span
+    className={cn(
+      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+      variant === "info" && "bg-accent/20 text-accent",
+      variant === "warning" && "bg-sem-warning/20 text-sem-warning",
+      variant === "success" && "bg-sem-success/20 text-sem-success",
+      variant === "purple" && "bg-purple-500/20 text-purple-300",
+      variant === "muted" && "bg-bg-elevated text-text-muted",
+    )}
+  >
+    {children}
+  </span>
+);
+
 export const TableCard: React.FC<TableCardProps> = ({
   table,
   onJoin,
   className,
 }) => {
-  const isTableFull = (table.playerCount || 0) >= table.maxPlayers;
-  const gameTypeDisplay =
-    table.gameType === "tournament" ? "Tournoi" : "Cash Game";
+  const playerCount = table.playerCount ?? 0;
+  const isTableFull = playerCount >= table.maxPlayers;
+  const isTournament = table.gameType === "tournament";
 
-  // Tournoi terminé : on remplace le CTA "Rejoindre" par "Voir le classement"
   const tournamentFinished =
-    table.gameType === "tournament" &&
-    ((table as any).modules?.tournament?.status === "finished" ||
+    isTournament &&
+    (((table as any).modules?.tournament?.status === "finished") ||
       table.status === "finished");
 
-  // Determine button state based on table status and user seating
   const canJoin = tournamentFinished
     ? true
     : !isTableFull || table.isUserSeated;
-  const buttonText = tournamentFinished
+
+  const buttonLabel = tournamentFinished
     ? "Voir le classement"
     : table.isUserSeated
-    ? "Continuer"
-    : isTableFull
-    ? "Table pleine"
-    : "Rejoindre";
-  const buttonVariant = tournamentFinished
-    ? "secondary"
-    : canJoin
-    ? "primary"
-    : "secondary";
+      ? "Continuer"
+      : isTableFull
+        ? "Table pleine"
+        : "Rejoindre";
+
+  const buttonVariant: "primary" | "secondary" =
+    tournamentFinished ? "secondary" : canJoin ? "primary" : "secondary";
 
   return (
-    <div
+    <article
       className={cn(
-        "bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow",
-        className
+        "bg-bg-surface border border-border-default rounded-lg p-4 hover:border-accent/50 transition-colors",
+        className,
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[200px]">
+      <header className="flex justify-between items-start gap-3 mb-3 min-w-0">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold text-text-primary truncate">
             {table.name}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span
-              className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium",
-                table.gameType === "tournament"
-                  ? "bg-purple-100 text-purple-800"
-                  : "bg-blue-100 text-blue-800"
-              )}
-            >
-              {gameTypeDisplay}
-            </span>
-            {table.isPrivate && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                Privée
-              </span>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge variant={isTournament ? "purple" : "info"}>
+              {isTournament ? "Tournoi" : "Cash Game"}
+            </Badge>
+            {table.isPrivate && <Badge variant="warning">Privée</Badge>}
+            {isTournament && table.buyIn === 0 && (
+              <Badge variant="success">Freeroll</Badge>
             )}
-            {table.gameType === 'tournament' && table.buyIn === 0 && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Freeroll
-              </span>
-            )}
-            {tournamentFinished && (
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
-                Terminé
-              </span>
-            )}
+            {tournamentFinished && <Badge variant="muted">Terminé</Badge>}
           </div>
         </div>
 
-        <div className="text-right">
-          <div className="text-sm text-gray-500">Joueurs</div>
-          <div className="text-lg font-bold text-gray-900">
-            {table.playerCount || 0}/{table.maxPlayers}
+        <div className="text-right flex-shrink-0">
+          <div className="text-xs text-text-muted">Joueurs</div>
+          <div className="text-lg font-bold text-text-primary">
+            {playerCount}/{table.maxPlayers}
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="space-y-2 mb-4 text-sm">
+      <dl className="space-y-1.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-500">Blinds:</span>
-          <div className="font-medium text-poker-green-400 truncate max-w-[80px]">
+          <dt className="text-text-muted">Blinds</dt>
+          <dd className="font-medium text-text-primary">
             {table.smallBlind}/{table.bigBlind}
-          </div>
+          </dd>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Stack:</span>
-          <div className="font-medium text-blue-600 truncate max-w-[100px]">
-            {table.startingStack?.toLocaleString() || 'N/A'}
-          </div>
+          <dt className="text-text-muted">Stack</dt>
+          <dd className="font-medium text-text-primary">
+            {formatChips(table.startingStack)}
+          </dd>
         </div>
-        {table.gameType === 'tournament' && (
+        {isTournament && (
           <div className="flex justify-between">
-            <span className="text-gray-500">Buy-in:</span>
-            <div className="font-medium text-purple-600 truncate max-w-[100px]">
-              {table.buyIn === 0 ? 'Freeroll' : `${table.buyIn?.toLocaleString()}€`}
-            </div>
+            <dt className="text-text-muted">Buy-in</dt>
+            <dd className="font-medium text-text-primary">
+              {table.buyIn === 0 ? "Gratuit" : `${formatChips(table.buyIn)} €`}
+            </dd>
           </div>
         )}
-      </div>
+      </dl>
 
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-gray-500">
-          Créée {new Date(table.createdAt).toLocaleDateString()}
-        </div>
-
+      <footer className="mt-4 flex items-center justify-between gap-3">
+        <span className="text-xs text-text-muted">
+          {new Date(table.createdAt).toLocaleDateString()}
+        </span>
         <Button
           variant={buttonVariant}
           size="sm"
           disabled={!canJoin}
           onClick={() => onJoin(table._id as Id<"tables">)}
         >
-          {buttonText}
+          {buttonLabel}
         </Button>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 };

@@ -5,6 +5,19 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Unreleased] — Sprint 2A Lobby cards + segmented control
+
+### Modifié
+- `TableCard` réécrit selon le spec mobile-first (TDD) : tokens Sprint 0 dark (`bg-bg-surface`, `border-border-default`), badges sémantiques (Cash/Tournoi/Privée/Freeroll/Terminé), format chips compact `K`, mise en page header/dl/footer.
+- `JoinByCodeForm` réécrit avec primitives Sprint 0 (`Card`, `Input`, `Button`) — gestion d'erreur via la prop `error` de l'Input.
+- `MyTablesSection` : tokens dark (`bg-bg-elevated`, `border-accent/30`), grille `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`.
+- `TableList` réécrit : SegmentedControl `Toutes / Cash / Tournois` (rôle `tablist`), squelettes de chargement, état vide cohérent, retrait du bloc quick-stats redondant.
+- `Lobby` simplifié : suppression du header custom — `AppShell` fournit maintenant le chrome. Plus que JoinByCodeForm + MyTables + TableList.
+- `AppMain` : `headerAction={ label: 'Créer', onClick: handleCreateTable }` passé à `AppShell` quand `currentView === 'lobby'`.
+
+### Ajouté
+- 11 tests UI (`TableCard`, `JoinByCodeForm`).
+
 ## [Unreleased] — Sprint 1C panneau droit desktop
 
 ### Ajouté
