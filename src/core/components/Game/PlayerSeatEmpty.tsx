@@ -42,7 +42,7 @@ export const PlayerSeatEmpty: React.FC<PlayerSeatEmptyProps> = ({ onClick, class
         {isDesktop ? 'Siège libre' : 'Libre'}
       </div>
       <div className="text-xs text-gray-400">
-        {isDesktop ? 'Cliquez pour rejoindre' : '+'}
+        {isDesktop ? 'Cliquez pour rejoindre' : 'Rejoindre'}
       </div>
     </button>
   );

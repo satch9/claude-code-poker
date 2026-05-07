@@ -41,7 +41,9 @@ describe('PlayerSeatEmpty', () => {
 
   it('shows shorter label on compact (mobile)', () => {
     render(<PlayerSeatEmpty onClick={() => {}} />);
-    expect(screen.getByText(/^Libre$|rejoindre/i)).toBeInTheDocument();
+    // Mobile shows the short title "Libre" (not "Siège libre")
+    expect(screen.getByText('Libre')).toBeInTheDocument();
+    expect(screen.queryByText('Siège libre')).toBeNull();
   });
 
   it('shows full label on desktop', () => {
