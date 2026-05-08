@@ -54,22 +54,25 @@ export const getUserStats = query({
     const gamesWon = winActions.length;
     const totalWinnings = winActions.reduce((sum, action) => sum + (action.amount || 0), 0);
 
-    // Get unique hands played
+    // Mains jouées = mains uniques (tableId + handNumber distincts).
+    // Parties jouées = tables/tournois distincts auxquels l'utilisateur a participé.
     const uniqueHands = new Set();
-    const playerActions = userActions.filter(action => 
-      action.action !== "win" && 
-      action.action !== "system" && 
+    const uniqueTables = new Set();
+    const playerActions = userActions.filter(action =>
+      action.action !== "win" &&
+      action.action !== "system" &&
       action.handNumber
     );
-    
+
     playerActions.forEach(action => {
       if (action.handNumber && action.tableId) {
         uniqueHands.add(`${action.tableId}-${action.handNumber}`);
+        uniqueTables.add(String(action.tableId));
       }
     });
-    
-    const gamesPlayed = uniqueHands.size;
-    const handsPlayed = playerActions.length;
+
+    const handsPlayed = uniqueHands.size;
+    const gamesPlayed = uniqueTables.size;
 
     // Calculate action breakdown
     const actionCounts = {
@@ -110,8 +113,8 @@ export const getUserStats = query({
       { action: "fold", count: 0 }
     ).action;
 
-    // Calculate win rate
-    const winRate = gamesPlayed > 0 ? (gamesWon / gamesPlayed) * 100 : 0;
+    // Calculate win rate (pots gagnés / mains jouées)
+    const winRate = handsPlayed > 0 ? (gamesWon / handsPlayed) * 100 : 0;
 
     // Find biggest win
     const biggestWin = winActions.reduce((max, action) => 
