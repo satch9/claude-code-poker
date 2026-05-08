@@ -290,12 +290,14 @@ export const CreateTableForm: React.FC<CreateTableFormProps> = ({
             type="number"
             min={0}
             value={formData.buyIn ?? ''}
-            onChange={(e) =>
+            onChange={(e) => {
+              const raw = e.target.value;
+              const parsed = raw === '' ? undefined : parseInt(raw, 10);
               setFormData((prev) => ({
                 ...prev,
-                buyIn: parseInt(e.target.value) || undefined,
-              }))
-            }
+                buyIn: parsed !== undefined && Number.isNaN(parsed) ? undefined : parsed,
+              }));
+            }}
             error={errors.buyIn}
             hint="0 = freeroll gratuit"
           />
