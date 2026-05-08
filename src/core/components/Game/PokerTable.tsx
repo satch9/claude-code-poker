@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Send } from "lucide-react";
+import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { Card } from "../UI/Card";
@@ -232,6 +232,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   // Drawer unifié contenant 3 onglets : Joueurs / Historique / Chat.
   // Remplace les anciens drawers ChatDrawer + ActionFeedDrawer.
   const [showTablePanelDrawer, setShowTablePanelDrawer] = useState(false);
+  // Mobile uniquement : header masqué par défaut, révélé en overlay via chevron.
+  const [showHeaderDrawer, setShowHeaderDrawer] = useState(false);
+  useEffect(() => {
+    if (!showHeaderDrawer) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowHeaderDrawer(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showHeaderDrawer]);
   const rebuyMutation = useMutation(api.players.rebuy);
   const joinTableMutation = useMutation(api.players.joinTable);
   const { user: authUser } = useAuth();
@@ -492,30 +502,55 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     };
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
-        {/* Header */}
-        <header className="px-2 py-2 border-b border-poker-green-700 flex justify-between items-center flex-shrink-0 gap-1">
-          <div className="text-sm min-w-0 flex-1">
-            <div className="font-bold truncate">{table.name}</div>
-            <div className="text-xs text-poker-green-200 truncate">
-              {table.smallBlind}/{table.bigBlind}
-              {" • "}
-              {table.gameType === "tournament" ? "Tournoi" : "Cash"}
-            </div>
-          </div>
-          {table.inviteCode && authUser?._id === table.creatorId && (
-            <button
-              onClick={() => setShowInviteDialog(true)}
-              title={`Code d'invitation : ${table.inviteCode}`}
-              className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded flex-shrink-0 inline-flex items-center justify-center"
-              aria-label="Inviter des joueurs"
-            >
-              <Send size={16} aria-hidden />
-            </button>
-          )}
-          <Button variant="secondary" size="sm" onClick={onLeaveTable} className="flex-shrink-0">
-            Quitter
-          </Button>
-        </header>
+        {/* Header heads-up portrait — masqué par défaut, révélé via chevron flottant. */}
+        {!showHeaderDrawer && (
+          <button
+            onClick={() => setShowHeaderDrawer(true)}
+            aria-label="Afficher le header"
+            className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          >
+            <ChevronDown size={18} />
+          </button>
+        )}
+        {showHeaderDrawer && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowHeaderDrawer(false)}
+              aria-hidden
+            />
+            <header className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 py-2 flex justify-between items-center gap-1 transition-transform duration-200">
+              <div className="text-sm min-w-0 flex-1">
+                <div className="font-bold truncate">{table.name}</div>
+                <div className="text-xs text-poker-green-200 truncate">
+                  {table.smallBlind}/{table.bigBlind}
+                  {" • "}
+                  {table.gameType === "tournament" ? "Tournoi" : "Cash"}
+                </div>
+              </div>
+              {table.inviteCode && authUser?._id === table.creatorId && (
+                <button
+                  onClick={() => { setShowHeaderDrawer(false); setShowInviteDialog(true); }}
+                  title={`Code d'invitation : ${table.inviteCode}`}
+                  className="px-2 py-1 bg-poker-green-700 hover:bg-poker-green-600 rounded flex-shrink-0 inline-flex items-center justify-center"
+                  aria-label="Inviter des joueurs"
+                >
+                  <Send size={16} aria-hidden />
+                </button>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => { setShowHeaderDrawer(false); onLeaveTable(); }} className="flex-shrink-0">
+                Quitter
+              </Button>
+              <button
+                onClick={() => setShowHeaderDrawer(false)}
+                aria-label="Masquer le header"
+                className="p-1 rounded text-white hover:bg-poker-green-700 flex-shrink-0"
+              >
+                <ChevronUp size={18} />
+              </button>
+            </header>
+          </>
+        )}
 
         {/* Tournament info bar */}
         {table.gameType === "tournament" && table.modules?.tournament && (
@@ -709,44 +744,67 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
       {/* Landscape Warning for mobile portrait */}
       <LandscapeWarning />
-      {/* Header mobile (non heads-up portrait) — version compacte du header
-          desktop, avec la même rangée d'icônes dans le drawer system. */}
-      {isMobile && (
-        <div className="flex justify-between items-center border-b border-poker-green-700 flex-shrink-0 px-2 py-2 gap-1">
-          <div className="text-white min-w-0 flex-1">
-            <div className="text-sm font-bold truncate">{table.name}</div>
-            <div className="text-xs text-poker-green-200 truncate">
-              {table.gameType === "tournament" ? "Tournoi" : "Cash"} •
-              {" "}{table.smallBlind}/{table.bigBlind}
+      {/* Header mobile (non heads-up portrait) — masqué par défaut,
+          révélé en overlay via le chevron flottant. */}
+      {isMobile && !showHeaderDrawer && (
+        <button
+          onClick={() => setShowHeaderDrawer(true)}
+          aria-label="Afficher le header"
+          className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+        >
+          <ChevronDown size={18} />
+        </button>
+      )}
+      {isMobile && showHeaderDrawer && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowHeaderDrawer(false)}
+            aria-hidden
+          />
+          <div className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 py-2 gap-1 transition-transform duration-200">
+            <div className="text-white min-w-0 flex-1">
+              <div className="text-sm font-bold truncate">{table.name}</div>
+              <div className="text-xs text-poker-green-200 truncate">
+                {table.gameType === "tournament" ? "Tournoi" : "Cash"} •
+                {" "}{table.smallBlind}/{table.bigBlind}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {gameState.phase === "waiting" &&
+                table.status === "waiting" &&
+                players.length >= 2 &&
+                currentPlayer &&
+                currentPlayer.userId === table.creatorId && (
+                  <Button
+                    onClick={() => { setShowHeaderDrawer(false); handleStartGame(); }}
+                    disabled={isProcessing}
+                    size="sm"
+                    variant="primary"
+                  >
+                    {isProcessing ? "..." : "Démarrer"}
+                  </Button>
+                )}
+              <HeaderActionIcons
+                onTogglePanel={() => { setShowTablePanelDrawer((v) => !v); setShowHeaderDrawer(false); }}
+                onToggleSettings={() => { setShowSettingsDrawer((v) => !v); setShowHeaderDrawer(false); }}
+                onToggleInvite={() => { setShowInviteDialog((v) => !v); setShowHeaderDrawer(false); }}
+                showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
+                unreadChat={headerUnreadChat}
+              />
+              <Button variant="secondary" size="sm" onClick={() => { setShowHeaderDrawer(false); onLeaveTable(); }}>
+                Quitter
+              </Button>
+              <button
+                onClick={() => setShowHeaderDrawer(false)}
+                aria-label="Masquer le header"
+                className="ml-1 p-1 rounded text-white hover:bg-poker-green-700"
+              >
+                <ChevronUp size={18} />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {gameState.phase === "waiting" &&
-              table.status === "waiting" &&
-              players.length >= 2 &&
-              currentPlayer &&
-              currentPlayer.userId === table.creatorId && (
-                <Button
-                  onClick={handleStartGame}
-                  disabled={isProcessing}
-                  size="sm"
-                  variant="primary"
-                >
-                  {isProcessing ? "..." : "Démarrer"}
-                </Button>
-              )}
-            <HeaderActionIcons
-              onTogglePanel={() => setShowTablePanelDrawer((v) => !v)}
-              onToggleSettings={() => setShowSettingsDrawer((v) => !v)}
-              onToggleInvite={() => setShowInviteDialog((v) => !v)}
-              showInvite={!!table.inviteCode && authUser?._id === table.creatorId}
-              unreadChat={headerUnreadChat}
-            />
-            <Button variant="secondary" size="sm" onClick={onLeaveTable}>
-              Quitter
-            </Button>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Header desktop */}
