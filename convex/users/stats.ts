@@ -3,26 +3,53 @@ import { v } from "convex/values";
 
 // Get comprehensive user statistics
 export const getUserStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    userId: v.id("users"),
+    mode: v.optional(
+      v.union(v.literal("all"), v.literal("tournament"), v.literal("cash"))
+    ),
+  },
   handler: async (ctx, args) => {
+    const mode = args.mode ?? "all";
+
     // Get all players records for this user to find their player IDs
     const userPlayers = await ctx.db
       .query("players")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-    
+
     const playerIds = userPlayers.map(p => p._id);
-    
+
     // Get all game actions for this user's player IDs
     const allActions = await ctx.db
       .query("gameActions")
       .collect();
-    
+
     // Filter actions for this user's player IDs
-    const userActions = allActions.filter(action => 
-      playerIds.includes(action.playerId as any) || 
+    let userActions = allActions.filter(action =>
+      playerIds.includes(action.playerId as any) ||
       action.playerName === userPlayers[0]?.userId // fallback for system messages
     );
+
+    // Filtre par type de partie (tournoi / cash) — on charge les tables
+    // impliquées en bulk, puis on filtre les actions par gameType.
+    const tableIdsInActions = Array.from(
+      new Set(userActions.map((a) => String(a.tableId)).filter(Boolean))
+    );
+    const tablesInvolved = await Promise.all(
+      tableIdsInActions.map((id) => ctx.db.get(id as any))
+    );
+    const gameTypeByTableId = new Map<string, "cash" | "tournament">();
+    for (const t of tablesInvolved) {
+      if (t && (t as any).gameType) {
+        gameTypeByTableId.set(String((t as any)._id), (t as any).gameType);
+      }
+    }
+    if (mode !== "all") {
+      userActions = userActions.filter(
+        (a) => gameTypeByTableId.get(String(a.tableId)) === mode
+      );
+    }
 
     if (userActions.length === 0) {
       return {
@@ -122,17 +149,21 @@ export const getUserStats = query({
     );
 
     // Calculate tournament wins from finalRanking (source autoritaire).
-    const finishedTournaments = await ctx.db
-      .query("tables")
-      .filter((q) => q.eq(q.field("status"), "finished"))
-      .collect();
-    const tournamentWins = finishedTournaments.filter((t: any) => {
-      const ranking = t.modules?.tournament?.finalRanking;
-      if (!Array.isArray(ranking)) return false;
-      return ranking.some(
-        (r: any) => r.userId === args.userId && r.position === 1
-      );
-    }).length;
+    // En mode "cash" la métrique n'a pas de sens → 0.
+    let tournamentWins = 0;
+    if (mode !== "cash") {
+      const finishedTournaments = await ctx.db
+        .query("tables")
+        .filter((q) => q.eq(q.field("status"), "finished"))
+        .collect();
+      tournamentWins = finishedTournaments.filter((t: any) => {
+        const ranking = t.modules?.tournament?.finalRanking;
+        if (!Array.isArray(ranking)) return false;
+        return ranking.some(
+          (r: any) => r.userId === args.userId && r.position === 1
+        );
+      }).length;
+    }
 
     // Calculate average game duration (simplified - time between first and last action per hand)
     const gamesByHand = new Map();

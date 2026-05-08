@@ -50,12 +50,13 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
   showDetailed = false,
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [mode, setMode] = useState<'all' | 'tournament' | 'cash'>('all');
 
   const userIdValid = isValidUserId(userId);
 
   const userStats = useQuery(
     api.users.stats.getUserStats,
-    userIdValid ? { userId } : 'skip',
+    userIdValid ? { userId, mode } : 'skip',
   );
   const userRanking = useQuery(
     api.users.stats.getUserRanking,
@@ -163,6 +164,29 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
         </div>
       ) : (
         <div>
+          <div className="flex gap-2 mb-4" role="tablist" aria-label="Filtre par type de partie">
+            {([
+              { id: 'all', label: 'Toutes' },
+              { id: 'tournament', label: 'Tournoi' },
+              { id: 'cash', label: 'Cash' },
+            ] as const).map((opt) => (
+              <button
+                key={opt.id}
+                role="tab"
+                aria-selected={mode === opt.id}
+                onClick={() => setMode(opt.id)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+                  mode === opt.id
+                    ? 'bg-accent/20 border-accent/40 text-accent'
+                    : 'bg-bg-elevated border-border-default text-text-muted hover:text-text-primary'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <StatTile label="Victoires" value={userStats.gamesWon} variant="success" />
             <StatTile label="Parties" value={userStats.gamesPlayed} variant="accent" />
@@ -174,9 +198,14 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+          <div className={cn(
+            'grid gap-3 mb-5',
+            mode === 'cash' ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'
+          )}>
             <StatTile label="Plus gros gain" value={userStats.biggestWin.toLocaleString()} variant="warning" />
-            <StatTile label="Tournois gagnés" value={userStats.tournamentWins} variant="danger" />
+            {mode !== 'cash' && (
+              <StatTile label="Tournois gagnés" value={userStats.tournamentWins} variant="danger" />
+            )}
             <StatTile label="Mains jouées" value={userStats.handsPlayed} variant="muted" />
           </div>
 
