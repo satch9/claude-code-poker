@@ -4,7 +4,8 @@ import { PlayerSeat } from "./PlayerSeat";
 import { CommunityCards } from "./CommunityCards";
 import { Card } from "../UI/Card";
 import { BettingControls } from "./BettingControls";
-import { ShowdownResults } from "./ShowdownResults";
+import { TournamentScoreboard } from "./TournamentScoreboard";
+import { PotFlyToWinner } from "./PotFlyToWinner";
 import { HeaderActionIcons } from "./HeaderActionIcons";
 import { Drawer } from "../UI/Drawer";
 import { SettingsDrawer } from "./SettingsDrawer";
@@ -354,6 +355,85 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     isMobile,
   ]);
 
+  // ----- Showdown : cartes révélées + gagnants + orchestration -----
+  // showdownResults vient de useGameLogic (query getShowdownResults active
+  // uniquement quand gameState.phase === 'showdown').
+  const showdownCardsByUserId = useMemo(() => {
+    const m = new Map<string, string[]>();
+    if (showdownResults?.results) {
+      for (const r of showdownResults.results) {
+        m.set(String(r.userId), r.cards);
+      }
+    }
+    return m;
+  }, [showdownResults]);
+
+  const showdownWinners = useMemo(() => {
+    const s = new Set<string>();
+    if (showdownResults?.pots) {
+      for (const p of showdownResults.pots) {
+        for (const id of p.winnerUserIds) s.add(String(id));
+      }
+    }
+    return s;
+  }, [showdownResults]);
+
+  // Index du side pot en cours d'animation (null = aucune anim active).
+  const [showdownPotIndex, setShowdownPotIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (gameState?.phase !== "showdown") {
+      setShowdownPotIndex(null);
+      return;
+    }
+    const pots = showdownResults?.pots;
+    if (!pots || pots.length === 0) return;
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let i = 0;
+
+    const step = () => {
+      if (cancelled) return;
+      if (i >= pots.length) {
+        setShowdownPotIndex(null);
+        return;
+      }
+      setShowdownPotIndex(i);
+      i += 1;
+      // 900ms d'animation + 600ms de pause avant le prochain pot.
+      timer = setTimeout(step, 1500);
+    };
+
+    // Délai initial pour laisser le card-reveal se jouer (~800ms).
+    timer = setTimeout(step, 800);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [gameState?.phase, showdownResults]);
+
+  const currentShowdownPot = useMemo(() => {
+    if (showdownPotIndex === null) return null;
+    const pots = showdownResults?.pots;
+    if (!pots || showdownPotIndex >= pots.length) return null;
+    const pot = pots[showdownPotIndex];
+    if (pot.winnerUserIds.length === 0) return null;
+    // Choisit le premier gagnant comme cible visuelle de l'animation.
+    // En cas de split pot (rare), on anime vers le 1er ; les gagnants
+    // multiples sont déjà tous mis en avant via le winner-glow.
+    const winnerUserId = String(pot.winnerUserIds[0]);
+    const winnerSeat = seats.find(
+      (s) => s.player?.userId && String(s.player.userId) === winnerUserId,
+    );
+    if (!winnerSeat) return null;
+    return {
+      amount: pot.amount,
+      seatAngle: winnerSeat.seatAngle,
+    };
+  }, [showdownPotIndex, showdownResults, seats]);
+
   // Early return if no tableId or no data (must be AFTER all hooks)
   if (isLoading || !table || !gameState || !players) {
     return (
@@ -552,28 +632,18 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             )}
         </footer>
 
-        {/* Tournament terminé : prioritaire sur le showdown de la dernière main
-            (le scoreboard final + bouton 'Retour au lobby' doit rester visible
-            même si gameState.phase est encore 'showdown'). */}
+        {/* Tournament terminé : scoreboard final + bouton 'Retour au lobby'.
+            Le showdown de main est géré sur le tapis lui-même (cartes
+            retournées + winner-glow + animation PotFlyToWinner) et n'a plus
+            de modale. */}
         {table.gameType === "tournament" &&
-        table.modules?.tournament?.status === "finished" ? (
-          <ShowdownResults
-            results={[]}
-            pot={0}
-            communityCards={[]}
-            table={table}
-            players={players}
-            onBackToLobby={onLeaveTable}
-          />
-        ) : showdownResults ? (
-          <ShowdownResults
-            results={showdownResults.results}
-            pot={showdownResults.pot}
-            communityCards={showdownResults.communityCards}
-            table={table}
-            players={players}
-          />
-        ) : null}
+          table.modules?.tournament?.status === "finished" && (
+            <TournamentScoreboard
+              table={table}
+              players={players}
+              onBackToLobby={onLeaveTable}
+            />
+          )}
 
         {/* Modale Rebuy */}
         {showRebuyDialog && currentPlayer && authUser && (
@@ -850,6 +920,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                     showCards={
                       seat.isCurrentPlayer || gameState.phase === "showdown"
                     }
+                    revealedCards={
+                      gameState.phase === "showdown" && seat.player?.userId
+                        ? showdownCardsByUserId.get(String(seat.player.userId))
+                        : undefined
+                    }
+                    isShowdownWinner={
+                      gameState.phase === "showdown" &&
+                      !!seat.player?.userId &&
+                      showdownWinners.has(String(seat.player.userId))
+                    }
                     isEmpty={seat.isEmpty}
                     onSeatClick={() => {
                       if (!seat.isEmpty) return;
@@ -891,6 +971,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </div>
               )}
 
+              {/* Showdown : animation centre→gagnant pour chaque side pot.
+                  L'orchestrateur (showdownPotIndex) avance de pot en pot. */}
+              {currentShowdownPot && (
+                <PotFlyToWinner
+                  key={showdownPotIndex}
+                  amount={currentShowdownPot.amount}
+                  seatAngle={currentShowdownPot.seatAngle}
+                  isMobile={isMobile}
+                  onAnimationEnd={() => {
+                    /* l'avance vers le pot suivant est gérée par l'effect setTimeout */
+                  }}
+                />
+              )}
 
             </div>
           </div>
@@ -930,28 +1023,16 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             Le top header mobile (plus haut) + les drawers (Chat/Paramètres/
             Actions/Infos) couvrent désormais ces fonctions. */}
 
-        {/* Tournament terminé : prioritaire sur le showdown de la dernière main
-            (le scoreboard final + bouton 'Retour au lobby' doit rester visible
-            même si gameState.phase est encore 'showdown'). */}
+        {/* Tournament terminé : scoreboard final + bouton 'Retour au lobby'.
+            Le showdown de main est géré sur le tapis lui-même. */}
         {table.gameType === "tournament" &&
-        table.modules?.tournament?.status === "finished" ? (
-          <ShowdownResults
-            results={[]}
-            pot={0}
-            communityCards={[]}
-            table={table}
-            players={players}
-            onBackToLobby={onLeaveTable}
-          />
-        ) : showdownResults ? (
-          <ShowdownResults
-            results={showdownResults.results}
-            pot={showdownResults.pot}
-            communityCards={showdownResults.communityCards}
-            table={table}
-            players={players}
-          />
-        ) : null}
+          table.modules?.tournament?.status === "finished" && (
+            <TournamentScoreboard
+              table={table}
+              players={players}
+              onBackToLobby={onLeaveTable}
+            />
+          )}
 
 
         {/* Rebuy Dialog */}

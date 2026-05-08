@@ -21,6 +21,11 @@ interface PlayerSeatProps {
   smallBlindAmount?: number;
   bigBlindAmount?: number;
   showCards?: boolean;
+  // Cartes révélées au showdown (override player.cards qui est masqué par
+  // sanitizePlayer côté serveur). Utilisées uniquement quand showCards=true.
+  revealedCards?: string[];
+  // Aura "winner-glow" autour du siège gagnant pendant le showdown.
+  isShowdownWinner?: boolean;
   isEmpty?: boolean;
   onSeatClick?: () => void;
   onTimeOut?: () => void;
@@ -40,6 +45,8 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   smallBlindAmount: _smallBlindAmount = 0,
   bigBlindAmount: _bigBlindAmount = 0,
   showCards = false,
+  revealedCards,
+  isShowdownWinner = false,
   isEmpty = false,
   onSeatClick,
   onTimeOut,
@@ -105,24 +112,32 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
           ...(seatAngle !== undefined ? getCardsStyleFromAngle(seatAngle, isCurrentPlayer, showCards) : {}),
         }}
       >
-        {player.cards.length > 0 ? (
-          player.cards.map((cardStr, index) => {
-            const parsedCard = showCards ? parseCard(cardStr) : undefined;
-            return (
-              <Card
-                key={index}
-                card={parsedCard}
-                isHidden={!showCards}
-                size={isMobile ? "sm" : "md"}
-              />
-            );
-          })
-        ) : (
-          <>
-            <Card size={isMobile ? "sm" : "md"} />
-            <Card size={isMobile ? "sm" : "md"} />
-          </>
-        )}
+        {(() => {
+          // Au showdown, les cartes adverses sont sanitizées dans player.cards.
+          // On utilise revealedCards (depuis getShowdownResults) si fourni.
+          const cardsToRender =
+            showCards && revealedCards && revealedCards.length > 0
+              ? revealedCards
+              : player.cards;
+          return cardsToRender.length > 0 ? (
+            cardsToRender.map((cardStr, index) => {
+              const parsedCard = showCards ? parseCard(cardStr) : undefined;
+              return (
+                <Card
+                  key={index}
+                  card={parsedCard}
+                  isHidden={!showCards}
+                  size={isMobile ? "sm" : "md"}
+                />
+              );
+            })
+          ) : (
+            <>
+              <Card size={isMobile ? "sm" : "md"} />
+              <Card size={isMobile ? "sm" : "md"} />
+            </>
+          );
+        })()}
       </div>
 
       {/* Player seat box */}
@@ -134,6 +149,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
           isActivePlayer && responsiveClasses.playerStates.active,
           player.isFolded && responsiveClasses.playerStates.folded,
           player.isAllIn && responsiveClasses.playerStates.allIn,
+          isShowdownWinner && "winner-glow",
           className
         )}
       >
@@ -296,6 +312,7 @@ export const PlayerSeat = React.memo(PlayerSeatComponent, (prev, next) => {
     prev.isSmallBlind !== next.isSmallBlind ||
     prev.isBigBlind !== next.isBigBlind ||
     prev.showCards !== next.showCards ||
+    prev.isShowdownWinner !== next.isShowdownWinner ||
     prev.seatAngle !== next.seatAngle ||
     prev.timeLimit !== next.timeLimit ||
     prev.smallBlindAmount !== next.smallBlindAmount ||
@@ -305,6 +322,13 @@ export const PlayerSeat = React.memo(PlayerSeatComponent, (prev, next) => {
     prev.onTimeOut !== next.onTimeOut
   ) {
     return false; // re-render
+  }
+  // revealedCards: shallow compare by length + content
+  const ra = prev.revealedCards ?? [];
+  const rb = next.revealedCards ?? [];
+  if (ra.length !== rb.length) return false;
+  for (let i = 0; i < ra.length; i++) {
+    if (ra[i] !== rb[i]) return false;
   }
   // Player object: comparer les champs visibles
   const a = prev.player;

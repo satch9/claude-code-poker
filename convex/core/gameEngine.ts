@@ -1136,12 +1136,20 @@ async function determineWinner(ctx: any, tableId: string) {
     updatedAt: Date.now(),
   });
 
+  // Délai dynamique pour laisser le client animer cartes + jetons.
+  // 4500 ms de base + 1500 ms par side pot supplémentaire (séquentiel).
+  // Plafonné à 7500 ms (~3 side pots).
+  const showdownDelayMs = Math.min(7500, 4500 + (sidePots.length - 1) * 1500);
+
   // According to poker rules, automatically start next hand after showdown
-  await endHand(ctx, tableId);
+  await endHand(ctx, tableId, showdownDelayMs);
 }
 
-// End current hand and prepare for next
-async function endHand(ctx: any, tableId: string) {
+// End current hand and prepare for next.
+// `delayMs` est paramétré par l'appelant (3000 par défaut pour les fins de
+// main par fold, plus long pour le showdown afin de laisser jouer
+// l'animation centre→gagnant et les éventuels side pots séquentiels).
+async function endHand(ctx: any, tableId: string, delayMs: number = 3000) {
   const table = await ctx.db.get(tableId);
   if (!table) {
     throw new Error("Table not found");
@@ -1173,9 +1181,8 @@ async function endHand(ctx: any, tableId: string) {
   }
 
   if (playersWithChips.length >= 2) {
-    // Schedule next hand 3s later — showdown phase stays visible to clients
     await ctx.scheduler.runAfter(
-      3000,
+      delayMs,
       (internal as any)["core/gameEngine"].scheduleStartNextHand,
       { tableId }
     );
@@ -1353,10 +1360,51 @@ export const getShowdownResults = query({
       isWinner: winnerIds.includes(String(r.userId)),
     }));
 
+    // Reconstitue la séquence de side pots pour l'animation client.
+    // Réutilise calculateSidePots avec handContribution (cumul main).
+    const rawSidePots = calculateSidePots(
+      players.map((p) => ({
+        userId: p.userId,
+        contribution: p.handContribution ?? p.currentBet ?? 0,
+        isFolded: p.isFolded,
+      })),
+    );
+
+    const fallbackPots =
+      rawSidePots.length === 0 && gameState.pot > 0
+        ? [
+            {
+              amount: gameState.pot,
+              eligiblePlayers: activePlayers.map((p) => p.userId),
+            },
+          ]
+        : rawSidePots;
+
+    // Pour chaque side pot, trouve le(s) gagnant(s) parmi ses éligibles.
+    const handByUserId = new Map<string, any>(
+      results.map((r) => [String(r.userId), r.handRank]),
+    );
+    const pots = fallbackPots.map((sp) => {
+      const eligibleHands = sp.eligiblePlayers
+        .map((uid) => ({ userId: uid, hand: handByUserId.get(String(uid)) }))
+        .filter((h): h is { userId: string; hand: any } => !!h.hand);
+      if (eligibleHands.length === 0) {
+        return { amount: sp.amount, winnerUserIds: [] as string[] };
+      }
+      const wIds = determineWinners(
+        eligibleHands.map((h) => ({ hand: h.hand, playerId: String(h.userId) })),
+      );
+      return {
+        amount: sp.amount,
+        winnerUserIds: wIds.map(String),
+      };
+    });
+
     return {
       results: resultsWithWinnerFlag,
       pot: gameState.pot,
       communityCards: gameState.communityCards,
+      pots,
     };
   },
 });

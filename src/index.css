@@ -148,6 +148,44 @@
   }
 }
 
+/* Animation centre-pot → siège du gagnant pendant le showdown.
+   La pile de jetons part du centre de la table et se déplace vers le
+   siège gagnant grâce à --push-dx / --push-dy injectés en JS. */
+.chips-push-to-winner {
+  animation: chipsPushToWinner 0.9s ease-out forwards;
+}
+@keyframes chipsPushToWinner {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--push-dx, 0), var(--push-dy, 0)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* Aura dorée autour du siège du gagnant pendant le showdown */
+.winner-glow {
+  animation: winnerGlow 1.4s ease-in-out infinite;
+  border-radius: 9999px;
+}
+@keyframes winnerGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 12px 4px rgba(250, 204, 21, 0.55),
+      0 0 24px 8px rgba(250, 204, 21, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 24px 8px rgba(250, 204, 21, 0.85),
+      0 0 48px 16px rgba(250, 204, 21, 0.4);
+  }
+}
+
 /* Animations spécifiques au poker */
 @keyframes cardDealFromDeck {
   0% {
