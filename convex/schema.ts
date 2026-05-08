@@ -104,6 +104,10 @@ export default defineSchema({
     tournamentRank: v.optional(v.number()),
     // Tournoi : joueur absent (déconnecté / pause). Auto-fold + blinds postées.
     sitOut: v.optional(v.boolean()),
+    // Cumul total de jetons engagés sur la main courante (blinds + bets/
+    // calls/raises/all-in, toutes streets confondues). Reset au début de
+    // chaque main. Optionnel pour compat avec lignes existantes pré-migration.
+    handContribution: v.optional(v.number()),
   })
     .index("by_table", ["tableId"])
     .index("by_user", ["userId"])

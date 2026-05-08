@@ -1,75 +1,107 @@
 import { describe, it, expect } from "vitest";
 import { calculateSidePots } from "../convex/utils/turnManager";
 
-// Régression : calculateSidePots lit player.currentBet (la mise du round
-// courant) comme si c'était la contribution totale du joueur à la main.
-// Si on l'appelle au showdown sans avoir reset les bets, on n'obtient que
-// le pot du dernier round et on perd les rounds antérieurs.
-//
-// Cas observé en partie réelle (hand 22:03:13 → 22:04:33) :
-//   - Pré : 40
-//   - Flop : 34 each → 68
-//   - Turn : 70 each → 140
-//   - River : 124 each → 248
-//   - gameState.pot cumulatif = 496
-//   - calculateSidePots avec cb=124 each → [{ amount: 248 }]
-//   - Pot affiché : 248 (différence de 248 jetons disparaît)
-//
-// Le fix au niveau du moteur : reset des player.currentBet à l'entrée du
-// showdown (comme dans toutes les autres transitions de phase). Le fallback
-// ligne 1029 utilise alors gameState.pot.
+// calculateSidePots opère désormais sur la contribution TOTALE de chaque
+// joueur sur la main (cumul de tous les rounds de mise + blinds), pas
+// uniquement sur la mise du round courant. Le moteur lit ce total dans
+// player.handContribution.
 
 describe("calculateSidePots — invariants", () => {
-  it("avec deux joueurs alignés et currentBet > 0, retourne uniquement le round courant", () => {
+  it("retourne [] quand tous les joueurs ont une contribution = 0", () => {
+    expect(
+      calculateSidePots([
+        { userId: "a", contribution: 0, isFolded: false },
+        { userId: "b", contribution: 0, isFolded: false },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("heads-up sans tapis avec mises sur 3 streets : un seul pot du cumul", () => {
+    // Préflop 20 + flop 34 + turn 70 + river 124 = 248 par joueur, pot 496.
     const result = calculateSidePots([
-      { userId: "a", currentBet: 124, isAllIn: false, isFolded: false },
-      { userId: "b", currentBet: 124, isAllIn: false, isFolded: false },
+      { userId: "a", contribution: 248, isFolded: false },
+      { userId: "b", contribution: 248, isFolded: false },
     ]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].amount).toBe(248);
-    // Documente l'hypothèse implicite : ce sidePot ne représente PAS le total
-    // de la main. Le moteur doit reset les bets et utiliser gameState.pot
-    // (fallback) pour obtenir le pot cumulé.
+    expect(result[0]).toEqual({
+      amount: 496,
+      eligiblePlayers: ["a", "b"],
+    });
   });
 
-  it("avec deux joueurs et currentBet = 0, retourne [] (déclenche le fallback gameState.pot)", () => {
+  it("multi-way : 3 short stacks (178) + 1 gros stack (3466) → main pot stratifié + side pot pour le sur-stack", () => {
+    // Reproduit le cas observé en partie réelle (4 joueurs, Eliott gros stack).
     const result = calculateSidePots([
-      { userId: "a", currentBet: 0, isAllIn: false, isFolded: false },
-      { userId: "b", currentBet: 0, isAllIn: false, isFolded: false },
-    ]);
-
-    expect(result).toEqual([]);
-  });
-
-  it("retourne [] quand tous les joueurs encore actifs ont currentBet = 0", () => {
-    const result = calculateSidePots([
-      { userId: "a", currentBet: 0, isAllIn: false, isFolded: false },
-      { userId: "b", currentBet: 0, isAllIn: false, isFolded: false },
-      { userId: "c", currentBet: 0, isAllIn: false, isFolded: true },
-    ]);
-
-    expect(result).toEqual([]);
-  });
-
-  it("calcule des side pots stratifiés avec un all-in partiel sur le même round", () => {
-    // A est all-in pour 100, B et C continuent à 200 chacun.
-    const result = calculateSidePots([
-      { userId: "a", currentBet: 100, isAllIn: true, isFolded: false },
-      { userId: "b", currentBet: 200, isAllIn: false, isFolded: false },
-      { userId: "c", currentBet: 200, isAllIn: false, isFolded: false },
+      { userId: "satch9", contribution: 178, isFolded: false },
+      { userId: "lena", contribution: 178, isFolded: false },
+      { userId: "bea", contribution: 178, isFolded: false },
+      { userId: "eliott", contribution: 3466, isFolded: false },
     ]);
 
     expect(result).toHaveLength(2);
-    // Main pot : 3 joueurs × 100 = 300, éligibles A/B/C
+    // Main pot : 4 × 178 = 712, tous éligibles
     expect(result[0]).toEqual({
-      amount: 300,
+      amount: 712,
+      eligiblePlayers: ["satch9", "lena", "bea", "eliott"],
+    });
+    // Side pot : 1 × 3288, eligible Eliott seul
+    expect(result[1]).toEqual({
+      amount: 3288,
+      eligiblePlayers: ["eliott"],
+    });
+  });
+
+  it("deux paliers de tapis distincts (A 100 / B 500 / C 500)", () => {
+    const result = calculateSidePots([
+      { userId: "a", contribution: 100, isFolded: false },
+      { userId: "b", contribution: 500, isFolded: false },
+      { userId: "c", contribution: 500, isFolded: false },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      amount: 300, // 3 × 100
       eligiblePlayers: ["a", "b", "c"],
     });
-    // Side pot : 2 joueurs × 100 = 200, éligibles B/C
     expect(result[1]).toEqual({
-      amount: 200,
+      amount: 800, // 2 × 400
       eligiblePlayers: ["b", "c"],
     });
+  });
+
+  it("inclut la contribution d'un joueur foldé dans le pot mais pas dans les éligibles", () => {
+    // A mise 50 puis fold ; B et C vont au showdown à 1000 chacun.
+    const result = calculateSidePots([
+      { userId: "a", contribution: 50, isFolded: true },
+      { userId: "b", contribution: 1000, isFolded: false },
+      { userId: "c", contribution: 1000, isFolded: false },
+    ]);
+
+    // Couche 50 (3 contributeurs, 2 éligibles) + couche 950 (2 contributeurs / éligibles)
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      amount: 150, // 3 × 50, A folded donc exclus des éligibles
+      eligiblePlayers: ["b", "c"],
+    });
+    expect(result[1]).toEqual({
+      amount: 1900, // 2 × 950
+      eligiblePlayers: ["b", "c"],
+    });
+
+    // Total = 150 + 1900 = 2050 = somme des contributions (50 + 1000 + 1000)
+  });
+
+  it("la somme des side pots est toujours égale à la somme des contributions", () => {
+    const players = [
+      { userId: "a", contribution: 100, isFolded: false },
+      { userId: "b", contribution: 250, isFolded: true },
+      { userId: "c", contribution: 600, isFolded: false },
+      { userId: "d", contribution: 600, isFolded: false },
+    ];
+    const result = calculateSidePots(players);
+    const totalPot = result.reduce((acc, p) => acc + p.amount, 0);
+    const totalContrib = players.reduce((acc, p) => acc + p.contribution, 0);
+    expect(totalPot).toBe(totalContrib);
   });
 });

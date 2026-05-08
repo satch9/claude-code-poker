@@ -159,6 +159,8 @@ async function startGameInternal(ctx: any, tableId: string) {
       return ctx.db.patch(player._id, {
         cards: playerCards[player._id].map(cardToString),
         currentBet: betAmount,
+        // Cumul total sur la main : démarre avec les blinds postées.
+        handContribution: betAmount,
         hasActed: !!player.sitOut, // sit-out a "déjà agi" (auto-fold)
         isAllIn: betAmount > 0 && chips === 0,
         // Sit-out : auto-fold dès le départ. Les blinds postées sont perdues.
@@ -410,6 +412,7 @@ export const playerAction = mutation({
         await ctx.db.patch(player._id, {
           chips: newChips,
           currentBet: newCurrentBet,
+          handContribution: (player.handContribution ?? player.currentBet) + betAmount,
           hasActed: true,
           isAllIn,
           lastAction: isAllIn ? "all-in" : "call",
@@ -446,6 +449,7 @@ export const playerAction = mutation({
         await ctx.db.patch(player._id, {
           chips: newChips,
           currentBet: newCurrentBet,
+          handContribution: (player.handContribution ?? player.currentBet) + betAmount,
           hasActed: true,
           isAllIn,
           lastAction: isAllIn ? "all-in" : "raise",
@@ -479,6 +483,7 @@ export const playerAction = mutation({
         await ctx.db.patch(player._id, {
           chips: newChips,
           currentBet: newCurrentBet,
+          handContribution: (player.handContribution ?? player.currentBet) + betAmount,
           hasActed: true,
           isAllIn: true,
           lastAction: "all-in",
@@ -1018,16 +1023,16 @@ async function determineWinner(ctx: any, tableId: string) {
     });
   }
 
-  // Calculate side pots for pot distribution
-  // Note: calculateSidePots filtre par currentBet > 0. Si tous les joueurs
-  // ont check-down (sans all-in), currentBet=0 → sidePots=[]. Dans ce cas
-  // on fabrique un pot unique avec gameState.pot et tous les joueurs actifs
-  // comme éligibles.
+  // Calculate side pots based on each player's TOTAL contribution to the
+  // hand (handContribution accumulé sur toutes les streets, blinds + bets).
+  // Fallback sur currentBet pour les lignes pré-migration qui n'auraient
+  // pas encore handContribution. Le fallback gameState.pot ci-dessous est
+  // gardé en filet de sécurité (cas où aucun joueur n'a contribué, ce qui
+  // ne devrait pas survenir puisque les blinds sont obligatoires).
   let sidePots = calculateSidePots(
     players.map((p: any) => ({
       userId: p.userId,
-      currentBet: p.currentBet,
-      isAllIn: p.isAllIn,
+      contribution: p.handContribution ?? p.currentBet ?? 0,
       isFolded: p.isFolded,
     }))
   );
@@ -1223,6 +1228,7 @@ async function prepareNextHand(ctx: any, tableId: string) {
         return ctx.db.patch(player._id, {
           cards: [],
           currentBet: 0,
+          handContribution: 0,
           hasActed: true,
           isAllIn: false,
           isFolded: true,
@@ -1232,6 +1238,7 @@ async function prepareNextHand(ctx: any, tableId: string) {
       return ctx.db.patch(player._id, {
         cards: [],
         currentBet: 0,
+        handContribution: 0,
         hasActed: false,
         isAllIn: false,
         isFolded: false,

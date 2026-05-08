@@ -279,44 +279,50 @@ export function resetPlayersForNewRound(
     }));
 }
 
-// Calculate side pots for all-in scenarios
+// Calculate side pots from each player's TOTAL contribution to the hand.
+// Includes folded players' contributions in the pot amounts (their chips
+// stay in the pot) but excludes them from eligibility.
 export function calculateSidePots(
   players: Array<{
     userId: string;
-    currentBet: number;
-    isAllIn: boolean;
+    contribution: number; // cumul sur toute la main : blinds + bets/calls/raises/all-in
     isFolded: boolean;
   }>
 ): Array<{ amount: number; eligiblePlayers: string[] }> {
-  const activePlayers = players.filter(p => !p.isFolded && p.currentBet > 0);
-  
-  if (activePlayers.length === 0) return [];
-  
-  // Sort by bet amount
-  const sortedBets = activePlayers
-    .map(p => ({ userId: p.userId, bet: p.currentBet, isAllIn: p.isAllIn }))
-    .sort((a, b) => a.bet - b.bet);
-  
+  const contributors = players.filter(p => p.contribution > 0);
+  if (contributors.length === 0) return [];
+
+  // Niveaux uniques de contribution, ordre croissant.
+  const levels = Array.from(new Set(contributors.map(p => p.contribution))).sort(
+    (a, b) => a - b,
+  );
+
   const sidePots: Array<{ amount: number; eligiblePlayers: string[] }> = [];
-  let previousBet = 0;
-  
-  for (let i = 0; i < sortedBets.length; i++) {
-    const currentBet = sortedBets[i].bet;
-    const betDifference = currentBet - previousBet;
-    
-    if (betDifference > 0) {
-      const eligiblePlayers = sortedBets.slice(i).map(p => p.userId);
-      const potAmount = betDifference * eligiblePlayers.length;
-      
-      sidePots.push({
-        amount: potAmount,
-        eligiblePlayers
-      });
+  let previousLevel = 0;
+
+  for (const level of levels) {
+    const diff = level - previousLevel;
+    previousLevel = level;
+    if (diff <= 0) continue;
+
+    // Tous les joueurs (foldés inclus) qui ont atteint au moins ce niveau
+    // ont contribué `diff` à cette couche.
+    const reached = contributors.filter(p => p.contribution >= level);
+    const amount = diff * reached.length;
+
+    // Éligibles pour gagner cette couche : ceux atteints qui ne sont pas foldés.
+    const eligible = reached.filter(p => !p.isFolded).map(p => p.userId);
+
+    if (eligible.length > 0) {
+      sidePots.push({ amount, eligiblePlayers: eligible });
+    } else if (sidePots.length > 0) {
+      // Tous les éligibles à ce niveau ont fold (cas dégénéré : ne devrait
+      // pas survenir car le dernier non-foldé est par construction le plus
+      // haut contributeur). Par défense on rattache ce diff au pot précédent.
+      sidePots[sidePots.length - 1].amount += amount;
     }
-    
-    previousBet = currentBet;
   }
-  
+
   return sidePots;
 }
 
