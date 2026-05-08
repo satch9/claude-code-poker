@@ -71,4 +71,26 @@ describe("ChatPanel", () => {
     render(<ChatPanel tableId={tableId} currentUserId={"u1" as any} isSeated isActive />);
     expect(markRead).toHaveBeenCalled();
   });
+
+  it("aligns own messages on the right and others on the left", () => {
+    mockReturn.messages = [
+      { _id: "m1", userId: "u2", playerName: "Bob", body: "salut", createdAt: Date.now() },
+      { _id: "m2", userId: "u1", playerName: "Moi", body: "yo", createdAt: Date.now() },
+    ];
+    render(<ChatPanel tableId={tableId} currentUserId={"u1" as any} isSeated isActive />);
+
+    const bobRow = screen.getByText("salut").closest("[data-message-side]");
+    const meRow = screen.getByText("yo").closest("[data-message-side]");
+
+    expect(bobRow).toHaveAttribute("data-message-side", "left");
+    expect(meRow).toHaveAttribute("data-message-side", "right");
+  });
+
+  it("hides the player name above own bubbles (already known)", () => {
+    mockReturn.messages = [
+      { _id: "m1", userId: "u1", playerName: "Moi", body: "coucou", createdAt: Date.now() },
+    ];
+    render(<ChatPanel tableId={tableId} currentUserId={"u1" as any} isSeated isActive />);
+    expect(screen.queryByText("Moi")).toBeNull();
+  });
 });

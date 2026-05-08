@@ -95,23 +95,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {messages.map((m) => {
           const mine = m.userId === currentUserId;
           return (
-            <div key={m._id} className="leading-tight">
-              <div className="flex items-baseline gap-2">
-                <span
+            <div
+              key={m._id}
+              data-message-side={mine ? "right" : "left"}
+              className={cn("flex w-full", mine ? "justify-end" : "justify-start")}
+            >
+              <div className={cn("max-w-[80%] flex flex-col", mine ? "items-end" : "items-start")}>
+                {!mine && (
+                  <span className="text-xs font-medium text-accent px-1 mb-0.5">
+                    {m.playerName}
+                  </span>
+                )}
+                <div
                   className={cn(
-                    "text-xs font-medium",
-                    mine ? "text-accent" : "text-text-primary",
+                    "px-3 py-1.5 rounded-2xl shadow-sm",
+                    mine
+                      ? "bg-accent text-white rounded-br-sm"
+                      : "bg-bg-elevated text-text-primary rounded-bl-sm",
                   )}
                 >
-                  {m.playerName}
-                </span>
-                <span className="text-[10px] text-text-muted">
-                  {formatTime(m.createdAt)}
-                </span>
+                  <p className="break-words whitespace-pre-wrap leading-snug">
+                    {m.body}
+                  </p>
+                  <span
+                    className={cn(
+                      "block text-[10px] tabular-nums text-right mt-0.5",
+                      mine ? "text-white/70" : "text-text-muted",
+                    )}
+                  >
+                    {formatTime(m.createdAt)}
+                  </span>
+                </div>
               </div>
-              <p className="text-text-primary break-words whitespace-pre-wrap">
-                {m.body}
-              </p>
             </div>
           );
         })}
