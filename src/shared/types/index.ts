@@ -35,6 +35,9 @@ export interface Player {
   chips: number;
   cards: string[];
   currentBet: number;
+  // Cumul des jetons engagés sur la main courante (toutes streets +
+  // blinds). Optionnel pour compat avec lignes pré-migration.
+  handContribution?: number;
   hasActed: boolean;
   isAllIn: boolean;
   isFolded: boolean;

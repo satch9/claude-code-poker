@@ -18,6 +18,7 @@ import { useTableChat } from "../../hooks/useTableChat";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses, useSeatPositioning } from "../../hooks/useResponsiveClasses";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { calculateSidePots } from "../../../../convex/utils/turnManager";
 import { RebuyDialog } from "./RebuyDialog";
 import { InviteDialog } from "./InviteDialog";
 import { useMutation } from "convex/react";
@@ -355,6 +356,22 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     isMobile,
   ]);
 
+  // ----- Side pots stratifiés calculés côté client -----
+  // gameState.sidePots n'est jamais alimenté par le moteur ; on reconstruit
+  // la stratification à partir des contributions cumulées des joueurs
+  // (handContribution rempli par le moteur, reset entre les mains).
+  const liveSidePots = useMemo(() => {
+    if (!players || players.length === 0) return [] as { amount: number }[];
+    const pots = calculateSidePots(
+      players.map((p) => ({
+        userId: String(p.userId),
+        contribution: p.handContribution ?? p.currentBet ?? 0,
+        isFolded: p.isFolded,
+      })),
+    );
+    return pots.map((p) => ({ amount: p.amount }));
+  }, [players]);
+
   // ----- Showdown : cartes révélées + gagnants + orchestration -----
   // showdownResults vient de useGameLogic (query getShowdownResults active
   // uniquement quand gameState.phase === 'showdown').
@@ -548,7 +565,20 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           <div className="text-xs text-poker-green-200 uppercase tracking-wider">
             {gameState.phase === "waiting" ? "En attente" : gameState.phase}
           </div>
-          <div className="text-2xl font-bold">Pot {gameState.pot}</div>
+          {liveSidePots.length >= 2 ? (
+            <div className="flex flex-col items-center gap-0.5 text-sm font-semibold">
+              {liveSidePots.map((p, i) => (
+                <div key={i} className="flex gap-2">
+                  <span className="text-poker-green-200">
+                    {i === 0 ? "Pot principal" : `Side pot ${i}`}
+                  </span>
+                  <span className="text-gold tabular-nums">{p.amount.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-2xl font-bold">Pot {gameState.pot}</div>
+          )}
           {gameState.communityCards.length > 0 && (
             <div className="flex gap-1 mt-1">
               {gameState.communityCards.map((cardStr: string, i: number) => (
@@ -859,6 +889,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   pot={gameState.pot}
                   playersCount={players.length}
                   maxPlayers={table.maxPlayers}
+                  sidePots={liveSidePots}
                 />
               </div>
 
@@ -947,29 +978,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 </div>
               ))}
 
-              {/* Side pots indicator */}
-              {gameState.sidePots.length > 0 && (
-                <div
-                  className="absolute top-4 left-4 bg-gradient-to-br from-white/95 to-gray-100/95 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/50"
-                  style={{ transform: 'scaleY(1.43)' }}
-                >
-                  <div className="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                    Side Pots
-                  </div>
-                  {gameState.sidePots.map((pot, index) => (
-                    <div
-                      key={index}
-                      className="text-sm text-gray-700 py-1 flex justify-between"
-                    >
-                      <span>Pot {index + 1}:</span>
-                      <span className="font-semibold">
-                        {pot.amount.toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Side pots stratifiés affichés directement au centre via
+                  CommunityCards.sidePots (calculé dans liveSidePots). */}
 
               {/* Showdown : animation centre→gagnant pour chaque side pot.
                   L'orchestrateur (showdownPotIndex) avance de pot en pot. */}

@@ -11,6 +11,10 @@ export interface CommunityCardsProps {
   pot: number;
   playersCount?: number;
   maxPlayers?: number;
+  // Side pots stratifiés calculés depuis les contributions cumulées des
+  // joueurs. Si fourni avec >= 2 entrées, affiche une liste détaillée
+  // (Pot principal / Side pot 1 / ...) au lieu du badge "Pot : X" unique.
+  sidePots?: { amount: number }[];
   className?: string;
 }
 
@@ -75,22 +79,42 @@ export const CommunityCards: React.FC<CommunityCardsProps> = ({
   pot,
   playersCount,
   maxPlayers,
+  sidePots,
   className,
 }) => {
   const isDesktop = useMediaQuery(BREAKPOINTS.lg);
   const compact = !isDesktop;
   const cardsToShow = cards.slice(0, CARDS_PER_PHASE[phase]);
+  const hasStratifiedPots = !!sidePots && sidePots.length >= 2;
 
   return (
     <div className={cn('text-center flex flex-col items-center', className)}>
-      <div
-        className={cn(
-          'bg-black/60 backdrop-blur-sm text-white rounded-full font-semibold shadow-md border border-white/10',
-          compact ? 'px-3 py-1 text-xs mb-1' : 'px-4 py-1.5 text-sm mb-2',
-        )}
-      >
-        Pot : <span className="text-gold">{formatPot(pot, compact)}</span>
-      </div>
+      {hasStratifiedPots ? (
+        <div
+          className={cn(
+            'bg-black/60 backdrop-blur-sm text-white rounded-2xl font-semibold shadow-md border border-white/10 flex flex-col gap-0.5',
+            compact ? 'px-3 py-1.5 text-xs mb-1' : 'px-4 py-2 text-sm mb-2',
+          )}
+        >
+          {sidePots!.map((p, i) => (
+            <div key={i} className="flex items-center justify-between gap-3">
+              <span className="text-white/80">
+                {i === 0 ? 'Pot principal' : `Side pot ${i}`}
+              </span>
+              <span className="text-gold tabular-nums">{formatPot(p.amount, compact)}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'bg-black/60 backdrop-blur-sm text-white rounded-full font-semibold shadow-md border border-white/10',
+            compact ? 'px-3 py-1 text-xs mb-1' : 'px-4 py-1.5 text-sm mb-2',
+          )}
+        >
+          Pot : <span className="text-gold">{formatPot(pot, compact)}</span>
+        </div>
+      )}
 
       {cardsToShow.length > 0 ? (
         <div className={cn('flex justify-center flex-wrap', compact ? 'gap-1' : 'gap-2')}>
