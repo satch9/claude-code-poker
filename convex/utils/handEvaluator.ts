@@ -374,7 +374,7 @@ export function translateHandName(englishName: string): string {
     'Straight': 'Quinte',
     'Three of a Kind': 'Brelan',
     'Two Pair': 'Deux Paires',
-    'One Pair': 'Paire',
+    'Pair': 'Paire',
     'High Card': 'Carte Haute'
   };
 
@@ -386,6 +386,8 @@ export function translateHandName(englishName: string): string {
  */
 export function getHandDescription(hand: EnhancedHandRank): string {
   const frenchName = translateHandName(hand.name);
+  const topKicker = hand.kickers[0]?.rank;
+  const kickerSuffix = topKicker ? ` (kicker ${topKicker})` : '';
 
   switch (hand.name) {
     case 'Full House':
@@ -400,25 +402,25 @@ export function getHandDescription(hand: EnhancedHandRank): string {
       return `Carré de ${fourRank}`;
 
     case 'Three of a Kind':
-      // Pour un brelan, on veut "Brelan de [rang]"
+      // Pour un brelan, on veut "Brelan de [rang] (kicker [carte])"
       const threeRank2 = hand.cards[0].rank;
-      return `Brelan de ${threeRank2}`;
+      return `Brelan de ${threeRank2}${kickerSuffix}`;
 
     case 'Two Pair':
-      // Pour deux paires, on veut "Deux paires [haute] et [basse]"
+      // Pour deux paires, on veut "Deux paires [haute] et [basse] (kicker [carte])"
       const highPair = hand.cards[0].rank;
       const lowPair = hand.cards[2].rank;
-      return `Deux paires ${highPair} et ${lowPair}`;
+      return `Deux paires ${highPair} et ${lowPair}${kickerSuffix}`;
 
-    case 'One Pair':
-      // Pour une paire, on veut "Paire de [rang]"
+    case 'Pair':
+      // Pour une paire, on veut "Paire de [rang] (kicker [carte])"
       const pairRank2 = hand.cards[0].rank;
-      return `Paire de ${pairRank2}`;
+      return `Paire de ${pairRank2}${kickerSuffix}`;
 
     case 'High Card':
-      // Pour carte haute, on veut "Carte haute [rang]"
+      // Pour carte haute, on veut "Carte haute [rang] (kicker [carte])"
       const highCard = hand.cards[0].rank;
-      return `Carte haute ${highCard}`;
+      return `Carte haute ${highCard}${kickerSuffix}`;
 
     case 'Flush':
       // Pour une couleur, on veut "Couleur [suit]"
