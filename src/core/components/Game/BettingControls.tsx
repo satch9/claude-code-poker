@@ -88,78 +88,112 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   const formatAmount = (n?: number) =>
     n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
 
-  const raisePanel = raiseAction ? (
+  const presetButtons = (
+    <>
+      {presets.map((p) => (
+        <button
+          key={p.label}
+          type="button"
+          onClick={() => setRaiseAmount(p.value)}
+          className="min-h-tap px-3 rounded-lg border border-border-default bg-bg-elevated text-text-primary hover:border-accent text-sm font-medium"
+        >
+          {p.label}
+        </button>
+      ))}
+    </>
+  );
+
+  const sliderInput = (
+    <input
+      type="range"
+      min={minRaise}
+      max={maxRaise}
+      step={Math.max(1, Math.floor(minRaise / 10) || 1)}
+      value={raiseAmount}
+      onChange={(e) => setRaiseAmount(clamp(parseInt(e.target.value, 10)))}
+      aria-label="Slider de relance"
+      className="w-full h-2 bg-bg-elevated rounded-lg appearance-none cursor-pointer"
+    />
+  );
+
+  const numericInput = (
+    <input
+      type="number"
+      min={minRaise}
+      max={maxRaise}
+      value={raiseAmount}
+      onChange={(e) =>
+        setRaiseAmount(clamp(parseInt(e.target.value, 10) || minRaise))
+      }
+      aria-label="Montant de la relance"
+      className="w-full min-h-tap rounded-lg px-3 bg-bg-elevated text-text-primary border border-border-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    />
+  );
+
+  const cancelButton = (
+    <Button
+      variant="ghost"
+      size="md"
+      onClick={() => setIsRaiseOpen(false)}
+      className="flex-1"
+    >
+      Annuler
+    </Button>
+  );
+
+  const confirmButton = (label: string) => (
+    <Button
+      variant="success"
+      size="md"
+      onClick={() => {
+        dispatch({ action: 'raise', amount: raiseAmount });
+        setIsRaiseOpen(false);
+      }}
+      disabled={isLocked || raiseAmount < minRaise || raiseAmount > maxRaise}
+      className="flex-1"
+    >
+      {label}
+    </Button>
+  );
+
+  const raisePanelDesktop = raiseAction ? (
     <div className="flex flex-col gap-4">
-      {/* Presets */}
-      <div className="flex flex-wrap gap-2">
-        {presets.map((p) => (
-          <button
-            key={p.label}
-            type="button"
-            onClick={() => setRaiseAmount(p.value)}
-            className="min-h-tap px-3 rounded-lg border border-border-default bg-bg-elevated text-text-primary hover:border-accent text-sm font-medium"
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Slider */}
-      <input
-        type="range"
-        min={minRaise}
-        max={maxRaise}
-        step={Math.max(1, Math.floor(minRaise / 10) || 1)}
-        value={raiseAmount}
-        onChange={(e) => setRaiseAmount(clamp(parseInt(e.target.value, 10)))}
-        aria-label="Slider de relance"
-        className="w-full h-2 bg-bg-elevated rounded-lg appearance-none cursor-pointer"
-      />
-
-      {/* Min / Max labels */}
+      <div className="flex flex-wrap gap-2">{presetButtons}</div>
+      {sliderInput}
       <div className="flex justify-between text-xs text-text-muted">
         <span>Min: {minRaise.toLocaleString()}</span>
         <span>Max: {maxRaise.toLocaleString()}</span>
       </div>
-
-      {/* Numeric input */}
       <label className="flex items-center gap-2">
         <span className="text-sm text-text-muted">Montant</span>
-        <input
-          type="number"
-          min={minRaise}
-          max={maxRaise}
-          value={raiseAmount}
-          onChange={(e) =>
-            setRaiseAmount(clamp(parseInt(e.target.value, 10) || minRaise))
-          }
-          aria-label="Montant de la relance"
-          className="flex-1 min-h-tap rounded-lg px-3 bg-bg-elevated text-text-primary border border-border-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        />
+        {numericInput}
       </label>
-
-      {/* Actions */}
       <div className="flex gap-2 pt-2">
-        <Button
-          variant="ghost"
-          size="md"
-          onClick={() => setIsRaiseOpen(false)}
-          className="flex-1"
-        >
-          Annuler
-        </Button>
-        <Button
-          variant="success"
-          size="md"
-          onClick={() => {
-            dispatch({ action: 'raise', amount: raiseAmount });
-            setIsRaiseOpen(false);
-          }}
-          disabled={isLocked || raiseAmount < minRaise || raiseAmount > maxRaise}
-          className="flex-1"
-        >
-          Relancer à {raiseAmount.toLocaleString()}
-        </Button>
+        {cancelButton}
+        {confirmButton(`Relancer à ${raiseAmount.toLocaleString()}`)}
+      </div>
+    </div>
+  ) : null;
+
+  const raisePanelMobile = raiseAction ? (
+    <div className="grid grid-cols-[auto,1fr] gap-3">
+      {/* Col 1 — presets verticaux */}
+      <div className="flex flex-col gap-2">{presetButtons}</div>
+
+      {/* Col 2 — slider, input, actions */}
+      <div className="flex flex-col gap-3 min-w-0">
+        <div className="flex flex-col gap-1">
+          {sliderInput}
+          <div className="flex justify-between text-xs text-text-muted">
+            <span>{minRaise.toLocaleString()}</span>
+            <span>{maxRaise.toLocaleString()}</span>
+          </div>
+        </div>
+        {numericInput}
+        <div className="flex gap-2">
+          {cancelButton}
+          {confirmButton(`Relancer ${raiseAmount.toLocaleString()}`)}
+        </div>
       </div>
     </div>
   ) : null;
@@ -253,7 +287,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
       {/* Desktop: inline panel ouvert au clic sur Raise */}
       {isDesktop && raiseAction && isRaiseOpen && (
         <div className="mt-2 p-4 bg-bg-surface border border-border-default rounded-lg">
-          {raisePanel}
+          {raisePanelDesktop}
         </div>
       )}
 
@@ -264,7 +298,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           onClose={() => setIsRaiseOpen(false)}
           title="Relance"
         >
-          {raisePanel}
+          {raisePanelMobile}
         </BottomSheet>
       )}
     </>
