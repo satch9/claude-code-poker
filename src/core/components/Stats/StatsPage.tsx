@@ -6,6 +6,7 @@ import { PlayerStats } from "./PlayerStats";
 import { cn } from "../../../shared/utils/cn";
 
 type Period = "7d" | "30d" | "90d" | "all";
+type Mode = "all" | "tournament" | "cash";
 
 const PERIODS: { id: Period; label: string; days: number | null }[] = [
   { id: "7d", label: "7j", days: 7 },
@@ -25,6 +26,7 @@ interface StatsPageProps {
 export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _onBack }) => {
   const { user } = useAuth();
   const [period, setPeriod] = useState<Period>("30d");
+  const [mode, setMode] = useState<Mode>("all");
 
   const detailedStats = useQuery(
     api.users.stats.getUserStats,
@@ -61,14 +63,20 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _
     onExportRequest?.(handleExportJson);
   }, [onExportRequest, handleExportJson]);
 
-  // Filtre période côté client pour l'historique des mains.
+  // Filtre période + mode (tournoi/cash) côté client pour l'historique des mains.
   const filteredHands = useMemo(() => {
     if (!handsHistory) return [];
     const period_ = PERIODS.find((p) => p.id === period);
-    if (!period_ || period_.days === null) return handsHistory;
-    const cutoff = Date.now() - period_.days * 24 * 60 * 60 * 1000;
-    return handsHistory.filter((h) => h.endTs >= cutoff);
-  }, [handsHistory, period]);
+    const cutoff =
+      period_ && period_.days !== null
+        ? Date.now() - period_.days * 24 * 60 * 60 * 1000
+        : null;
+    return handsHistory.filter((h) => {
+      if (cutoff !== null && h.endTs < cutoff) return false;
+      if (mode !== "all" && h.gameType !== mode) return false;
+      return true;
+    });
+  }, [handsHistory, period, mode]);
 
   if (!user) return null;
 
@@ -106,7 +114,7 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _
       </div>
 
       {/* Stats détaillées (carrière) */}
-      <PlayerStats userId={user._id} showDetailed />
+      <PlayerStats userId={user._id} showDetailed mode={mode} onModeChange={setMode} />
 
       {/* Mains jouées */}
       <section className="bg-bg-surface border border-border-default rounded-lg p-3 md:p-5 text-text-primary">

@@ -7,9 +7,14 @@ import { Button } from '../../../shared/ui/Button';
 import { isValidUserId } from '../../../shared/utils/validation';
 import { cn } from '../../../shared/utils/cn';
 
+type StatsMode = 'all' | 'tournament' | 'cash';
+
 interface PlayerStatsProps {
   userId: Id<'users'>;
   showDetailed?: boolean;
+  /** Mode contrôlé depuis le parent. Si absent, le composant gère son propre state. */
+  mode?: StatsMode;
+  onModeChange?: (mode: StatsMode) => void;
 }
 
 const StatTile: React.FC<{
@@ -48,9 +53,13 @@ const StatTile: React.FC<{
 export const PlayerStats: React.FC<PlayerStatsProps> = ({
   userId,
   showDetailed = false,
+  mode: modeProp,
+  onModeChange,
 }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [mode, setMode] = useState<'all' | 'tournament' | 'cash'>('all');
+  const [internalMode, setInternalMode] = useState<StatsMode>('all');
+  const mode = modeProp ?? internalMode;
+  const setMode = onModeChange ?? setInternalMode;
 
   const userIdValid = isValidUserId(userId);
 
