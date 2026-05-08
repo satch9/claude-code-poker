@@ -120,8 +120,8 @@ export const useSeatPositioning = () => {
     // peuvent légèrement déborder visuellement du feutre (mais pas du
     // viewport contenant), c'est l'effet PokerStars recherché.
     constraints: {
-      minX: isMobile ? 11 : 5,
-      maxX: isMobile ? 89 : 95,
+      minX: isMobile ? 8 : 3,
+      maxX: isMobile ? 92 : 97,
       minY: isMobile ? -5 : 3,
       maxY: isMobile ? 105 : 97,
     },
