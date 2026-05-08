@@ -283,20 +283,25 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
         )}
 
         {/* Player timer */}
-        {isActivePlayer && onTimeOut && (
-          <div
-            className={cn(
-              "absolute top-1/2 transform -translate-y-1/2",
-              isMobile ? "-left-6" : "-left-8"
-            )}
-          >
-            <PlayerTimer
-              isActive={isActivePlayer}
-              timeLimit={timeLimit}
-              onTimeOut={onTimeOut}
-            />
-          </div>
-        )}
+        {isActivePlayer && onTimeOut && (() => {
+          const onLeftSide = seatAngle !== undefined && Math.cos(seatAngle) < -0.1;
+          return (
+            <div
+              className={cn(
+                "absolute top-1/2 transform -translate-y-1/2",
+                onLeftSide
+                  ? (isMobile ? "-right-6" : "-right-8")
+                  : (isMobile ? "-left-6" : "-left-8")
+              )}
+            >
+              <PlayerTimer
+                isActive={isActivePlayer}
+                timeLimit={timeLimit}
+                onTimeOut={onTimeOut}
+              />
+            </div>
+          );
+        })()}
       </div>
     </>
   );
