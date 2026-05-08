@@ -136,6 +136,12 @@
     transform: scaleY(0.7);
     box-shadow: 0 0 30px rgba(0,0,0,0.5);
   }
+
+  @media (max-width: 767px) {
+    .poker-table-felt {
+      transform: scaleY(0.85);
+    }
+  }
   
   .sidebar-desktop {
     @apply flex-shrink-0 border-poker-green-700 space-y-4 overflow-y-auto w-80;

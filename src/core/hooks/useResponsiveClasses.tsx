@@ -65,7 +65,7 @@ export const useResponsiveClasses = () => {
     // les autres cas iOS doivent utiliser le même layout que mobile non-iOS.
     positioning: {
       radiusX: 50,
-      radiusY: isMobile ? 45 : 50,
+      radiusY: isMobile ? 55 : 50,
     },
     
     // Classes d'état des joueurs
@@ -122,8 +122,8 @@ export const useSeatPositioning = () => {
     constraints: {
       minX: isMobile ? 11 : 5,
       maxX: isMobile ? 89 : 95,
-      minY: isMobile ? 5 : 3,
-      maxY: isMobile ? 95 : 97,
+      minY: isMobile ? -5 : 3,
+      maxY: isMobile ? 105 : 97,
     },
     
     // Radius selon l'écran

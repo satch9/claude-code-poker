@@ -938,7 +938,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   sièges N/S sont poussés vers l'extérieur, on a la place. */}
               <div className={responsiveClasses.tableCenter}
                 style={{
-                  transform: 'translate(-50%, -50%) scaleY(1.43)'
+                  transform: `translate(-50%, -50%) scaleY(${isMobile ? 1.176 : 1.43})`
                 }}>
                 {/* Community cards */}
                 <CommunityCards
