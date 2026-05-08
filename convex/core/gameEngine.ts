@@ -2046,6 +2046,14 @@ async function endTournament(ctx: any, tableId: string) {
 
   const winnerUser = await ctx.db.get(winner.userId);
   await addActionToFeed(ctx, tableId, {
+    playerId: winner._id,
+    playerName: winnerUser?.name ?? "Joueur",
+    action: "win",
+    amount: winnerUpdated.chips,
+    message: `remporte le tournoi avec ${winnerUpdated.chips} jetons!`,
+    isSystem: false,
+  });
+  await addActionToFeed(ctx, tableId, {
     playerName: "Système",
     action: "system",
     message: `Tournoi terminé · Vainqueur : ${winnerUser?.name ?? "Joueur"}`,

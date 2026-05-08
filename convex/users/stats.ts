@@ -118,10 +118,18 @@ export const getUserStats = query({
       Math.max(max, action.amount || 0), 0
     );
 
-    // Calculate tournament wins (actions with message containing "tournoi")
-    const tournamentWins = winActions.filter(action => 
-      action.message?.toLowerCase().includes("tournoi")
-    ).length;
+    // Calculate tournament wins from finalRanking (source autoritaire).
+    const finishedTournaments = await ctx.db
+      .query("tables")
+      .filter((q) => q.eq(q.field("status"), "finished"))
+      .collect();
+    const tournamentWins = finishedTournaments.filter((t: any) => {
+      const ranking = t.modules?.tournament?.finalRanking;
+      if (!Array.isArray(ranking)) return false;
+      return ranking.some(
+        (r: any) => r.userId === args.userId && r.position === 1
+      );
+    }).length;
 
     // Calculate average game duration (simplified - time between first and last action per hand)
     const gamesByHand = new Map();
