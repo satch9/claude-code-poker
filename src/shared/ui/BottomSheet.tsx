@@ -9,6 +9,8 @@ export interface BottomSheetProps {
   children: React.ReactNode;
   /** Hauteur max du sheet (CSS unit). Défaut: 85vh. */
   maxHeight?: string;
+  /** Cache le titre visuellement (toujours utilisé pour l'aria-label). */
+  hideTitle?: boolean;
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -17,6 +19,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   title,
   children,
   maxHeight = '85vh',
+  hideTitle = false,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -68,8 +71,17 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         <div className="flex justify-center pt-2 pb-1" aria-hidden="true">
           <div className="h-1.5 w-10 rounded-full bg-text-muted/40" />
         </div>
-        <header className="flex items-center justify-between px-4 py-2 border-b border-border-default">
-          <h2 className="text-base font-semibold">{title}</h2>
+        <header
+          className={cn(
+            'flex items-center px-4',
+            hideTitle ? 'justify-end py-1' : 'justify-between py-2 border-b border-border-default',
+          )}
+        >
+          {hideTitle ? (
+            <h2 className="sr-only">{title}</h2>
+          ) : (
+            <h2 className="text-base font-semibold">{title}</h2>
+          )}
           <button
             type="button"
             onClick={onClose}

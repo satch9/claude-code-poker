@@ -88,20 +88,20 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   const formatAmount = (n?: number) =>
     n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
 
-  const presetButtons = (
-    <>
-      {presets.map((p) => (
-        <button
-          key={p.label}
-          type="button"
-          onClick={() => setRaiseAmount(p.value)}
-          className="min-h-tap px-3 rounded-lg border border-border-default bg-bg-elevated text-text-primary hover:border-accent text-sm font-medium"
-        >
-          {p.label}
-        </button>
-      ))}
-    </>
-  );
+  const renderPresets = (compact = false) =>
+    presets.map((p) => (
+      <button
+        key={p.label}
+        type="button"
+        onClick={() => setRaiseAmount(p.value)}
+        className={cn(
+          'rounded-lg border border-border-default bg-bg-elevated text-text-primary hover:border-accent font-medium',
+          compact ? 'px-2 py-1 text-xs' : 'min-h-tap px-3 text-sm',
+        )}
+      >
+        {p.label}
+      </button>
+    ));
 
   const sliderInput = (
     <input
@@ -132,7 +132,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
   const cancelButton = (
     <Button
-      variant="ghost"
+      variant="secondary"
       size="md"
       onClick={() => setIsRaiseOpen(false)}
       className="flex-1"
@@ -158,7 +158,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
   const raisePanelDesktop = raiseAction ? (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">{presetButtons}</div>
+      <div className="flex flex-wrap gap-2">{renderPresets(false)}</div>
       {sliderInput}
       <div className="flex justify-between text-xs text-text-muted">
         <span>Min: {minRaise.toLocaleString()}</span>
@@ -176,12 +176,12 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   ) : null;
 
   const raisePanelMobile = raiseAction ? (
-    <div className="grid grid-cols-[auto,1fr] gap-3">
+    <div className="grid grid-cols-[auto,1fr] gap-3 min-h-[36vh]">
       {/* Col 1 — presets verticaux */}
-      <div className="flex flex-col gap-2">{presetButtons}</div>
+      <div className="flex flex-col justify-between gap-1">{renderPresets(true)}</div>
 
-      {/* Col 2 — slider, input, actions */}
-      <div className="flex flex-col gap-3 min-w-0">
+      {/* Col 2 — slider, input, actions répartis */}
+      <div className="flex flex-col justify-between min-w-0 gap-3">
         <div className="flex flex-col gap-1">
           {sliderInput}
           <div className="flex justify-between text-xs text-text-muted">
@@ -297,6 +297,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           isOpen={isRaiseOpen}
           onClose={() => setIsRaiseOpen(false)}
           title="Relance"
+          hideTitle
         >
           {raisePanelMobile}
         </BottomSheet>
