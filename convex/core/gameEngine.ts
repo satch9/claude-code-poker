@@ -1049,6 +1049,11 @@ async function determineWinner(ctx: any, tableId: string) {
     console.log("🎰 Side pots calculated:", sidePots);
   }
 
+  // Accumule les gains par joueur sur tous les side pots avant de patcher
+  // la BDD. Sans ça, un gagnant multi-pot voit son chips overwrite à chaque
+  // itération (winner.player.chips est la valeur cachée au début).
+  const winningsByPlayerId = new Map<string, number>();
+
   // Distribute each side pot individually
   for (let i = 0; i < sidePots.length; i++) {
     const sidePot = sidePots[i];
@@ -1093,14 +1098,11 @@ async function determineWinner(ctx: any, tableId: string) {
 
     console.log(`🎰 Side pot ${i + 1}: ${sidePot.amount} jetons, ${potWinners.length} gagnant(s), ${sharePerWinner} jetons chacun (reste ${remainder} au 1er après dealer)`);
 
-    await Promise.all(
-      sortedPotWinners.map((winner: any, idx: number) => {
-        const extra = idx === 0 ? remainder : 0;
-        return ctx.db.patch(winner.player._id, {
-          chips: winner.player.chips + sharePerWinner + extra,
-        });
-      })
-    );
+    sortedPotWinners.forEach((winner: any, idx: number) => {
+      const extra = idx === 0 ? remainder : 0;
+      const id = String(winner.player._id);
+      winningsByPlayerId.set(id, (winningsByPlayerId.get(id) ?? 0) + sharePerWinner + extra);
+    });
 
     // Add winner announcement for this side pot
     if (potWinners.length === 1) {
@@ -1128,6 +1130,20 @@ async function determineWinner(ctx: any, tableId: string) {
       });
     }
   }
+
+  // Patch unique par joueur avec le cumul des gains sur tous les side pots
+  // qu'il a remportés. On part de player.chips lu au début (cache cohérent
+  // pour cette transaction) et on additionne le total accumulé.
+  const playerById = new Map<string, any>(
+    players.map((p: any) => [String(p._id), p] as const),
+  );
+  await Promise.all(
+    Array.from(winningsByPlayerId.entries()).map(([playerId, totalWon]) => {
+      const p = playerById.get(playerId);
+      if (!p) return Promise.resolve();
+      return ctx.db.patch(p._id, { chips: p.chips + totalWon });
+    }),
+  );
 
   // Update game state to showdown
   await ctx.db.patch(gameState._id, {
