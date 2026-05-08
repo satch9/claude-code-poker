@@ -236,7 +236,7 @@ describe('BettingControls — Desktop (inline)', () => {
     mockMatchMedia(true); // desktop
   });
 
-  it('shows inline raise slider on desktop without opening sheet', () => {
+  it('shows the Raise button initially, no inline slider visible', () => {
     render(
       <BettingControls
         {...baseProps}
@@ -246,13 +246,42 @@ describe('BettingControls — Desktop (inline)', () => {
         ]}
       />,
     );
-    // Raise button should NOT be present on desktop (slider is inline)
-    expect(screen.queryByRole('button', { name: /^raise$/i })).toBeNull();
-    // Slider and presets are visible without any click
+    expect(screen.getByRole('button', { name: /^raise$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: /relance/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^pot$/i })).toBeNull();
+  });
+
+  it('reveals the inline panel after clicking Raise (no dialog on desktop)', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={100}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
     expect(screen.getByRole('slider', { name: /relance/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^pot$/i })).toBeInTheDocument();
-    // No dialog
+    // Pas de modal sur desktop
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('hides the inline panel when Annuler is clicked on desktop', async () => {
+    render(
+      <BettingControls
+        {...baseProps}
+        potSize={100}
+        availableActions={[
+          { action: 'raise', minAmount: 20, maxAmount: 1000 },
+        ]}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
+    expect(screen.getByRole('slider', { name: /relance/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /annuler/i }));
+    expect(screen.queryByRole('slider', { name: /relance/i })).toBeNull();
   });
 
   it('confirms raise inline on desktop', async () => {
@@ -267,6 +296,7 @@ describe('BettingControls — Desktop (inline)', () => {
         ]}
       />,
     );
+    await userEvent.click(screen.getByRole('button', { name: /^raise$/i }));
     await userEvent.click(screen.getByRole('button', { name: /^pot$/i }));
     await userEvent.click(screen.getByRole('button', { name: /relancer à 100/i }));
     expect(onAction).toHaveBeenCalledWith({ action: 'raise', amount: 100 });

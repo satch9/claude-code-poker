@@ -140,16 +140,14 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
-        {!isDesktop && (
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={() => setIsRaiseOpen(false)}
-            className="flex-1"
-          >
-            Annuler
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={() => setIsRaiseOpen(false)}
+          className="flex-1"
+        >
+          Annuler
+        </Button>
         <Button
           variant="success"
           size="md"
@@ -226,12 +224,12 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
             Call {formatAmount(callAction.amount)}
           </Button>
         )}
-        {raiseAction && !isDesktop && (
+        {raiseAction && (
           <Button
             variant="success"
             size="md"
             disabled={isLocked}
-            onClick={() => setIsRaiseOpen(true)}
+            onClick={() => setIsRaiseOpen((v) => !v)}
             className="flex-1"
           >
             Raise
@@ -252,8 +250,8 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
         )}
       </div>
 
-      {/* Desktop: inline panel */}
-      {isDesktop && raiseAction && (
+      {/* Desktop: inline panel ouvert au clic sur Raise */}
+      {isDesktop && raiseAction && isRaiseOpen && (
         <div className="mt-2 p-4 bg-bg-surface border border-border-default rounded-lg">
           {raisePanel}
         </div>
