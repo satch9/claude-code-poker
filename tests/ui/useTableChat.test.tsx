@@ -71,4 +71,24 @@ describe("useTableChat", () => {
     expect(result.current.messages).toEqual([]);
     expect(result.current.isLoading).toBe(true);
   });
+
+  it("markRead in one instance updates the unread count in another instance for the same tableId", () => {
+    mockMessages = [
+      { _id: "m1", userId: "u2", playerName: "Bob", body: "bob1", createdAt: 200 },
+    ];
+
+    const a = renderHook(() => useTableChat(tableId));
+    const b = renderHook(() => useTableChat(tableId));
+
+    expect(a.result.current.unreadCount).toBe(1);
+    expect(b.result.current.unreadCount).toBe(1);
+
+    // Instance B (le ChatPanel) marque comme lu...
+    act(() => b.result.current.markRead());
+
+    // ...et l'instance A (le badge du header / drawer button) doit aussi
+    // refléter le compteur à 0 sans attendre l'arrivée d'un nouveau message.
+    expect(a.result.current.unreadCount).toBe(0);
+    expect(b.result.current.unreadCount).toBe(0);
+  });
 });

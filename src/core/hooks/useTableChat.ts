@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -6,6 +6,29 @@ import { useAuth } from "./useAuth";
 import { useToast } from "../../shared/ui";
 
 const STORAGE_KEY = (tableId: string) => `chat:lastRead:${tableId}`;
+
+// Pub-sub par tableId : permet à toutes les instances de useTableChat
+// montées simultanément (badge header, badge onglet, ChatPanel) de
+// se synchroniser quand l'une d'elles appelle markRead, sans attendre
+// l'arrivée d'un nouveau message pour rafraîchir.
+const listeners = new Map<string, Set<() => void>>();
+
+function subscribeMarkRead(tableId: string, cb: () => void): () => void {
+  let set = listeners.get(tableId);
+  if (!set) {
+    set = new Set();
+    listeners.set(tableId, set);
+  }
+  set.add(cb);
+  return () => {
+    set!.delete(cb);
+    if (set!.size === 0) listeners.delete(tableId);
+  };
+}
+
+function notifyMarkRead(tableId: string): void {
+  listeners.get(tableId)?.forEach((cb) => cb());
+}
 
 function readLastRead(tableId: string): number {
   try {
@@ -45,6 +68,15 @@ export function useTableChat(tableId: Id<"tables"> | null) {
   const [lastReadBump, setLastReadBump] = useState(0);
   const [sending, setSending] = useState(false);
 
+  // S'abonne aux notifications markRead émises par les autres instances
+  // de useTableChat pour la même tableId.
+  useEffect(() => {
+    if (!tableId) return;
+    return subscribeMarkRead(String(tableId), () => {
+      setLastReadBump((n) => n + 1);
+    });
+  }, [tableId]);
+
   const messages = messagesRaw ?? [];
   const isLoading = messagesRaw === undefined;
 
@@ -60,7 +92,7 @@ export function useTableChat(tableId: Id<"tables"> | null) {
   const markRead = useCallback(() => {
     if (!tableId) return;
     writeLastRead(String(tableId), Date.now());
-    setLastReadBump((n) => n + 1);
+    notifyMarkRead(String(tableId));
   }, [tableId]);
 
   const send = useCallback(
