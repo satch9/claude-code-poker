@@ -44,6 +44,8 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
         return 'text-green-500';
       case 'showdown':
         return 'text-amber-400';
+      case 'eliminated':
+        return 'text-red-500';
       default:
         return 'text-gray-400';
     }
@@ -72,6 +74,10 @@ export const ActionFeed: React.FC<ActionFeedProps> = ({
         return playerName === 'Système' ? 'Nouvelle main commencée' : `${playerName} rejoint la table`;
       case 'leave':
         return `${playerName} quitte la table`;
+      case 'eliminated':
+        return item.amount
+          ? `${playerName} éliminé (${item.amount}${item.amount === 1 ? 'er' : 'e'})`
+          : `${playerName} éliminé`;
       case 'system':
         return 'Message système';
       default:

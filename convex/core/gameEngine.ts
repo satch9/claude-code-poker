@@ -1230,6 +1230,13 @@ async function prepareNextHand(ctx: any, tableId: string) {
           eliminatedAt: now,
           tournamentRank: rankCounter,
         });
+        await addActionToFeed(ctx, tableId, {
+          playerId: player._id,
+          playerName: player.name,
+          action: "eliminated",
+          amount: rankCounter,
+          isSystem: true,
+        });
         rankCounter--;
       }
     }
