@@ -186,14 +186,9 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
             >
               {player.user?.name || "Player"}
             </div>
-            <div
-              className={cn(
-                "text-green-400 font-bold truncate",
-                isMobile ? "text-xs leading-tight" : "text-xs"
-              )}
-            >
-              {formatChips(player.chips, isMobile)}
-            </div>
+            {/* Total des jetons déplacé dans PlayersChipsBar (bandeau haut
+                d'écran) pour décharger le seat. La currentBet reste affichée
+                en pile de jetons sous le seat. */}
             {!isMobile && player.lastAction && (
               <div className="text-xs text-gray-300 font-medium truncate">
                 {getActionLabel(player.lastAction)}

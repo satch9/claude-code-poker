@@ -26,6 +26,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrientation } from "@/shared/hooks/useOrientation";
 import { TableRightPanel } from './TableRightPanel';
+import { PlayersChipsBar } from './PlayersChipsBar';
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -274,6 +275,21 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     isAllIn: !!p.isAllIn,
     isCurrent: p.userId === currentPlayer?.userId,
   }));
+
+  // Version pour la PlayersChipsBar : on inclut les éliminés (line-through)
+  // et on trie par seatPosition pour un ordre stable.
+  const playersForChipsBar = (players ?? [])
+    .slice()
+    .sort((a, b) => a.seatPosition - b.seatPosition)
+    .map((p) => ({
+      userId: String(p.userId),
+      name: (p as any).user?.name || 'Joueur',
+      chips: p.chips ?? 0,
+      isFolded: !!p.isFolded,
+      isAllIn: !!p.isAllIn,
+      eliminated: !!(p as any).eliminatedAt,
+      isCurrent: p.userId === currentPlayer?.userId,
+    }));
 
   // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
   // on appelle joinTable pour reset le flag (il vient de revenir).
@@ -539,6 +555,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         )}
 
         {/* Tournament info — désormais intégré dans le header (compact). */}
+
+        {/* Bandeau récap chips de tous les joueurs */}
+        <PlayersChipsBar players={playersForChipsBar} />
 
         {/* Adversaire */}
         <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
@@ -866,6 +885,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       )}
 
       {/* Tournament info — désormais intégré dans le header (compact). */}
+
+      {/* Bandeau récap chips de tous les joueurs */}
+      <PlayersChipsBar players={playersForChipsBar} />
 
       {/* Main content - responsive layout */}
       <div className={cn(
