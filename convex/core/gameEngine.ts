@@ -1296,9 +1296,15 @@ async function prepareNextHand(ctx: any, tableId: string) {
           eliminatedAt: now,
           tournamentRank: rankCounter,
         });
+        // BUG fixé : `player.name` n'existe pas (le nom est sur la table
+        // users). Sans le fetch ci-dessous, l'insert dans gameActions
+        // explosait sur le schema (playerName: v.string() requis), le
+        // try/catch silencieux de scheduleStartNextHand absorbait l'erreur
+        // et la chaîne de mains s'arrêtait → table figée en phase=waiting.
+        const user = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, tableId, {
           playerId: player._id,
-          playerName: player.name,
+          playerName: user?.name || "Joueur",
           action: "eliminated",
           amount: rankCounter,
           isSystem: true,
@@ -1878,7 +1884,12 @@ export const scheduleStartNextHand = internalMutation({
       await startNextHandInternal(ctx, args.tableId);
       console.log(`✓ scheduleStartNextHand completed for ${args.tableId}`);
     } catch (e) {
+      // On loggue mais on RE-THROW : laisser le try/catch silencieux a fait
+      // pourrir une erreur de schema (player.name undefined sur l'addAction
+      // "eliminated") qui figeait la table sans la moindre trace utile dans
+      // les logs failure. Mieux vaut crash visible que blocage silencieux.
       console.error("scheduleStartNextHand error", e);
+      throw e;
     }
   },
 });
