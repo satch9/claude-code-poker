@@ -86,7 +86,7 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   ];
 
   const formatAmount = (n?: number) =>
-    n === undefined ? '' : n >= 1000 ? `${Math.floor(n / 1000)}K` : String(n);
+    n === undefined ? '' : n.toLocaleString('fr-FR');
 
   const renderPresets = (compact = false) =>
     presets.map((p) => (
@@ -176,15 +176,15 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
   ) : null;
 
   const raisePanelMobile = raiseAction ? (
-    <div className="grid grid-cols-[auto,1fr] gap-3 min-h-[36vh]">
-      {/* Col 1 — presets verticaux */}
-      <div className="flex flex-col justify-between gap-1">{renderPresets(true)}</div>
+    <div className="grid grid-cols-[auto,1fr] gap-2">
+      {/* Col 1 — presets verticaux compacts */}
+      <div className="flex flex-col gap-1">{renderPresets(true)}</div>
 
-      {/* Col 2 — slider, input, actions répartis */}
-      <div className="flex flex-col justify-between min-w-0 gap-3">
-        <div className="flex flex-col gap-1">
+      {/* Col 2 — slider, input, actions */}
+      <div className="flex flex-col min-w-0 gap-2">
+        <div className="flex flex-col gap-0.5">
           {sliderInput}
-          <div className="flex justify-between text-xs text-text-muted">
+          <div className="flex justify-between text-[10px] text-text-muted">
             <span>{minRaise.toLocaleString()}</span>
             <span>{maxRaise.toLocaleString()}</span>
           </div>
@@ -198,9 +198,14 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
     </div>
   ) : null;
 
+  // Sur mobile (non desktop), on compacte au max pour ne pas masquer les
+  // cartes du joueur sous la barre d'actions.
+  const btnSize = isDesktop ? 'md' : 'sm';
+  const btnTextClass = isDesktop ? '' : 'text-xs px-1';
+
   return (
     <>
-      {(potOdds || handStrength) && (
+      {(potOdds || handStrength) && isDesktop && (
         <div className="flex flex-wrap gap-2 px-2 pb-1 text-xs">
           {potOdds && (
             <span className="px-2 py-0.5 rounded-full bg-bg-elevated text-text-muted">
@@ -222,14 +227,14 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
           )}
         </div>
       )}
-      <div className={cn('flex gap-2 p-2', className)}>
+      <div className={cn('flex gap-1.5', isDesktop ? 'gap-2 p-2' : 'p-1', className)}>
         {foldAction && (
           <Button
             variant="danger"
-            size="md"
+            size={btnSize}
             disabled={isLocked}
             onClick={() => dispatch({ action: 'fold' })}
-            className="flex-1"
+            className={cn('flex-1', btnTextClass)}
           >
             Fold
           </Button>
@@ -237,10 +242,10 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
         {checkAction && (
           <Button
             variant="primary"
-            size="md"
+            size={btnSize}
             disabled={isLocked}
             onClick={() => dispatch({ action: 'check' })}
-            className="flex-1"
+            className={cn('flex-1', btnTextClass)}
           >
             Check
           </Button>
@@ -248,12 +253,12 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
         {callAction && (
           <Button
             variant="primary"
-            size="md"
+            size={btnSize}
             disabled={isLocked}
             onClick={() =>
               dispatch({ action: 'call', amount: callAction.amount })
             }
-            className="flex-1"
+            className={cn('flex-1', btnTextClass)}
           >
             Call {formatAmount(callAction.amount)}
           </Button>
@@ -261,10 +266,10 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
         {raiseAction && (
           <Button
             variant="success"
-            size="md"
+            size={btnSize}
             disabled={isLocked}
             onClick={() => setIsRaiseOpen((v) => !v)}
-            className="flex-1"
+            className={cn('flex-1', btnTextClass)}
           >
             Raise
           </Button>
@@ -272,12 +277,12 @@ export const BettingControls: React.FC<BettingControlsProps> = ({
         {allInAction && (
           <Button
             variant="danger"
-            size="md"
+            size={btnSize}
             disabled={isLocked}
             onClick={() =>
               dispatch({ action: 'all-in', amount: allInAction.amount })
             }
-            className="flex-1"
+            className={cn('flex-1', btnTextClass)}
           >
             All-in {formatAmount(allInAction.amount)}
           </Button>

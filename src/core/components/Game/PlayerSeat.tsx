@@ -184,11 +184,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
                 isMobile ? "text-xs leading-tight" : "text-xs"
               )}
             >
-              {isMobile
-                ? player.chips >= 1000
-                  ? `${Math.floor(player.chips / 1000)}K`
-                  : player.chips.toString()
-                : player.chips.toLocaleString()}
+              {formatChips(player.chips, isMobile)}
             </div>
             {!isMobile && player.lastAction && (
               <div className="text-xs text-gray-300 font-medium truncate">
@@ -261,9 +257,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
                 isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
               )}
             >
-              {isMobile && player.currentBet >= 1000
-                ? `${Math.floor(player.currentBet / 1000)}K`
-                : player.currentBet.toLocaleString()}
+              {formatChips(player.currentBet, isMobile)}
             </div>
           </div>
         )}
@@ -360,6 +354,20 @@ export const PlayerSeat = React.memo(PlayerSeatComponent, (prev, next) => {
   }
   return true; // skip re-render
 });
+
+// Affiche le montant exact (1460), avec séparateur fin (espace insécable
+// fine) sur mobile pour économiser la largeur. Ne raccourcit en "k" que
+// si vraiment énorme (>= 100 000) pour rester lisible.
+function formatChips(n: number, isMobile: boolean): string {
+  if (isMobile && n >= 100_000) {
+    const k = n / 1000;
+    return k >= 100 ? `${Math.round(k)}k` : `${k.toFixed(1)}k`;
+  }
+  if (isMobile) {
+    return n.toLocaleString("fr-FR").replace(/ | /g, " ");
+  }
+  return n.toLocaleString();
+}
 
 // Utility functions
 function parseCard(cardStr: string) {
