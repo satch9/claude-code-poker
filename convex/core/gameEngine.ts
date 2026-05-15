@@ -21,7 +21,6 @@ import {
   resetPlayersForNewRound,
   shouldEndHand,
   getNextPhase,
-  getNextDealerPosition,
   calculateSidePots
 } from "../utils/turnManager";
 import {
@@ -1289,14 +1288,19 @@ async function prepareNextHand(ctx: any, tableId: string) {
     .unique();
 
   if (gameState) {
-    // Move dealer position to next player
+    // "Dead button" : le bouton avance d'un siège quoi qu'il arrive (même
+    // sur un siège vide / joueur éliminé). Les SB/BB sont calculés au
+    // démarrage de la main suivante via getBlindPositions qui sait gérer
+    // un dealer hors des actifs (cherche le premier actif clockwise).
+    // Sans ça, deux mains consécutives pouvaient sauter le même joueur
+    // de la SB après une élimination.
+    const maxPlayers = table?.maxPlayers ?? 0;
+    const nextDealerPosition = maxPlayers > 0
+      ? (gameState.dealerPosition + 1) % maxPlayers
+      : gameState.dealerPosition;
     const playersWithChips = players.filter((p: any) => p.chips > 0);
-    const nextDealerPosition = getNextDealerPosition(
-      gameState.dealerPosition,
-      playersWithChips.map((p: any) => p.seatPosition).sort((a: number, b: number) => a - b)
-    );
 
-    console.log(`🔄 Dealer rotation: ${gameState.dealerPosition} → ${nextDealerPosition}`);
+    console.log(`🔄 Dealer rotation (dead button): ${gameState.dealerPosition} → ${nextDealerPosition}`);
     console.log(`👥 Players with chips: [${playersWithChips.map((p: any) => p.seatPosition).join(', ')}]`);
 
     await ctx.db.patch(gameState._id, {
