@@ -562,13 +562,18 @@ export const playerAction = mutation({
       // s'arrête au premier qui doit encore agir : non-folded, non-all-in, et
       // soit pas encore acté ce round, soit currentBet < mise courante.
       // Ça évite de redonner la main à un joueur qui a déjà matché la raise.
+      // Filtre défensif `chips > 0` : si un joueur a perdu tous ses jetons
+      // mid-hand (all-in busté) sans encore avoir reçu eliminatedAt (qui n'est
+      // posé qu'entre les mains par prepareNextHand), il ne doit pas figurer
+      // dans la rotation pour ne pas bloquer le tour des survivants.
       const seatOrder = allPlayers
-        .filter((p) => !p.isFolded && !p.eliminatedAt)
+        .filter((p) => !p.isFolded && !p.eliminatedAt && p.chips > 0)
         .map((p) => p.seatPosition)
         .sort((a, b) => a - b);
 
       const needsToAct = (p: typeof allPlayers[number]): boolean => {
         if (p.isFolded || p.isAllIn || p.eliminatedAt) return false;
+        if (p.chips === 0) return false; // sécurité : busté mais pas encore marqué
         if (!p.hasActed) return true;
         return p.currentBet < updatedGameState.currentBet;
       };
@@ -1706,6 +1711,28 @@ async function startNextHandInternal(ctx: any, tableId: string) {
   if (table.gameType === "tournament" && table.modules?.tournament) {
     const tournament = table.modules.tournament;
     const now = Date.now();
+    // Sécurité : si nextBlindIncrease n'a jamais été initialisé (0 ou
+    // undefined) alors que le tournoi tourne, on l'amorce ici sur la durée
+    // du niveau courant pour que le check ci-dessous puisse fonctionner aux
+    // mains suivantes.
+    if (
+      tournament.status === "running" &&
+      (!tournament.nextBlindIncrease || tournament.nextBlindIncrease === 0)
+    ) {
+      const lvl = tournament.blindStructure[tournament.currentBlindLevel ?? 0];
+      if (lvl) {
+        await ctx.db.patch(tableId, {
+          modules: {
+            ...table.modules,
+            tournament: {
+              ...tournament,
+              nextBlindIncrease: now + lvl.duration,
+            },
+          },
+        });
+        tournament.nextBlindIncrease = now + lvl.duration;
+      }
+    }
     if (
       tournament.status === "running" &&
       tournament.nextBlindIncrease > 0 &&
@@ -1764,12 +1791,17 @@ export const scheduleStartNextHand = internalMutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
     try {
+      console.log(`▶ scheduleStartNextHand fired for ${args.tableId}`);
       // Reset gameState phase to waiting first so startNextHandInternal accepts to start
       const gameState = await ctx.db
         .query("gameStates")
         .withIndex("by_table", (q: any) => q.eq("tableId", args.tableId))
         .unique();
-      if (gameState && gameState.phase === "showdown") {
+      // Reset depuis n'importe quelle phase non-waiting (showdown OU rare
+      // cas où la phase aurait avancé). Sans ça, si la phase a glissé,
+      // startNextHandInternal refuse de démarrer la main et le tournoi
+      // se retrouve gelé.
+      if (gameState && gameState.phase !== "waiting") {
         await ctx.db.patch(gameState._id, {
           phase: "waiting",
           autoAdvanceAt: undefined,
@@ -1778,6 +1810,7 @@ export const scheduleStartNextHand = internalMutation({
       }
       await prepareNextHand(ctx, args.tableId);
       await startNextHandInternal(ctx, args.tableId);
+      console.log(`✓ scheduleStartNextHand completed for ${args.tableId}`);
     } catch (e) {
       console.error("scheduleStartNextHand error", e);
     }
