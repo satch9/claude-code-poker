@@ -9,7 +9,10 @@
  */
 
 import type * as admin_advanceTurn from "../admin/advanceTurn.js";
+import type * as admin_resetPasswords from "../admin/resetPasswords.js";
+import type * as admin_resetPasswordsMutation from "../admin/resetPasswordsMutation.js";
 import type * as admin_wipeGameData from "../admin/wipeGameData.js";
+import type * as admin_wipeTablesOnly from "../admin/wipeTablesOnly.js";
 import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
 import type * as core_gameEngine from "../core/gameEngine.js";
@@ -40,7 +43,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "admin/advanceTurn": typeof admin_advanceTurn;
+  "admin/resetPasswords": typeof admin_resetPasswords;
+  "admin/resetPasswordsMutation": typeof admin_resetPasswordsMutation;
   "admin/wipeGameData": typeof admin_wipeGameData;
+  "admin/wipeTablesOnly": typeof admin_wipeTablesOnly;
   auth: typeof auth;
   chat: typeof chat;
   "core/gameEngine": typeof core_gameEngine;
