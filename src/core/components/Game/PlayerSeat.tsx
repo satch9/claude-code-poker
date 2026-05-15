@@ -7,7 +7,6 @@ import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
 import { BlindBadge } from "./BlindBadge";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
-import { PlayerAvatar } from "./PlayerAvatar";
 
 interface PlayerSeatProps {
   player?: Player;
@@ -169,25 +168,28 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
         <div
           className={cn(
             "flex items-center h-full",
-            isMobile ? "gap-1.5" : "gap-2"
+            isMobile ? "gap-1.5 px-1" : "gap-2 px-2"
           )}
         >
-          <PlayerAvatar
-            name={player.user?.name || 'Player'}
-            isActive={isActivePlayer}
-            isFolded={player.isFolded}
-          />
-          {/* Nom retiré : l'initiale dans l'avatar suffit à identifier le
-              joueur, et le nom complet est déjà visible dans
-              PlayersChipsBar en haut d'écran. La lastAction (desktop)
-              reste affichée à côté de l'avatar. */}
-          {!isMobile && player.lastAction && (
-            <div className="flex-1 min-w-0">
+          {/* Avatar masqué : avec des prénoms commençant par la même lettre,
+              l'initiale ne permet pas de distinguer les joueurs. On affiche
+              le nom complet à la place. */}
+          <div className="flex-1 min-w-0">
+            <div
+              className={cn(
+                "font-medium text-white truncate",
+                isMobile ? "text-xs leading-tight" : "text-sm",
+                isActivePlayer && !player.isFolded && "text-yellow-200"
+              )}
+            >
+              {player.user?.name || "Player"}
+            </div>
+            {!isMobile && player.lastAction && (
               <div className="text-xs text-gray-300 font-medium truncate">
                 {getActionLabel(player.lastAction)}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Animation push-to-pot: jetons partent vers le centre quand currentBet repasse à 0 */}
