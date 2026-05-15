@@ -24,10 +24,10 @@ export default {
         'table-radius-desktop': '42%',
         'card-offset': '16px',
         'card-offset-current': '24px',
-        'seat-mobile': '8rem',
+        'seat-mobile': '7rem',
         'seat-desktop': '13rem',
       },
-      
+
       // Z-index standardisé
       zIndex: {
         'card-hidden': '0',
@@ -122,11 +122,13 @@ export default {
       },
       
       // Tailles standardisées.
-      // seat-mobile: 8rem (128px) pour rentrer sur iPhone SE (375px) avec
-      // seats placés en bordure (radiusX=50). Combiné aux contraintes
-      // minX/maxX resserrées sur mobile dans useSeatPositioning.
+      // seat-mobile: 7rem (112px) pour rentrer sur Samsung 360px et iPhone SE
+      // (375px) avec seats E/W placés en bordure (radiusX=50). Combiné aux
+      // contraintes minX/maxX resserrées sur mobile dans useSeatPositioning,
+      // évite que les seats est/ouest dépassent du viewport et tronquent
+      // initiales/montants.
       width: {
-        'seat-mobile': '8rem',
+        'seat-mobile': '7rem',
         'seat-desktop': '13rem',
       },
       height: {

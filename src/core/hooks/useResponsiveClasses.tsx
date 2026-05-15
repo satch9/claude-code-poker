@@ -119,9 +119,12 @@ export const useSeatPositioning = () => {
     // sans les pousser vers l'intérieur. Avec un seat 8rem, certains
     // peuvent légèrement déborder visuellement du feutre (mais pas du
     // viewport contenant), c'est l'effet PokerStars recherché.
+    // Mobile : seat = 7rem (112px). Sur Samsung 360px viewport, half-width
+    // ≈ 16% donc on borne le centre à [16, 84] pour garantir que le seat
+    // reste entièrement visible (initiales + somme non tronquées).
     constraints: {
-      minX: isMobile ? 8 : 3,
-      maxX: isMobile ? 92 : 97,
+      minX: isMobile ? 16 : 3,
+      maxX: isMobile ? 84 : 97,
       minY: isMobile ? -5 : 3,
       maxY: isMobile ? 105 : 97,
     },
