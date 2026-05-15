@@ -129,32 +129,6 @@ function computeSeatPosition(
   } as const;
 }
 
-// Calculate dealer button position (in front of player seat).
-function computeDealerButtonPosition(
-  position: number,
-  maxPlayers: number,
-  viewerRotation: number,
-  isMobile: boolean,
-  seatPositioning: SeatGeomDeps
-) {
-  const angle = computeBaseAngle(position, maxPlayers, isMobile) + viewerRotation;
-
-  const { radiusX, radiusY } = seatPositioning.radius;
-  const { minX, maxX, minY, maxY } = seatPositioning.constraints;
-
-  const rawX = 50 + radiusX * Math.cos(angle);
-  const rawY = 50 + radiusY * Math.sin(angle);
-
-  const x = Math.max(minX, Math.min(maxX, rawX));
-  const y = Math.max(minY, Math.min(maxY, rawY));
-
-  return {
-    left: `${x}%`,
-    top: `${y}%`,
-    transform: "translate(-50%, -50%)",
-  };
-}
-
 interface BlindPlayerLike {
   user?: unknown;
   chips: number;
@@ -963,25 +937,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 />
               </div>
 
-              {/* Dealer button (pastille DEALER style PokerStars) */}
-              {gameState.dealerPosition >= 0 && (
-                <div
-                  className={responsiveClasses.dealerButton}
-                  style={{
-                    ...computeDealerButtonPosition(
-                      gameState.dealerPosition,
-                      table.maxPlayers,
-                      viewerRotation,
-                      isMobile,
-                      seatPositioning
-                    ),
-                    transform: `${computeDealerButtonPosition(gameState.dealerPosition, table.maxPlayers, viewerRotation, isMobile, seatPositioning).transform} scaleY(1.43)`
-                  }}
-                >
-                  DEALER
-                </div>
-              )}
-
+              {/* Pastille DEALER désormais affichée comme badge sur le seat
+                  (cf. PlayerSeat → BlindBadge type="dealer"), plus visible
+                  qu'un bouton flottant qui passait derrière les joueurs. */}
 
               {/* Player seats around the table.
                   En tournoi running, on n'affiche pas les sièges vides

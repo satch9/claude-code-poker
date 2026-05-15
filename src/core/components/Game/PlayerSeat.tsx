@@ -37,7 +37,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   player,
   position: _position,
   seatAngle,
-  isDealer: _isDealer = false,
+  isDealer = false,
   isCurrentPlayer = false,
   isActivePlayer = false,
   isSmallBlind = false,
@@ -153,9 +153,10 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
           className
         )}
       >
-        {/* Blind indicators */}
+        {/* Blind / Dealer indicators */}
         {isSmallBlind && <BlindBadge type="small" />}
         {isBigBlind && <BlindBadge type="big" />}
+        {isDealer && <BlindBadge type="dealer" />}
 
         {/* Player avatar and info */}
         <div
