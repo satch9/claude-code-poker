@@ -625,6 +625,63 @@ export const playerAction = mutation({
   },
 });
 
+// Trigger auto-advance server-side (scheduled via ctx.scheduler après une
+// transition all-in). Mirror logique de advancePhase mais sans auth check
+// (interne uniquement) et idempotent : si autoAdvanceAt a déjà été cleared
+// ou si la phase a changé, on no-op.
+export const triggerAutoAdvance = internalMutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+    if (!gameState) return { success: false, reason: "no game state" };
+    if (!gameState.autoAdvanceAt) {
+      return { success: false, reason: "no autoAdvanceAt (already advanced)" };
+    }
+
+    console.log(`▶ triggerAutoAdvance fired for ${args.tableId} (phase=${gameState.phase})`);
+
+    await ctx.db.patch(gameState._id, { autoAdvanceAt: undefined });
+
+    if (gameState.phase === "showdown") {
+      await determineWinner(ctx, args.tableId);
+      return { success: true, action: "showdown→determineWinner" };
+    }
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+
+    const playerStates: PlayerState[] = players.map((p) => ({
+      chips: p.chips,
+      currentBet: p.currentBet,
+      hasActed: p.hasActed,
+      isFolded: p.isFolded,
+      isAllIn: p.isAllIn,
+      lastAction: p.lastAction,
+      seatPosition: p.seatPosition,
+      eliminatedAt: p.eliminatedAt,
+    }));
+
+    const conditions = evaluateGameConditions(
+      playerStates,
+      gameState.currentBet,
+      gameState.lastRaiserPosition,
+    );
+    const nextPhaseInfo = getNextPhaseFromStateMachine(gameState.phase as any, conditions);
+
+    if (nextPhaseInfo) {
+      await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
+    } else {
+      await advanceToNextPhase(ctx, args.tableId);
+    }
+    return { success: true, action: `advanced from ${gameState.phase}` };
+  },
+});
+
 // Auto-advance to next phase (called by client timer)
 export const advancePhase = mutation({
   args: { tableId: v.id("tables") },
@@ -863,10 +920,15 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
       isSystem: true,
     });
 
-    // If next phase is showdown, trigger winner determination after delay
-    if (nextPhase === "showdown") {
-      console.log("🎮 Server: Setting up showdown with auto-advance");
-    }
+    // Filet de sécurité côté serveur : on ne dépend plus du client pour
+    // appeler advancePhase. Si le client est déconnecté ou lent, le
+    // scheduler Convex fait avancer la phase quoi qu'il arrive.
+    await ctx.scheduler.runAfter(
+      autoAdvanceDelay,
+      (internal as any)["core/gameEngine"].triggerAutoAdvance,
+      { tableId },
+    );
+
     return;
   }
 
@@ -1889,11 +1951,18 @@ async function advanceToNextPhaseWithStateMachine(
       autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
       updatedAt: Date.now(),
     });
-    // Si pas d'all-in (autoAdvance=false), déclencher determineWinner.
-    // determineWinner enchaîne sur endHand qui schedule la main suivante via runAfter(3000).
-    // Le path all-in garde son scheduler client-side via autoAdvanceAt.
     if (!nextPhaseInfo.autoAdvance) {
+      // Pas d'all-in : déclencher determineWinner directement.
+      // determineWinner enchaîne sur endHand qui schedule la main suivante.
       await determineWinner(ctx, tableId);
+    } else {
+      // Path all-in : filet de sécurité serveur pour ne pas dépendre du
+      // client (cf. triggerAutoAdvance + commentaire dans advanceToNextPhase).
+      await ctx.scheduler.runAfter(
+        nextPhaseInfo.delay,
+        (internal as any)["core/gameEngine"].triggerAutoAdvance,
+        { tableId },
+      );
     }
     return;
   }
@@ -1973,6 +2042,16 @@ async function advanceToNextPhaseWithStateMachine(
     autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
     updatedAt: Date.now(),
   });
+
+  // Filet de sécurité serveur quand autoAdvance=true (path all-in pour
+  // flop/turn/river). Ne dépend plus du client pour faire avancer.
+  if (nextPhaseInfo.autoAdvance) {
+    await ctx.scheduler.runAfter(
+      nextPhaseInfo.delay,
+      (internal as any)["core/gameEngine"].triggerAutoAdvance,
+      { tableId },
+    );
+  }
 
   // Debug log to verify autoAdvanceAt is set
   console.log(`🎮 Game state updated: phase=${nextPhaseInfo.nextPhase}, autoAdvanceAt=${nextPhaseInfo.autoAdvance ? 'SET' : 'NOT SET'}, delay=${nextPhaseInfo.delay}`);
