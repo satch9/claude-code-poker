@@ -177,24 +177,17 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
             isActive={isActivePlayer}
             isFolded={player.isFolded}
           />
-          <div className="flex-1 min-w-0">
-            <div
-              className={cn(
-                "font-medium text-white truncate",
-                isMobile ? "text-xs leading-tight" : "text-sm"
-              )}
-            >
-              {player.user?.name || "Player"}
-            </div>
-            {/* Total des jetons déplacé dans PlayersChipsBar (bandeau haut
-                d'écran) pour décharger le seat. La currentBet reste affichée
-                en pile de jetons sous le seat. */}
-            {!isMobile && player.lastAction && (
+          {/* Nom retiré : l'initiale dans l'avatar suffit à identifier le
+              joueur, et le nom complet est déjà visible dans
+              PlayersChipsBar en haut d'écran. La lastAction (desktop)
+              reste affichée à côté de l'avatar. */}
+          {!isMobile && player.lastAction && (
+            <div className="flex-1 min-w-0">
               <div className="text-xs text-gray-300 font-medium truncate">
                 {getActionLabel(player.lastAction)}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Animation push-to-pot: jetons partent vers le centre quand currentBet repasse à 0 */}
