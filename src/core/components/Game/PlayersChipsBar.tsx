@@ -5,10 +5,6 @@ export interface PlayersChipsBarPlayer {
   userId: string;
   name: string;
   chips: number;
-  isFolded?: boolean;
-  isAllIn?: boolean;
-  eliminated?: boolean;
-  isCurrent?: boolean;
 }
 
 interface PlayersChipsBarProps {
@@ -17,7 +13,9 @@ interface PlayersChipsBarProps {
 }
 
 // Bandeau horizontal compact affichant "Nom: chips" pour chaque joueur.
-// Placé en haut d'écran pour décharger les avatars sur le tapis.
+// Volontairement minimal : aucune info d'état de jeu (fold, all-in,
+// éliminé…) car ces infos sont déjà visibles sur le tapis. Cf. mémoire
+// utilisateur "PlayersChipsBar minimal".
 export const PlayersChipsBar: React.FC<PlayersChipsBarProps> = ({ players, className }) => {
   if (players.length === 0) return null;
   return (
@@ -30,23 +28,11 @@ export const PlayersChipsBar: React.FC<PlayersChipsBarProps> = ({ players, class
       {players.map((p, idx) => (
         <React.Fragment key={p.userId}>
           {idx > 0 && <span className="text-poker-green-400/60">·</span>}
-          <span
-            className={cn(
-              'inline-flex items-baseline gap-1',
-              p.eliminated && 'line-through text-poker-green-400/50',
-              p.isFolded && !p.eliminated && 'opacity-60',
-              p.isCurrent && 'font-semibold text-white',
-            )}
-          >
+          <span className="inline-flex items-baseline gap-1">
             <span className="truncate max-w-[8rem]">{p.name}</span>
             <span className="tabular-nums text-gold">
               {p.chips.toLocaleString('fr-FR')}
             </span>
-            {p.isAllIn && (
-              <span className="ml-0.5 px-1 rounded bg-red-600 text-white text-[10px] font-bold">
-                AI
-              </span>
-            )}
           </span>
         </React.Fragment>
       ))}

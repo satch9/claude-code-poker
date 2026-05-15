@@ -276,8 +276,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
     isCurrent: p.userId === currentPlayer?.userId,
   }));
 
-  // Version pour la PlayersChipsBar : on inclut les éliminés (line-through)
-  // et on trie par seatPosition pour un ordre stable.
+  // Version pour la PlayersChipsBar : nom + chips uniquement, trié par
+  // seatPosition pour un ordre stable. Pas d'état de jeu (déjà sur le tapis).
   const playersForChipsBar = (players ?? [])
     .slice()
     .sort((a, b) => a.seatPosition - b.seatPosition)
@@ -285,10 +285,6 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       userId: String(p.userId),
       name: (p as any).user?.name || 'Joueur',
       chips: p.chips ?? 0,
-      isFolded: !!p.isFolded,
-      isAllIn: !!p.isAllIn,
-      eliminated: !!(p as any).eliminatedAt,
-      isCurrent: p.userId === currentPlayer?.userId,
     }));
 
   // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
