@@ -23,10 +23,15 @@ export const useResponsiveClasses = () => {
     gap: isMobile ? 'gap-1' : 'gap-2',
     fontSize: isMobile ? 'text-xs' : 'text-sm',
     
-    // Sièges de joueur
+    // Sièges de joueur.
+    // Mobile : largeur auto pour ne pas réserver de place vide à droite du
+    // nom court (ex: "Bea"). Bornée par max-w-seat-mobile (7rem) et un
+    // min-w pour que les overlays (ALL-IN) restent lisibles.
     playerSeat: cn(
       'player-seat-base',
-      isMobile ? 'w-seat-mobile h-seat-mobile' : 'w-seat-desktop h-seat-desktop'
+      isMobile
+        ? 'w-auto min-w-[5rem] max-w-[7rem] h-seat-mobile'
+        : 'w-seat-desktop h-seat-desktop'
     ),
     
     // Barres latérales
