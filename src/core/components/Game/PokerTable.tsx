@@ -487,13 +487,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       return { rank, suit: suitMap[suitChar] };
     };
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         {/* Header heads-up portrait — masqué par défaut, révélé via chevron flottant. */}
         {!showHeaderDrawer && (
           <button
             onClick={() => setShowHeaderDrawer(true)}
             aria-label="Afficher le header"
-            className="fixed top-8 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+            className="fixed left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
           >
             <ChevronDown size={18} />
           </button>
@@ -505,7 +506,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               onClick={() => setShowHeaderDrawer(false)}
               aria-hidden
             />
-            <header className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 py-2 flex justify-between items-center gap-1 transition-transform duration-200">
+            <header
+              className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 flex justify-between items-center gap-1 transition-transform duration-200"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)', paddingBottom: '0.5rem' }}
+            >
               <div className="text-sm min-w-0 flex-1">
                 <div className="font-bold truncate">{table.name}</div>
                 {table.gameType === "tournament" && table.modules?.tournament ? (
@@ -737,7 +741,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         <button
           onClick={() => setShowHeaderDrawer(true)}
           aria-label="Afficher le header"
-          className="fixed top-8 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          className="fixed left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
         >
           <ChevronDown size={18} />
         </button>
@@ -749,7 +754,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             onClick={() => setShowHeaderDrawer(false)}
             aria-hidden
           />
-          <div className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 py-2 gap-1 transition-transform duration-200">
+          <div
+            className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 gap-1 transition-transform duration-200"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)', paddingBottom: '0.5rem' }}
+          >
             <div className="text-white min-w-0 flex-1">
               <div className="text-sm font-bold truncate">{table.name}</div>
               {table.gameType === "tournament" && table.modules?.tournament ? (

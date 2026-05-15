@@ -10,7 +10,10 @@ export const useResponsiveClasses = () => {
   
   return {
     // Container principal
-    pokerTableContainer: "fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden mobile-viewport",
+    // pt/pb safe-area : indispensable en mode PWA fullscreen pour ne pas
+    // que le contenu passe sous la barre de statut iOS / le notch / le
+    // home indicator. pl/pr couvre les notches latéraux en paysage.
+    pokerTableContainer: "fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden mobile-viewport pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]",
     
     // Tailles de base
     cardSize: isMobile ? 'sm' : isTablet ? 'md' : 'lg',
