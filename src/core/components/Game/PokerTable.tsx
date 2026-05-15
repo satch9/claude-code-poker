@@ -497,7 +497,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           <button
             onClick={() => setShowHeaderDrawer(true)}
             aria-label="Afficher le header"
-            className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+            className="fixed top-8 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
           >
             <ChevronDown size={18} />
           </button>
@@ -741,7 +741,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         <button
           onClick={() => setShowHeaderDrawer(true)}
           aria-label="Afficher le header"
-          className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          className="fixed top-8 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
         >
           <ChevronDown size={18} />
         </button>
