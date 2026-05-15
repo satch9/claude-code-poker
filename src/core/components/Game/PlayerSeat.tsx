@@ -422,47 +422,15 @@ function getActionLabel(action: string) {
   }
 }
 
-function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = false, showCards: boolean = false) {
-  // Décale les cartes légèrement vers le centre de la table selon l'angle du siège
-  // Les seats sont centrés via translate(-50%, -50%), on ajoute un offset relatif
-  const baseDist = isCurrentPlayer ? 24 : 16; // joueur courant un peu plus visible - pourrait utiliser responsiveClasses.cardOffsets
-  const dx = Math.cos(angleRad) * (-baseDist); // vers le centre = opposé au rayon
-  const dy = Math.sin(angleRad) * (-baseDist);
-
-  // Ajustement additionnel pour les cartes du joueur courant selon la position
-  const extraOffsetX = 0;
-  let extraOffsetY = 0;
-
-  if (showCards) {
-    // Ajustement léger selon l'angle pour harmoniser le dépassement
-    const adjustmentDistance = 25;
-
-    // Angle approximatif pour différencier les positions
-    const normalizedAngle = ((angleRad % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
-
-    if (normalizedAngle < Math.PI / 4 || normalizedAngle > 7 * Math.PI / 4) {
-      // Est (droite) - angle ~ 0
-      extraOffsetY = -adjustmentDistance;
-    } else if (normalizedAngle < 3 * Math.PI / 4) {
-      // Sud (bas) - angle ~ π/2
-      extraOffsetY = -adjustmentDistance * -0.3;
-    } else if (normalizedAngle < 5 * Math.PI / 4) {
-      // Ouest (gauche) - angle ~ π
-      extraOffsetY = -adjustmentDistance;
-    } else {
-      // Nord (haut) - angle ~ 3π/2
-      extraOffsetY = -adjustmentDistance * 1.9; // Un peu plus pour le nord
-    }
-  }
-
-  // Position de base avec ajustements
-  const finalDx = dx + extraOffsetX;
-  const finalDy = dy + extraOffsetY;
-  const baseTransform = `translate(-50%, -50%) translate(${finalDx}px, ${finalDy}px)`;
-
+function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = false, _showCards: boolean = false) {
+  // Cartes positionnées en haut du seat (top:10%) pour tous les joueurs.
+  // On garde un léger offset horizontal vers le centre de la table selon
+  // l'angle pour que les cartes restent ancrées du bon côté.
+  const baseDist = isCurrentPlayer ? 24 : 16;
+  const dx = Math.cos(angleRad) * (-baseDist);
   return {
     left: '50%',
-    top: '50%',
-    transform: baseTransform,
+    top: '10%',
+    transform: `translate(-50%, -50%) translate(${dx}px, 0)`,
   } as React.CSSProperties;
 }

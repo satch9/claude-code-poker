@@ -132,7 +132,7 @@ export default {
         'seat-desktop': '13rem',
       },
       height: {
-        'seat-mobile': '3rem',
+        'seat-mobile': '2rem',
         'seat-desktop': '4rem',
       },
       
