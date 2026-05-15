@@ -43,7 +43,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
   // Compute whether the current user could act (used to gate getAvailableActions).
   // We check phase + turn position here directly to avoid depending on `isMyTurn`
   // (which is derived later and would create ordering noise).
-  const myPlayer = players?.find(p => p.userId === user?._id);
+  const myPlayer = players?.find((p: any) => p.userId === user?._id);
   const phase = gameState?.phase;
   const couldActNow = !!(
     user &&
@@ -86,8 +86,8 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
   }, []);
 
   // Game state helpers - memoized for performance
-  const currentPlayer = useMemo(() => 
-    players?.find(p => p.userId === user?._id), 
+  const currentPlayer = useMemo(() =>
+    players?.find((p: any) => p.userId === user?._id),
     [players, user?._id]
   );
   
@@ -188,7 +188,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
   };
 
   const handleCall = () => {
-    const callAction = availableActions?.actions.find(a => a.action === 'call');
+    const callAction = availableActions?.actions.find((a: any) => a.action ==='call');
     if (callAction) {
       handlePlayerAction({ action: 'call', amount: callAction.amount });
     }
@@ -199,7 +199,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
   };
 
   const handleAllIn = () => {
-    const allInAction = availableActions?.actions.find(a => a.action === 'all-in');
+    const allInAction = availableActions?.actions.find((a: any) => a.action ==='all-in');
     if (allInAction) {
       handlePlayerAction({ action: 'all-in', amount: allInAction.amount });
     }
@@ -317,7 +317,7 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
     const canCheck = callAmount === 0;
     const canCall = callAmount > 0 && callAmount <= currentPlayer.chips;
 
-    const raiseAction = availableActions?.actions.find(a => a.action === 'raise');
+    const raiseAction = availableActions?.actions.find((a: any) => a.action ==='raise');
     const minRaise = raiseAction?.minAmount || 0;
     const maxRaise = raiseAction?.maxAmount || currentPlayer.chips;
 
@@ -377,8 +377,8 @@ export const useGameLogic = (tableId: Id<'tables'> | null, _onLeaveTable?: () =>
   const getGameStats = useMemo(() => {
     if (!players || !gameState) return null;
 
-    const activePlayers = players.filter(p => !p.isFolded);
-    const totalChips = players.reduce((sum, p) => sum + p.chips, 0);
+    const activePlayers = players.filter((p: any) => !p.isFolded);
+    const totalChips = players.reduce((sum: number, p: any) => sum + p.chips, 0);
     const averageChips = totalChips / players.length;
     
     return {

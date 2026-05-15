@@ -10,7 +10,10 @@ export const useResponsiveClasses = () => {
   
   return {
     // Container principal
-    pokerTableContainer: "fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden mobile-viewport",
+    // pt/pb safe-area : indispensable en mode PWA fullscreen pour ne pas
+    // que le contenu passe sous la barre de statut iOS / le notch / le
+    // home indicator. pl/pr couvre les notches latéraux en paysage.
+    pokerTableContainer: "fixed inset-0 bg-gradient-to-br from-poker-green-800 to-poker-green-900 flex flex-col overflow-hidden mobile-viewport pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]",
     
     // Tailles de base
     cardSize: isMobile ? 'sm' : isTablet ? 'md' : 'lg',
@@ -20,10 +23,15 @@ export const useResponsiveClasses = () => {
     gap: isMobile ? 'gap-1' : 'gap-2',
     fontSize: isMobile ? 'text-xs' : 'text-sm',
     
-    // Sièges de joueur
+    // Sièges de joueur.
+    // Mobile : largeur auto pour ne pas réserver de place vide à droite du
+    // nom court (ex: "Bea"). Bornée par max-w-seat-mobile (7rem) et un
+    // min-w pour que les overlays (ALL-IN) restent lisibles.
     playerSeat: cn(
       'player-seat-base',
-      isMobile ? 'w-seat-mobile h-seat-mobile' : 'w-seat-desktop h-seat-desktop'
+      isMobile
+        ? 'w-auto min-w-[5rem] max-w-[7rem] h-seat-mobile'
+        : 'w-seat-desktop h-seat-desktop'
     ),
     
     // Barres latérales
@@ -119,9 +127,12 @@ export const useSeatPositioning = () => {
     // sans les pousser vers l'intérieur. Avec un seat 8rem, certains
     // peuvent légèrement déborder visuellement du feutre (mais pas du
     // viewport contenant), c'est l'effet PokerStars recherché.
+    // Mobile : seat = 7rem (112px). Sur Samsung 360px viewport, half-width
+    // ≈ 16% donc on borne le centre à [16, 84] pour garantir que le seat
+    // reste entièrement visible (initiales + somme non tronquées).
     constraints: {
-      minX: isMobile ? 8 : 3,
-      maxX: isMobile ? 92 : 97,
+      minX: isMobile ? 16 : 3,
+      maxX: isMobile ? 84 : 97,
       minY: isMobile ? -5 : 3,
       maxY: isMobile ? 105 : 97,
     },

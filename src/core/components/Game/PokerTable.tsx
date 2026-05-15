@@ -26,6 +26,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrientation } from "@/shared/hooks/useOrientation";
 import { TableRightPanel } from './TableRightPanel';
+import { PlayersChipsBar } from './PlayersChipsBar';
 
 interface PokerTableProps {
   tableId: Id<"tables"> | null;
@@ -127,32 +128,6 @@ function computeSeatPosition(
     transform: "translate(-50%, -50%)",
     angle,
   } as const;
-}
-
-// Calculate dealer button position (in front of player seat).
-function computeDealerButtonPosition(
-  position: number,
-  maxPlayers: number,
-  viewerRotation: number,
-  isMobile: boolean,
-  seatPositioning: SeatGeomDeps
-) {
-  const angle = computeBaseAngle(position, maxPlayers, isMobile) + viewerRotation;
-
-  const { radiusX, radiusY } = seatPositioning.radius;
-  const { minX, maxX, minY, maxY } = seatPositioning.constraints;
-
-  const rawX = 50 + radiusX * Math.cos(angle);
-  const rawY = 50 + radiusY * Math.sin(angle);
-
-  const x = Math.max(minX, Math.min(maxX, rawX));
-  const y = Math.max(minY, Math.min(maxY, rawY));
-
-  return {
-    left: `${x}%`,
-    top: `${y}%`,
-    transform: "translate(-50%, -50%)",
-  };
 }
 
 interface BlindPlayerLike {
@@ -292,14 +267,25 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const isLoading = !tableId || !gameState || !players || !table;
 
   // Résumé des joueurs pour le panneau latéral desktop
-  const playersForPanel = (players ?? []).map((p) => ({
+  const playersForPanel = ((players ?? []) as any[]).map((p: any) => ({
     userId: String(p.userId),
-    name: (p as any).user?.name || 'Joueur',
+    name: p.user?.name || 'Joueur',
     chips: p.chips ?? 0,
     isFolded: !!p.isFolded,
     isAllIn: !!p.isAllIn,
     isCurrent: p.userId === currentPlayer?.userId,
   }));
+
+  // Version pour la PlayersChipsBar : nom + chips uniquement, trié par
+  // seatPosition pour un ordre stable. Pas d'état de jeu (déjà sur le tapis).
+  const playersForChipsBar = ((players ?? []) as any[])
+    .slice()
+    .sort((a: any, b: any) => a.seatPosition - b.seatPosition)
+    .map((p: any) => ({
+      userId: String(p.userId),
+      name: p.user?.name || 'Joueur',
+      chips: p.chips ?? 0,
+    }));
 
   // Auto-réactivation : si l'utilisateur courant est en sit-out à la table,
   // on appelle joinTable pour reset le flag (il vient de revenir).
@@ -331,7 +317,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const seats = useMemo(() => {
     if (!table || !players || !gameState) return [];
     return Array.from({ length: table.maxPlayers }, (_, position) => {
-      const player = players.find((p) => p.seatPosition === position && p.user);
+      const player = (players as any[]).find((p: any) => p.seatPosition === position && p.user);
       const isEmpty = !player;
       const seatGeom = computeSeatPosition(
         position,
@@ -373,7 +359,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const liveSidePots = useMemo(() => {
     if (!players || players.length === 0) return [] as { amount: number }[];
     const pots = calculateSidePots(
-      players.map((p) => ({
+      players.map((p: any) => ({
         userId: String(p.userId),
         contribution: p.handContribution ?? p.currentBet ?? 0,
         isFolded: p.isFolded,
@@ -475,7 +461,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Mobile portrait heads-up : layout vertical simplifié
   if (isMobile && table.maxPlayers === 2 && isPortrait) {
-    const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
+    const opponent = players.find((p: any) => p.userId !== currentPlayer?.userId);
     // En heads-up : dealer = small blind, l'autre = big blind
     const dealerPos = gameState.dealerPosition;
     const sbPos = smallBlindPos;
@@ -501,13 +487,14 @@ export const PokerTable: React.FC<PokerTableProps> = ({
       return { rank, suit: suitMap[suitChar] };
     };
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-poker-green-800 to-poker-green-900 text-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         {/* Header heads-up portrait — masqué par défaut, révélé via chevron flottant. */}
         {!showHeaderDrawer && (
           <button
             onClick={() => setShowHeaderDrawer(true)}
             aria-label="Afficher le header"
-            className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+            className="fixed left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
           >
             <ChevronDown size={18} />
           </button>
@@ -519,14 +506,29 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               onClick={() => setShowHeaderDrawer(false)}
               aria-hidden
             />
-            <header className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 py-2 flex justify-between items-center gap-1 transition-transform duration-200">
+            <header
+              className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 flex justify-between items-center gap-1 transition-transform duration-200"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)', paddingBottom: '0.5rem' }}
+            >
               <div className="text-sm min-w-0 flex-1">
                 <div className="font-bold truncate">{table.name}</div>
-                <div className="text-xs text-poker-green-200 truncate">
-                  {table.smallBlind}/{table.bigBlind}
-                  {" • "}
-                  {table.gameType === "tournament" ? "Tournoi" : "Cash"}
-                </div>
+                {table.gameType === "tournament" && table.modules?.tournament ? (
+                  <TournamentInfo
+                    compact
+                    blindStructure={table.modules.tournament.blindStructure}
+                    currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                    nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                    prizeStructure={table.modules.tournament.prizeStructure}
+                    status={table.modules.tournament.status ?? "registering"}
+                    totalPlayers={table.maxPlayers}
+                    remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                    buyIn={table.buyIn}
+                  />
+                ) : (
+                  <div className="text-xs text-poker-green-200 truncate">
+                    Cash · {table.smallBlind}/{table.bigBlind}
+                  </div>
+                )}
               </div>
               {table.inviteCode && authUser?._id === table.creatorId && (
                 <button
@@ -552,21 +554,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </>
         )}
 
-        {/* Tournament info bar */}
-        {table.gameType === "tournament" && table.modules?.tournament && (
-          <div className="px-3 pt-2">
-            <TournamentInfo
-              blindStructure={table.modules.tournament.blindStructure}
-              currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
-              nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
-              prizeStructure={table.modules.tournament.prizeStructure}
-              status={table.modules.tournament.status ?? "registering"}
-              totalPlayers={table.maxPlayers}
-              remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
-              buyIn={table.buyIn}
-            />
-          </div>
-        )}
+        {/* Tournament info — désormais intégré dans le header (compact). */}
+
+        {/* Bandeau récap chips de tous les joueurs */}
+        <PlayersChipsBar players={playersForChipsBar} />
 
         {/* Adversaire */}
         <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
@@ -750,7 +741,8 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         <button
           onClick={() => setShowHeaderDrawer(true)}
           aria-label="Afficher le header"
-          className="fixed top-1 left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          className="fixed left-1/2 -translate-x-1/2 z-30 bg-poker-green-700/80 hover:bg-poker-green-600 rounded-full px-3 py-0.5 text-white shadow"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
         >
           <ChevronDown size={18} />
         </button>
@@ -762,13 +754,29 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             onClick={() => setShowHeaderDrawer(false)}
             aria-hidden
           />
-          <div className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 py-2 gap-1 transition-transform duration-200">
+          <div
+            className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 gap-1 transition-transform duration-200"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)', paddingBottom: '0.5rem' }}
+          >
             <div className="text-white min-w-0 flex-1">
               <div className="text-sm font-bold truncate">{table.name}</div>
-              <div className="text-xs text-poker-green-200 truncate">
-                {table.gameType === "tournament" ? "Tournoi" : "Cash"} •
-                {" "}{table.smallBlind}/{table.bigBlind}
-              </div>
+              {table.gameType === "tournament" && table.modules?.tournament ? (
+                <TournamentInfo
+                  compact
+                  blindStructure={table.modules.tournament.blindStructure}
+                  currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                  nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                  prizeStructure={table.modules.tournament.prizeStructure}
+                  status={table.modules.tournament.status ?? "registering"}
+                  totalPlayers={table.maxPlayers}
+                  remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                  buyIn={table.buyIn}
+                />
+              ) : (
+                <div className="text-xs text-poker-green-200 truncate">
+                  Cash · {table.smallBlind}/{table.bigBlind}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {gameState.phase === "waiting" &&
@@ -815,10 +823,25 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               <span className="hidden lg:inline">{appTitle} - </span>
               {table.name}
             </h1>
-            <p className="text-xs lg:text-sm text-poker-green-200 truncate">
-              {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
-              Blinds: {table.smallBlind}/{table.bigBlind}
-            </p>
+            {table.gameType === "tournament" && table.modules?.tournament ? (
+              <div className="text-xs lg:text-sm">
+                <TournamentInfo
+                  compact
+                  blindStructure={table.modules.tournament.blindStructure}
+                  currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                  nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                  prizeStructure={table.modules.tournament.prizeStructure}
+                  status={table.modules.tournament.status ?? "registering"}
+                  totalPlayers={table.maxPlayers}
+                  remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                  buyIn={table.buyIn}
+                />
+              </div>
+            ) : (
+              <p className="text-xs lg:text-sm text-poker-green-200 truncate">
+                Cash Game · Blinds {table.smallBlind}/{table.bigBlind}
+              </p>
+            )}
           </div>
           <div className="flex gap-1 lg:gap-2 items-center flex-shrink-0">
             {/* Start game button in header - only for first game */}
@@ -865,21 +888,10 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         </div>
       )}
 
-      {/* Tournament info bar */}
-      {table.gameType === "tournament" && table.modules?.tournament && (
-        <div className="px-4 pt-2">
-          <TournamentInfo
-            blindStructure={table.modules.tournament.blindStructure}
-            currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
-            nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
-            prizeStructure={table.modules.tournament.prizeStructure}
-            status={table.modules.tournament.status ?? "registering"}
-            totalPlayers={table.maxPlayers}
-            remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
-            buyIn={table.buyIn}
-          />
-        </div>
-      )}
+      {/* Tournament info — désormais intégré dans le header (compact). */}
+
+      {/* Bandeau récap chips de tous les joueurs */}
+      <PlayersChipsBar players={playersForChipsBar} />
 
       {/* Main content - responsive layout */}
       <div className={cn(
@@ -951,25 +963,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                 />
               </div>
 
-              {/* Dealer button (pastille DEALER style PokerStars) */}
-              {gameState.dealerPosition >= 0 && (
-                <div
-                  className={responsiveClasses.dealerButton}
-                  style={{
-                    ...computeDealerButtonPosition(
-                      gameState.dealerPosition,
-                      table.maxPlayers,
-                      viewerRotation,
-                      isMobile,
-                      seatPositioning
-                    ),
-                    transform: `${computeDealerButtonPosition(gameState.dealerPosition, table.maxPlayers, viewerRotation, isMobile, seatPositioning).transform} scaleY(1.43)`
-                  }}
-                >
-                  DEALER
-                </div>
-              )}
-
+              {/* Pastille DEALER désormais affichée comme badge sur le seat
+                  (cf. PlayerSeat → BlindBadge type="dealer"), plus visible
+                  qu'un bouton flottant qui passait derrière les joueurs. */}
 
               {/* Player seats around the table.
                   En tournoi running, on n'affiche pas les sièges vides
@@ -980,7 +976,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   const tournamentRunning =
                     table.gameType === "tournament" &&
                     table.modules?.tournament?.status === "running";
-                  return !tournamentRunning;
+                  // En tournoi running on cache les sièges vides (joueurs
+                  // éliminés), SAUF s'ils portent le bouton dealer fantôme :
+                  // la pastille D doit rester visible sur le tapis.
+                  if (tournamentRunning) return seat.isDealer;
+                  return true;
                 })
                 .map((seat) => (
                 <div
@@ -1020,16 +1020,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       showdownWinners.has(String(seat.player.userId))
                     }
                     isEmpty={seat.isEmpty}
-                    onSeatClick={() => {
-                      if (!seat.isEmpty) return;
-                      // Tournoi running : on n'accepte plus de nouveaux joueurs
-                      // (pas de rebuy). Les sièges vides correspondent à des éliminés.
+                    onSeatClick={(() => {
                       const tournamentRunning =
                         table.gameType === "tournament" &&
                         table.modules?.tournament?.status === "running";
-                      if (tournamentRunning) return;
-                      onJoinSeat(seat.position);
-                    }}
+                      // Tournoi running : sièges vides = joueurs éliminés,
+                      // pas de rejoin possible → on n'attache pas de handler
+                      // (rend le seat visuellement désactivé).
+                      if (seat.isEmpty && tournamentRunning) return undefined;
+                      return () => {
+                        if (!seat.isEmpty) return;
+                        onJoinSeat(seat.position);
+                      };
+                    })()}
                     onTimeOut={seat.isActivePlayer && gameState.phase !== "waiting" ? handleTimeOut : undefined}
                     timeLimit={30}
                   />
@@ -1066,7 +1069,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             availableActions.length > 0 && (
               <div className={cn(
                 isLandscape
-                  ? "fixed bottom-0 left-0 right-0 z-30 px-2 pb-[env(safe-area-inset-bottom)] bg-black/50 backdrop-blur-sm border-t border-poker-green-700"
+                  ? "fixed bottom-0 left-0 right-0 z-30 px-1 pb-[env(safe-area-inset-bottom)] bg-black/60 backdrop-blur-sm border-t border-poker-green-700"
                   : cn("w-full", isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl")
               )}>
                 <BettingControls

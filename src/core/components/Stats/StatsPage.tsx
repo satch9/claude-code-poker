@@ -71,7 +71,7 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _
       period_ && period_.days !== null
         ? Date.now() - period_.days * 24 * 60 * 60 * 1000
         : null;
-    return handsHistory.filter((h) => {
+    return handsHistory.filter((h: any) => {
       if (cutoff !== null && h.endTs < cutoff) return false;
       if (mode !== "all" && h.gameType !== mode) return false;
       return true;
@@ -137,7 +137,7 @@ export const StatsPage: React.FC<StatsPageProps> = ({ onExportRequest, onBack: _
         )}
         {filteredHands.length > 0 && (
           <ul className="flex flex-col gap-2">
-            {filteredHands.map((h) => (
+            {filteredHands.map((h: any) => (
               <li
                 key={`${h.tableId}-${h.handNumber}`}
                 className="bg-bg-elevated border border-border-default rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"

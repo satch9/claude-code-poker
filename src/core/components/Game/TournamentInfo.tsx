@@ -9,6 +9,8 @@ interface TournamentInfoProps {
   totalPlayers: number;
   remainingPlayers: number;
   buyIn?: number;
+  /** Inline mode : une seule ligne compacte à intégrer dans le header. */
+  compact?: boolean;
 }
 
 function formatTime(ms: number): string {
@@ -27,6 +29,7 @@ export const TournamentInfo: React.FC<TournamentInfoProps> = ({
   totalPlayers,
   remainingPlayers,
   buyIn,
+  compact = false,
 }) => {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -35,6 +38,29 @@ export const TournamentInfo: React.FC<TournamentInfoProps> = ({
     return () => clearInterval(id);
   }, [status]);
 
+  const level = blindStructure[currentBlindLevel];
+  const remainingMs = nextBlindIncrease - Date.now();
+  const prizePool = buyIn ? totalPlayers * buyIn : 0;
+
+  if (compact) {
+    if (status === "registering") {
+      return (
+        <span className="text-xs text-poker-green-200 truncate">
+          Tournoi · en attente {remainingPlayers}/{totalPlayers}
+        </span>
+      );
+    }
+    return (
+      <span className="text-xs text-poker-green-200 truncate">
+        N{level?.level ?? "?"} · {level?.smallBlind ?? "?"}/{level?.bigBlind ?? "?"}
+        {status === "running" && ` · ${formatTime(remainingMs)}`}
+        {` · ${remainingPlayers}/${totalPlayers}`}
+        {prizePool > 0 && ` · ${prizePool}€`}
+        {status === "finished" && " · terminé"}
+      </span>
+    );
+  }
+
   if (status === "registering") {
     return (
       <div className="bg-poker-green-900 text-white px-3 py-2 text-sm rounded mb-2">
@@ -42,10 +68,6 @@ export const TournamentInfo: React.FC<TournamentInfoProps> = ({
       </div>
     );
   }
-
-  const level = blindStructure[currentBlindLevel];
-  const remainingMs = nextBlindIncrease - Date.now();
-  const prizePool = buyIn ? totalPlayers * buyIn : 0;
 
   return (
     <div className="bg-poker-green-900 text-white px-2 sm:px-3 py-2 rounded mb-2 flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-1 text-xs sm:text-sm">

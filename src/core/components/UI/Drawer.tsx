@@ -52,7 +52,14 @@ export const Drawer: React.FC<DrawerProps> = ({
         aria-modal="true"
         aria-label={title}
       >
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border-default">
+        {/* Header : padding-top élargi pour passer sous le notch (PWA iOS)
+            et garder le titre lisible. Le X reste là pour les utilisateurs
+            qui peuvent l'atteindre, mais un bouton "Fermer" duplicate est
+            ajouté en bas pour la portée du pouce en portrait. */}
+        <header
+          className="flex items-center justify-between px-4 pb-3 border-b border-border-default"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+        >
           <h2 className="text-base font-semibold">{title}</h2>
           <button
             onClick={onClose}
@@ -63,6 +70,21 @@ export const Drawer: React.FC<DrawerProps> = ({
           </button>
         </header>
         <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        {/* Bouton Fermer en bas : atteignable au pouce en portrait, et
+            respecte le safe-area-inset-bottom pour ne pas passer sous le
+            home indicator. */}
+        <footer
+          className="border-t border-border-default px-4 pt-2 bg-bg-surface"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)' }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full min-h-tap rounded-lg bg-bg-elevated hover:bg-bg-base text-text-primary font-medium border border-border-default"
+          >
+            Fermer
+          </button>
+        </footer>
       </aside>
     </>
   );

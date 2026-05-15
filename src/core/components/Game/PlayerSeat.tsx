@@ -7,7 +7,6 @@ import { PlayerSeatEmpty } from "./PlayerSeatEmpty";
 import { BlindBadge } from "./BlindBadge";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { useResponsiveClasses } from "../../hooks/useResponsiveClasses";
-import { PlayerAvatar } from "./PlayerAvatar";
 
 interface PlayerSeatProps {
   player?: Player;
@@ -37,7 +36,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   player,
   position: _position,
   seatAngle,
-  isDealer: _isDealer = false,
+  isDealer = false,
   isCurrentPlayer = false,
   isActivePlayer = false,
   isSmallBlind = false,
@@ -84,7 +83,14 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   }, [player?.currentBet]);
 
   if (isEmpty) {
-    return <PlayerSeatEmpty onClick={onSeatClick ?? (() => {})} className={className} />;
+    return (
+      <PlayerSeatEmpty
+        onClick={onSeatClick ?? (() => {})}
+        className={className}
+        isDealer={isDealer}
+        disabled={!onSeatClick}
+      />
+    );
   }
 
   if (!player) return null;
@@ -153,42 +159,30 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
           className
         )}
       >
-        {/* Blind indicators */}
+        {/* Blind / Dealer indicators */}
         {isSmallBlind && <BlindBadge type="small" />}
         {isBigBlind && <BlindBadge type="big" />}
+        {isDealer && <BlindBadge type="dealer" />}
 
         {/* Player avatar and info */}
         <div
           className={cn(
             "flex items-center h-full",
-            isMobile ? "gap-1.5" : "gap-2"
+            isMobile ? "gap-1.5 px-1" : "gap-2 px-2"
           )}
         >
-          <PlayerAvatar
-            name={player.user?.name || 'Player'}
-            isActive={isActivePlayer}
-            isFolded={player.isFolded}
-          />
+          {/* Avatar masqué : avec des prénoms commençant par la même lettre,
+              l'initiale ne permet pas de distinguer les joueurs. On affiche
+              le nom complet à la place. */}
           <div className="flex-1 min-w-0">
             <div
               className={cn(
                 "font-medium text-white truncate",
-                isMobile ? "text-xs leading-tight" : "text-sm"
+                isMobile ? "text-xs leading-tight" : "text-sm",
+                isActivePlayer && !player.isFolded && "text-yellow-200"
               )}
             >
               {player.user?.name || "Player"}
-            </div>
-            <div
-              className={cn(
-                "text-green-400 font-bold truncate",
-                isMobile ? "text-xs leading-tight" : "text-xs"
-              )}
-            >
-              {isMobile
-                ? player.chips >= 1000
-                  ? `${Math.floor(player.chips / 1000)}K`
-                  : player.chips.toString()
-                : player.chips.toLocaleString()}
             </div>
             {!isMobile && player.lastAction && (
               <div className="text-xs text-gray-300 font-medium truncate">
@@ -261,9 +255,7 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
                 isMobile ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
               )}
             >
-              {isMobile && player.currentBet >= 1000
-                ? `${Math.floor(player.currentBet / 1000)}K`
-                : player.currentBet.toLocaleString()}
+              {formatChips(player.currentBet, isMobile)}
             </div>
           </div>
         )}
@@ -361,6 +353,20 @@ export const PlayerSeat = React.memo(PlayerSeatComponent, (prev, next) => {
   return true; // skip re-render
 });
 
+// Affiche le montant exact (1460), avec séparateur fin (espace insécable
+// fine) sur mobile pour économiser la largeur. Ne raccourcit en "k" que
+// si vraiment énorme (>= 100 000) pour rester lisible.
+function formatChips(n: number, isMobile: boolean): string {
+  if (isMobile && n >= 100_000) {
+    const k = n / 1000;
+    return k >= 100 ? `${Math.round(k)}k` : `${k.toFixed(1)}k`;
+  }
+  if (isMobile) {
+    return n.toLocaleString("fr-FR").replace(/ | /g, " ");
+  }
+  return n.toLocaleString();
+}
+
 // Utility functions
 function parseCard(cardStr: string) {
   if (!cardStr || cardStr.length < 2) return undefined;
@@ -416,47 +422,15 @@ function getActionLabel(action: string) {
   }
 }
 
-function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = false, showCards: boolean = false) {
-  // Décale les cartes légèrement vers le centre de la table selon l'angle du siège
-  // Les seats sont centrés via translate(-50%, -50%), on ajoute un offset relatif
-  const baseDist = isCurrentPlayer ? 24 : 16; // joueur courant un peu plus visible - pourrait utiliser responsiveClasses.cardOffsets
-  const dx = Math.cos(angleRad) * (-baseDist); // vers le centre = opposé au rayon
-  const dy = Math.sin(angleRad) * (-baseDist);
-
-  // Ajustement additionnel pour les cartes du joueur courant selon la position
-  const extraOffsetX = 0;
-  let extraOffsetY = 0;
-
-  if (showCards) {
-    // Ajustement léger selon l'angle pour harmoniser le dépassement
-    const adjustmentDistance = 25;
-
-    // Angle approximatif pour différencier les positions
-    const normalizedAngle = ((angleRad % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
-
-    if (normalizedAngle < Math.PI / 4 || normalizedAngle > 7 * Math.PI / 4) {
-      // Est (droite) - angle ~ 0
-      extraOffsetY = -adjustmentDistance;
-    } else if (normalizedAngle < 3 * Math.PI / 4) {
-      // Sud (bas) - angle ~ π/2
-      extraOffsetY = -adjustmentDistance * -0.3;
-    } else if (normalizedAngle < 5 * Math.PI / 4) {
-      // Ouest (gauche) - angle ~ π
-      extraOffsetY = -adjustmentDistance;
-    } else {
-      // Nord (haut) - angle ~ 3π/2
-      extraOffsetY = -adjustmentDistance * 1.9; // Un peu plus pour le nord
-    }
-  }
-
-  // Position de base avec ajustements
-  const finalDx = dx + extraOffsetX;
-  const finalDy = dy + extraOffsetY;
-  const baseTransform = `translate(-50%, -50%) translate(${finalDx}px, ${finalDy}px)`;
-
+function getCardsStyleFromAngle(angleRad: number, isCurrentPlayer: boolean = false, _showCards: boolean = false) {
+  // Cartes positionnées en haut du seat (top:10%) pour tous les joueurs.
+  // On garde un léger offset horizontal vers le centre de la table selon
+  // l'angle pour que les cartes restent ancrées du bon côté.
+  const baseDist = isCurrentPlayer ? 24 : 16;
+  const dx = Math.cos(angleRad) * (-baseDist);
   return {
     left: '50%',
-    top: '50%',
-    transform: baseTransform,
+    top: '10%',
+    transform: `translate(-50%, -50%) translate(${dx}px, 0)`,
   } as React.CSSProperties;
 }

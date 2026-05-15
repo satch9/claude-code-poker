@@ -164,38 +164,63 @@ export function isBettingRoundComplete(
   return allActed;
 }
 
-// Get blind positions based on number of players
+// "Dead button" rule : trouve le prochain siège actif strictement après
+// `from` en parcourant clockwise (positions triées). Permet au bouton
+// dealer de rester sur un siège éliminé tout en assignant SB/BB aux
+// joueurs actifs suivants.
+function nextActiveAfter(from: number, playerPositions: number[]): number {
+  const after = playerPositions.filter((p) => p > from);
+  if (after.length > 0) return after[0];
+  // wrap around
+  return playerPositions[0];
+}
+
+// Get blind positions based on number of players.
+// Supporte le cas "dead button" : si dealerPosition ne correspond à aucun
+// joueur actif (joueur éliminé), on calcule SB en cherchant le premier
+// actif clockwise à partir de la position du bouton.
 export function getBlindPositions(
   dealerPosition: number,
   playerPositions: number[]
 ): { smallBlind: number; bigBlind: number } {
   const numPlayers = playerPositions.length;
-  
+
   if (numPlayers < 2) {
     throw new Error("Need at least 2 players");
   }
-  
+
+  const dealerIndex = playerPositions.indexOf(dealerPosition);
+  const dealerIsActive = dealerIndex >= 0;
+
   if (numPlayers === 2) {
-    // Heads-up: dealer is small blind
-    const bigBlindPosition = playerPositions.find(pos => pos !== dealerPosition);
-    if (bigBlindPosition === undefined) {
-      throw new Error("Cannot find big blind position in heads-up");
+    // Heads-up: dealer = small blind (s'il est actif), sinon le premier
+    // actif clockwise après le bouton est SB.
+    if (dealerIsActive) {
+      const bigBlindPosition = playerPositions.find((pos) => pos !== dealerPosition);
+      if (bigBlindPosition === undefined) {
+        throw new Error("Cannot find big blind position in heads-up");
+      }
+      return { smallBlind: dealerPosition, bigBlind: bigBlindPosition };
     }
-    return {
-      smallBlind: dealerPosition,
-      bigBlind: bigBlindPosition
-    };
-  } else {
-    // Multi-way: small blind is next to dealer
-    const dealerIndex = playerPositions.indexOf(dealerPosition);
+    const sb = nextActiveAfter(dealerPosition, playerPositions);
+    const bb = playerPositions.find((p) => p !== sb)!;
+    return { smallBlind: sb, bigBlind: bb };
+  }
+
+  // Multi-way
+  if (dealerIsActive) {
     const sbIndex = (dealerIndex + 1) % numPlayers;
     const bbIndex = (dealerIndex + 2) % numPlayers;
-    
     return {
       smallBlind: playerPositions[sbIndex],
-      bigBlind: playerPositions[bbIndex]
+      bigBlind: playerPositions[bbIndex],
     };
   }
+  // Dead button : SB = premier actif clockwise après la position du bouton.
+  const sb = nextActiveAfter(dealerPosition, playerPositions);
+  const sbIdx = playerPositions.indexOf(sb);
+  const bb = playerPositions[(sbIdx + 1) % numPlayers];
+  return { smallBlind: sb, bigBlind: bb };
 }
 
 // Get first player to act after blinds
@@ -205,25 +230,30 @@ export function getFirstPlayerToAct(
   phase: 'preflop' | 'postflop'
 ): number {
   const numPlayers = playerPositions.length;
-  
+
   if (numPlayers < 2) return -1;
-  
+
+  const dealerIndex = playerPositions.indexOf(dealerPosition);
+  const dealerIsActive = dealerIndex >= 0;
+  // Index "virtuel" du dealer dans la liste active : si dead button, on
+  // utilise l'index du premier actif AVANT le dealer (pour que +1, +2, +3
+  // pointent correctement vers SB/BB/UTG).
+  const effectiveDealerIndex = dealerIsActive
+    ? dealerIndex
+    : (playerPositions.indexOf(nextActiveAfter(dealerPosition, playerPositions)) - 1 + numPlayers) % numPlayers;
+
   if (phase === 'preflop') {
     if (numPlayers === 2) {
-      // Heads-up preflop: small blind (dealer) acts first
-      return dealerPosition;
-    } else {
-      // Multi-way preflop: player after big blind acts first
-      const dealerIndex = playerPositions.indexOf(dealerPosition);
-      const firstActorIndex = (dealerIndex + 3) % numPlayers;
-      return playerPositions[firstActorIndex];
+      // Heads-up preflop: SB acts first
+      const { smallBlind } = getBlindPositions(dealerPosition, playerPositions);
+      return smallBlind;
     }
-  } else {
-    // Post-flop: first active player after dealer acts first
-    const dealerIndex = playerPositions.indexOf(dealerPosition);
-    const firstActorIndex = (dealerIndex + 1) % numPlayers;
+    const firstActorIndex = (effectiveDealerIndex + 3) % numPlayers;
     return playerPositions[firstActorIndex];
   }
+  // Post-flop: first active player after dealer
+  const firstActorIndex = (effectiveDealerIndex + 1) % numPlayers;
+  return playerPositions[firstActorIndex];
 }
 
 // Advance to next hand

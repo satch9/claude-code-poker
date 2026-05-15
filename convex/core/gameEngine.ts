@@ -21,7 +21,6 @@ import {
   resetPlayersForNewRound,
   shouldEndHand,
   getNextPhase,
-  getNextDealerPosition,
   calculateSidePots
 } from "../utils/turnManager";
 import {
@@ -562,13 +561,18 @@ export const playerAction = mutation({
       // s'arrête au premier qui doit encore agir : non-folded, non-all-in, et
       // soit pas encore acté ce round, soit currentBet < mise courante.
       // Ça évite de redonner la main à un joueur qui a déjà matché la raise.
+      // Filtre défensif `chips > 0` : si un joueur a perdu tous ses jetons
+      // mid-hand (all-in busté) sans encore avoir reçu eliminatedAt (qui n'est
+      // posé qu'entre les mains par prepareNextHand), il ne doit pas figurer
+      // dans la rotation pour ne pas bloquer le tour des survivants.
       const seatOrder = allPlayers
-        .filter((p) => !p.isFolded && !p.eliminatedAt)
+        .filter((p) => !p.isFolded && !p.eliminatedAt && p.chips > 0)
         .map((p) => p.seatPosition)
         .sort((a, b) => a - b);
 
       const needsToAct = (p: typeof allPlayers[number]): boolean => {
         if (p.isFolded || p.isAllIn || p.eliminatedAt) return false;
+        if (p.chips === 0) return false; // sécurité : busté mais pas encore marqué
         if (!p.hasActed) return true;
         return p.currentBet < updatedGameState.currentBet;
       };
@@ -618,6 +622,63 @@ export const playerAction = mutation({
     }
 
     return { success: true };
+  },
+});
+
+// Trigger auto-advance server-side (scheduled via ctx.scheduler après une
+// transition all-in). Mirror logique de advancePhase mais sans auth check
+// (interne uniquement) et idempotent : si autoAdvanceAt a déjà été cleared
+// ou si la phase a changé, on no-op.
+export const triggerAutoAdvance = internalMutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const gameState = await ctx.db
+      .query("gameStates")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .unique();
+    if (!gameState) return { success: false, reason: "no game state" };
+    if (!gameState.autoAdvanceAt) {
+      return { success: false, reason: "no autoAdvanceAt (already advanced)" };
+    }
+
+    console.log(`▶ triggerAutoAdvance fired for ${args.tableId} (phase=${gameState.phase})`);
+
+    await ctx.db.patch(gameState._id, { autoAdvanceAt: undefined });
+
+    if (gameState.phase === "showdown") {
+      await determineWinner(ctx, args.tableId);
+      return { success: true, action: "showdown→determineWinner" };
+    }
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+
+    const playerStates: PlayerState[] = players.map((p) => ({
+      chips: p.chips,
+      currentBet: p.currentBet,
+      hasActed: p.hasActed,
+      isFolded: p.isFolded,
+      isAllIn: p.isAllIn,
+      lastAction: p.lastAction,
+      seatPosition: p.seatPosition,
+      eliminatedAt: p.eliminatedAt,
+    }));
+
+    const conditions = evaluateGameConditions(
+      playerStates,
+      gameState.currentBet,
+      gameState.lastRaiserPosition,
+    );
+    const nextPhaseInfo = getNextPhaseFromStateMachine(gameState.phase as any, conditions);
+
+    if (nextPhaseInfo) {
+      await advanceToNextPhaseWithStateMachine(ctx, args.tableId, nextPhaseInfo);
+    } else {
+      await advanceToNextPhase(ctx, args.tableId);
+    }
+    return { success: true, action: `advanced from ${gameState.phase}` };
   },
 });
 
@@ -859,10 +920,15 @@ async function advanceToNextPhase(ctx: any, tableId: string) {
       isSystem: true,
     });
 
-    // If next phase is showdown, trigger winner determination after delay
-    if (nextPhase === "showdown") {
-      console.log("🎮 Server: Setting up showdown with auto-advance");
-    }
+    // Filet de sécurité côté serveur : on ne dépend plus du client pour
+    // appeler advancePhase. Si le client est déconnecté ou lent, le
+    // scheduler Convex fait avancer la phase quoi qu'il arrive.
+    await ctx.scheduler.runAfter(
+      autoAdvanceDelay,
+      (internal as any)["core/gameEngine"].triggerAutoAdvance,
+      { tableId },
+    );
+
     return;
   }
 
@@ -1230,9 +1296,15 @@ async function prepareNextHand(ctx: any, tableId: string) {
           eliminatedAt: now,
           tournamentRank: rankCounter,
         });
+        // BUG fixé : `player.name` n'existe pas (le nom est sur la table
+        // users). Sans le fetch ci-dessous, l'insert dans gameActions
+        // explosait sur le schema (playerName: v.string() requis), le
+        // try/catch silencieux de scheduleStartNextHand absorbait l'erreur
+        // et la chaîne de mains s'arrêtait → table figée en phase=waiting.
+        const user = await ctx.db.get(player.userId);
         await addActionToFeed(ctx, tableId, {
           playerId: player._id,
-          playerName: player.name,
+          playerName: user?.name || "Joueur",
           action: "eliminated",
           amount: rankCounter,
           isSystem: true,
@@ -1284,14 +1356,19 @@ async function prepareNextHand(ctx: any, tableId: string) {
     .unique();
 
   if (gameState) {
-    // Move dealer position to next player
+    // "Dead button" : le bouton avance d'un siège quoi qu'il arrive (même
+    // sur un siège vide / joueur éliminé). Les SB/BB sont calculés au
+    // démarrage de la main suivante via getBlindPositions qui sait gérer
+    // un dealer hors des actifs (cherche le premier actif clockwise).
+    // Sans ça, deux mains consécutives pouvaient sauter le même joueur
+    // de la SB après une élimination.
+    const maxPlayers = table?.maxPlayers ?? 0;
+    const nextDealerPosition = maxPlayers > 0
+      ? (gameState.dealerPosition + 1) % maxPlayers
+      : gameState.dealerPosition;
     const playersWithChips = players.filter((p: any) => p.chips > 0);
-    const nextDealerPosition = getNextDealerPosition(
-      gameState.dealerPosition,
-      playersWithChips.map((p: any) => p.seatPosition).sort((a: number, b: number) => a - b)
-    );
 
-    console.log(`🔄 Dealer rotation: ${gameState.dealerPosition} → ${nextDealerPosition}`);
+    console.log(`🔄 Dealer rotation (dead button): ${gameState.dealerPosition} → ${nextDealerPosition}`);
     console.log(`👥 Players with chips: [${playersWithChips.map((p: any) => p.seatPosition).join(', ')}]`);
 
     await ctx.db.patch(gameState._id, {
@@ -1706,6 +1783,28 @@ async function startNextHandInternal(ctx: any, tableId: string) {
   if (table.gameType === "tournament" && table.modules?.tournament) {
     const tournament = table.modules.tournament;
     const now = Date.now();
+    // Sécurité : si nextBlindIncrease n'a jamais été initialisé (0 ou
+    // undefined) alors que le tournoi tourne, on l'amorce ici sur la durée
+    // du niveau courant pour que le check ci-dessous puisse fonctionner aux
+    // mains suivantes.
+    if (
+      tournament.status === "running" &&
+      (!tournament.nextBlindIncrease || tournament.nextBlindIncrease === 0)
+    ) {
+      const lvl = tournament.blindStructure[tournament.currentBlindLevel ?? 0];
+      if (lvl) {
+        await ctx.db.patch(tableId, {
+          modules: {
+            ...table.modules,
+            tournament: {
+              ...tournament,
+              nextBlindIncrease: now + lvl.duration,
+            },
+          },
+        });
+        tournament.nextBlindIncrease = now + lvl.duration;
+      }
+    }
     if (
       tournament.status === "running" &&
       tournament.nextBlindIncrease > 0 &&
@@ -1764,12 +1863,17 @@ export const scheduleStartNextHand = internalMutation({
   args: { tableId: v.id("tables") },
   handler: async (ctx, args) => {
     try {
+      console.log(`▶ scheduleStartNextHand fired for ${args.tableId}`);
       // Reset gameState phase to waiting first so startNextHandInternal accepts to start
       const gameState = await ctx.db
         .query("gameStates")
         .withIndex("by_table", (q: any) => q.eq("tableId", args.tableId))
         .unique();
-      if (gameState && gameState.phase === "showdown") {
+      // Reset depuis n'importe quelle phase non-waiting (showdown OU rare
+      // cas où la phase aurait avancé). Sans ça, si la phase a glissé,
+      // startNextHandInternal refuse de démarrer la main et le tournoi
+      // se retrouve gelé.
+      if (gameState && gameState.phase !== "waiting") {
         await ctx.db.patch(gameState._id, {
           phase: "waiting",
           autoAdvanceAt: undefined,
@@ -1778,8 +1882,14 @@ export const scheduleStartNextHand = internalMutation({
       }
       await prepareNextHand(ctx, args.tableId);
       await startNextHandInternal(ctx, args.tableId);
+      console.log(`✓ scheduleStartNextHand completed for ${args.tableId}`);
     } catch (e) {
+      // On loggue mais on RE-THROW : laisser le try/catch silencieux a fait
+      // pourrir une erreur de schema (player.name undefined sur l'addAction
+      // "eliminated") qui figeait la table sans la moindre trace utile dans
+      // les logs failure. Mieux vaut crash visible que blocage silencieux.
       console.error("scheduleStartNextHand error", e);
+      throw e;
     }
   },
 });
@@ -1852,11 +1962,18 @@ async function advanceToNextPhaseWithStateMachine(
       autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
       updatedAt: Date.now(),
     });
-    // Si pas d'all-in (autoAdvance=false), déclencher determineWinner.
-    // determineWinner enchaîne sur endHand qui schedule la main suivante via runAfter(3000).
-    // Le path all-in garde son scheduler client-side via autoAdvanceAt.
     if (!nextPhaseInfo.autoAdvance) {
+      // Pas d'all-in : déclencher determineWinner directement.
+      // determineWinner enchaîne sur endHand qui schedule la main suivante.
       await determineWinner(ctx, tableId);
+    } else {
+      // Path all-in : filet de sécurité serveur pour ne pas dépendre du
+      // client (cf. triggerAutoAdvance + commentaire dans advanceToNextPhase).
+      await ctx.scheduler.runAfter(
+        nextPhaseInfo.delay,
+        (internal as any)["core/gameEngine"].triggerAutoAdvance,
+        { tableId },
+      );
     }
     return;
   }
@@ -1936,6 +2053,16 @@ async function advanceToNextPhaseWithStateMachine(
     autoAdvanceAt: nextPhaseInfo.autoAdvance ? Date.now() + nextPhaseInfo.delay : undefined,
     updatedAt: Date.now(),
   });
+
+  // Filet de sécurité serveur quand autoAdvance=true (path all-in pour
+  // flop/turn/river). Ne dépend plus du client pour faire avancer.
+  if (nextPhaseInfo.autoAdvance) {
+    await ctx.scheduler.runAfter(
+      nextPhaseInfo.delay,
+      (internal as any)["core/gameEngine"].triggerAutoAdvance,
+      { tableId },
+    );
+  }
 
   // Debug log to verify autoAdvanceAt is set
   console.log(`🎮 Game state updated: phase=${nextPhaseInfo.nextPhase}, autoAdvanceAt=${nextPhaseInfo.autoAdvance ? 'SET' : 'NOT SET'}, delay=${nextPhaseInfo.delay}`);
