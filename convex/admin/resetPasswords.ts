@@ -8,12 +8,12 @@ import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Scrypt } from "lucia";
 
-export const resetPassword = action({
+export const resetPassword: any = action({
   args: {
     email: v.string(),
     newPassword: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ ok: boolean; reason?: string; accountId?: string }> => {
     const hash = await new Scrypt().hash(args.newPassword);
     return await ctx.runMutation(
       internal.admin.resetPasswordsMutation.patchSecret,

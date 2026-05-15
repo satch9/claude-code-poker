@@ -129,7 +129,7 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
           </div>
 
           <ul className="flex flex-col gap-2">
-            {userRanking.topPlayers.map((player, index) => (
+            {userRanking.topPlayers.map((player: any, index: number) => (
               <li
                 key={index}
                 className={cn(
@@ -286,7 +286,7 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
             <div>
               <h4 className="text-sm font-medium text-text-primary mb-2">Activité récente</h4>
               <ul className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
-                {userStats.recentActivity.map((activity, index) => (
+                {userStats.recentActivity.map((activity: any, index: number) => (
                   <li
                     key={index}
                     className="flex justify-between items-center p-2 bg-bg-elevated border border-border-default rounded-lg text-sm"

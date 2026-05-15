@@ -267,9 +267,9 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const isLoading = !tableId || !gameState || !players || !table;
 
   // Résumé des joueurs pour le panneau latéral desktop
-  const playersForPanel = (players ?? []).map((p) => ({
+  const playersForPanel = ((players ?? []) as any[]).map((p: any) => ({
     userId: String(p.userId),
-    name: (p as any).user?.name || 'Joueur',
+    name: p.user?.name || 'Joueur',
     chips: p.chips ?? 0,
     isFolded: !!p.isFolded,
     isAllIn: !!p.isAllIn,
@@ -278,12 +278,12 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Version pour la PlayersChipsBar : nom + chips uniquement, trié par
   // seatPosition pour un ordre stable. Pas d'état de jeu (déjà sur le tapis).
-  const playersForChipsBar = (players ?? [])
+  const playersForChipsBar = ((players ?? []) as any[])
     .slice()
-    .sort((a, b) => a.seatPosition - b.seatPosition)
-    .map((p) => ({
+    .sort((a: any, b: any) => a.seatPosition - b.seatPosition)
+    .map((p: any) => ({
       userId: String(p.userId),
-      name: (p as any).user?.name || 'Joueur',
+      name: p.user?.name || 'Joueur',
       chips: p.chips ?? 0,
     }));
 
@@ -317,7 +317,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const seats = useMemo(() => {
     if (!table || !players || !gameState) return [];
     return Array.from({ length: table.maxPlayers }, (_, position) => {
-      const player = players.find((p) => p.seatPosition === position && p.user);
+      const player = (players as any[]).find((p: any) => p.seatPosition === position && p.user);
       const isEmpty = !player;
       const seatGeom = computeSeatPosition(
         position,
@@ -359,7 +359,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
   const liveSidePots = useMemo(() => {
     if (!players || players.length === 0) return [] as { amount: number }[];
     const pots = calculateSidePots(
-      players.map((p) => ({
+      players.map((p: any) => ({
         userId: String(p.userId),
         contribution: p.handContribution ?? p.currentBet ?? 0,
         isFolded: p.isFolded,
@@ -461,7 +461,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
 
   // Mobile portrait heads-up : layout vertical simplifié
   if (isMobile && table.maxPlayers === 2 && isPortrait) {
-    const opponent = players.find((p) => p.userId !== currentPlayer?.userId);
+    const opponent = players.find((p: any) => p.userId !== currentPlayer?.userId);
     // En heads-up : dealer = small blind, l'autre = big blind
     const dealerPos = gameState.dealerPosition;
     const sbPos = smallBlindPos;
