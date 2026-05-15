@@ -950,7 +950,11 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                   const tournamentRunning =
                     table.gameType === "tournament" &&
                     table.modules?.tournament?.status === "running";
-                  return !tournamentRunning;
+                  // En tournoi running on cache les sièges vides (joueurs
+                  // éliminés), SAUF s'ils portent le bouton dealer fantôme :
+                  // la pastille D doit rester visible sur le tapis.
+                  if (tournamentRunning) return seat.isDealer;
+                  return true;
                 })
                 .map((seat) => (
                 <div
@@ -990,16 +994,19 @@ export const PokerTable: React.FC<PokerTableProps> = ({
                       showdownWinners.has(String(seat.player.userId))
                     }
                     isEmpty={seat.isEmpty}
-                    onSeatClick={() => {
-                      if (!seat.isEmpty) return;
-                      // Tournoi running : on n'accepte plus de nouveaux joueurs
-                      // (pas de rebuy). Les sièges vides correspondent à des éliminés.
+                    onSeatClick={(() => {
                       const tournamentRunning =
                         table.gameType === "tournament" &&
                         table.modules?.tournament?.status === "running";
-                      if (tournamentRunning) return;
-                      onJoinSeat(seat.position);
-                    }}
+                      // Tournoi running : sièges vides = joueurs éliminés,
+                      // pas de rejoin possible → on n'attache pas de handler
+                      // (rend le seat visuellement désactivé).
+                      if (seat.isEmpty && tournamentRunning) return undefined;
+                      return () => {
+                        if (!seat.isEmpty) return;
+                        onJoinSeat(seat.position);
+                      };
+                    })()}
                     onTimeOut={seat.isActivePlayer && gameState.phase !== "waiting" ? handleTimeOut : undefined}
                     timeLimit={30}
                   />

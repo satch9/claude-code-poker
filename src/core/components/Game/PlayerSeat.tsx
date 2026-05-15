@@ -84,7 +84,14 @@ const PlayerSeatComponent: React.FC<PlayerSeatProps> = ({
   }, [player?.currentBet]);
 
   if (isEmpty) {
-    return <PlayerSeatEmpty onClick={onSeatClick ?? (() => {})} className={className} />;
+    return (
+      <PlayerSeatEmpty
+        onClick={onSeatClick ?? (() => {})}
+        className={className}
+        isDealer={isDealer}
+        disabled={!onSeatClick}
+      />
+    );
   }
 
   if (!player) return null;
