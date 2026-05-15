@@ -522,11 +522,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             <header className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg px-2 py-2 flex justify-between items-center gap-1 transition-transform duration-200">
               <div className="text-sm min-w-0 flex-1">
                 <div className="font-bold truncate">{table.name}</div>
-                <div className="text-xs text-poker-green-200 truncate">
-                  {table.smallBlind}/{table.bigBlind}
-                  {" • "}
-                  {table.gameType === "tournament" ? "Tournoi" : "Cash"}
-                </div>
+                {table.gameType === "tournament" && table.modules?.tournament ? (
+                  <TournamentInfo
+                    compact
+                    blindStructure={table.modules.tournament.blindStructure}
+                    currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                    nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                    prizeStructure={table.modules.tournament.prizeStructure}
+                    status={table.modules.tournament.status ?? "registering"}
+                    totalPlayers={table.maxPlayers}
+                    remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                    buyIn={table.buyIn}
+                  />
+                ) : (
+                  <div className="text-xs text-poker-green-200 truncate">
+                    Cash · {table.smallBlind}/{table.bigBlind}
+                  </div>
+                )}
               </div>
               {table.inviteCode && authUser?._id === table.creatorId && (
                 <button
@@ -552,21 +564,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           </>
         )}
 
-        {/* Tournament info bar */}
-        {table.gameType === "tournament" && table.modules?.tournament && (
-          <div className="px-3 pt-2">
-            <TournamentInfo
-              blindStructure={table.modules.tournament.blindStructure}
-              currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
-              nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
-              prizeStructure={table.modules.tournament.prizeStructure}
-              status={table.modules.tournament.status ?? "registering"}
-              totalPlayers={table.maxPlayers}
-              remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
-              buyIn={table.buyIn}
-            />
-          </div>
-        )}
+        {/* Tournament info — désormais intégré dans le header (compact). */}
 
         {/* Adversaire */}
         <section className="flex-1 flex flex-col items-center justify-start py-4 gap-2 min-h-0">
@@ -765,10 +763,23 @@ export const PokerTable: React.FC<PokerTableProps> = ({
           <div className="fixed top-0 left-0 right-0 z-50 bg-poker-green-800 border-b border-poker-green-700 shadow-lg flex justify-between items-center px-2 py-2 gap-1 transition-transform duration-200">
             <div className="text-white min-w-0 flex-1">
               <div className="text-sm font-bold truncate">{table.name}</div>
-              <div className="text-xs text-poker-green-200 truncate">
-                {table.gameType === "tournament" ? "Tournoi" : "Cash"} •
-                {" "}{table.smallBlind}/{table.bigBlind}
-              </div>
+              {table.gameType === "tournament" && table.modules?.tournament ? (
+                <TournamentInfo
+                  compact
+                  blindStructure={table.modules.tournament.blindStructure}
+                  currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                  nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                  prizeStructure={table.modules.tournament.prizeStructure}
+                  status={table.modules.tournament.status ?? "registering"}
+                  totalPlayers={table.maxPlayers}
+                  remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                  buyIn={table.buyIn}
+                />
+              ) : (
+                <div className="text-xs text-poker-green-200 truncate">
+                  Cash · {table.smallBlind}/{table.bigBlind}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {gameState.phase === "waiting" &&
@@ -815,10 +826,25 @@ export const PokerTable: React.FC<PokerTableProps> = ({
               <span className="hidden lg:inline">{appTitle} - </span>
               {table.name}
             </h1>
-            <p className="text-xs lg:text-sm text-poker-green-200 truncate">
-              {table.gameType === "tournament" ? "Tournoi" : "Cash Game"} •
-              Blinds: {table.smallBlind}/{table.bigBlind}
-            </p>
+            {table.gameType === "tournament" && table.modules?.tournament ? (
+              <div className="text-xs lg:text-sm">
+                <TournamentInfo
+                  compact
+                  blindStructure={table.modules.tournament.blindStructure}
+                  currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
+                  nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
+                  prizeStructure={table.modules.tournament.prizeStructure}
+                  status={table.modules.tournament.status ?? "registering"}
+                  totalPlayers={table.maxPlayers}
+                  remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
+                  buyIn={table.buyIn}
+                />
+              </div>
+            ) : (
+              <p className="text-xs lg:text-sm text-poker-green-200 truncate">
+                Cash Game · Blinds {table.smallBlind}/{table.bigBlind}
+              </p>
+            )}
           </div>
           <div className="flex gap-1 lg:gap-2 items-center flex-shrink-0">
             {/* Start game button in header - only for first game */}
@@ -865,21 +891,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
         </div>
       )}
 
-      {/* Tournament info bar */}
-      {table.gameType === "tournament" && table.modules?.tournament && (
-        <div className="px-4 pt-2">
-          <TournamentInfo
-            blindStructure={table.modules.tournament.blindStructure}
-            currentBlindLevel={table.modules.tournament.currentBlindLevel ?? 0}
-            nextBlindIncrease={table.modules.tournament.nextBlindIncrease}
-            prizeStructure={table.modules.tournament.prizeStructure}
-            status={table.modules.tournament.status ?? "registering"}
-            totalPlayers={table.maxPlayers}
-            remainingPlayers={(players ?? []).filter((p: any) => p.chips > 0 && !p.eliminatedAt).length}
-            buyIn={table.buyIn}
-          />
-        </div>
-      )}
+      {/* Tournament info — désormais intégré dans le header (compact). */}
 
       {/* Main content - responsive layout */}
       <div className={cn(
@@ -1066,7 +1078,7 @@ export const PokerTable: React.FC<PokerTableProps> = ({
             availableActions.length > 0 && (
               <div className={cn(
                 isLandscape
-                  ? "fixed bottom-0 left-0 right-0 z-30 px-2 pb-[env(safe-area-inset-bottom)] bg-black/50 backdrop-blur-sm border-t border-poker-green-700"
+                  ? "fixed bottom-0 left-0 right-0 z-30 px-1 pb-[env(safe-area-inset-bottom)] bg-black/60 backdrop-blur-sm border-t border-poker-green-700"
                   : cn("w-full", isMobile ? "mt-0 max-w-none" : "mt-6 max-w-4xl")
               )}>
                 <BettingControls
