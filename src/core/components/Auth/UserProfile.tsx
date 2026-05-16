@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import { Flame } from "lucide-react";
 import { Button } from "../UI/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
@@ -49,12 +48,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   // Query for user statistics
   const userStats = useQuery(
     api.users.stats.getUserStats,
-    userIdValid ? { userId: user._id } : "skip"
-  );
-
-  // Query for user ranking
-  const userRanking = useQuery(
-    api.users.stats.getUserRanking,
     userIdValid ? { userId: user._id } : "skip"
   );
 
@@ -411,116 +404,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   <div className="text-xs text-gray-500 truncate">Parties jouées</div>
                 </div>
               </div>
-
-              {/* Detailed Stats */}
-              {userStats && userStats.gamesPlayed > 0 && (
-                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
-                  <h4 className={cn(
-                    "font-medium text-gray-700",
-                    isMobile ? "text-xs mb-2" : "text-sm mb-3"
-                  )}>
-                    Statistiques détaillées
-                  </h4>
-                  <div className={cn(isMobile ? "space-y-2" : "space-y-3")}>
-                    <div className={cn(
-                      "grid gap-2",
-                      isMobile ? "grid-cols-2 text-xs" : "grid-cols-3 text-xs"
-                    )}>
-                      <div className={cn(
-                        "text-center bg-blue-50 rounded",
-                        isMobile ? "p-1.5" : "p-2"
-                      )}>
-                        <div className="font-bold text-blue-600">{userStats.winRate}%</div>
-                        <div className="text-blue-500 truncate">Taux victoire</div>
-                      </div>
-                      <div className={cn(
-                        "text-center bg-green-50 rounded",
-                        isMobile ? "p-1.5" : "p-2"
-                      )}>
-                        <div className="font-bold text-green-600">{userStats.totalWinnings}</div>
-                        <div className="text-green-500 truncate">Jetons gagnés</div>
-                      </div>
-                      {!isMobile && (
-                        <div className="text-center p-2 bg-purple-50 rounded">
-                          <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
-                          <div className="text-purple-500 truncate">Mains jouées</div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className={cn(
-                        "text-center bg-orange-50 rounded",
-                        isMobile ? "p-1.5" : "p-2"
-                      )}>
-                        <div className="font-bold text-orange-600">{userStats.biggestWin}</div>
-                        <div className="text-orange-500 truncate">Plus gros gain</div>
-                      </div>
-                      <div className={cn(
-                        "text-center bg-red-50 rounded",
-                        isMobile ? "p-1.5" : "p-2"
-                      )}>
-                        <div className="font-bold text-red-600">{userStats.tournamentWins}</div>
-                        <div className="text-red-500 truncate">Tournois gagnés</div>
-                      </div>
-                    </div>
-                    
-                    {/* Mains jouées sur mobile */}
-                    {isMobile && (
-                      <div className="grid grid-cols-1 gap-2 text-xs">
-                        <div className="text-center p-1.5 bg-purple-50 rounded">
-                          <div className="font-bold text-purple-600">{userStats.handsPlayed}</div>
-                          <div className="text-purple-500 truncate">Mains jouées</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Style de jeu */}
-                    <div className={cn(
-                      "bg-gray-50 rounded-lg",
-                      isMobile ? "p-2" : "p-3"
-                    )}>
-                      <div className="text-xs font-medium text-gray-700 mb-2">Style de jeu</div>
-                      <div className="text-xs text-gray-600">
-                        Action favorite: <span className="font-bold capitalize">{userStats.mostFrequentAction}</span>
-                      </div>
-                      {userStats.currentWinStreak > 0 && (
-                        <div className="text-xs text-green-600 mt-1 inline-flex items-center gap-1">
-                          <Flame size={12} aria-hidden /> Série de {userStats.currentWinStreak} victoire{userStats.currentWinStreak > 1 ? 's' : ''}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Ranking */}
-              {userRanking && userRanking.totalPlayers > 1 && (
-                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
-                  <h4 className={cn(
-                    "font-medium text-gray-700",
-                    isMobile ? "text-xs mb-2" : "text-sm mb-3"
-                  )}>
-                    Classement
-                  </h4>
-                  <div className={cn(
-                    "bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200",
-                    isMobile ? "p-2" : "p-3"
-                  )}>
-                    <div className="text-center">
-                      <div className={cn(
-                        "font-bold text-orange-600",
-                        isMobile ? "text-base" : "text-lg"
-                      )}>
-                        #{userRanking.userRank}
-                      </div>
-                      <div className="text-xs text-orange-500">
-                        sur {userRanking.totalPlayers} joueurs
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Account info */}
               <div className={cn(
