@@ -79,6 +79,121 @@ export const fixGhostEliminated = mutation({
   },
 });
 
+// Reconstruit tournamentRank + finalRanking d'un tournoi terminé en se basant
+// sur l'historique réel des éliminations (gameActions.action="eliminated", triées
+// par timestamp). Corrige les tournois affectés par le bug d'inversion de rang.
+//
+// Algorithme :
+//  1. Winner = seul joueur avec chips > 0 → rang 1.
+//  2. Les actions "eliminated" sont chronologiques ; le 1er busté reçoit le pire
+//     rang (= N), le suivant N-1, etc. — exclut le HU loser (la dernière main ne
+//     déclenche pas l'action "eliminated").
+//  3. Le HU loser (chips=0, pas d'action "eliminated" le concernant, pas de
+//     tournamentRank issu de l'historique) hérite du meilleur rang libre (= 2).
+export const rebuildTournamentRanks = mutation({
+  args: { tableId: v.id("tables") },
+  handler: async (ctx, args) => {
+    const table = await ctx.db.get(args.tableId);
+    if (!table || table.gameType !== "tournament" || !table.modules?.tournament) {
+      throw new Error("Not a tournament table");
+    }
+    const t = table.modules.tournament;
+
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect();
+    const N = players.length;
+
+    const winner = players.find((p) => p.chips > 0);
+    if (!winner) throw new Error("No winner found (no player with chips > 0)");
+
+    const eliminatedActions = (await ctx.db
+      .query("gameActions")
+      .withIndex("by_table", (q) => q.eq("tableId", args.tableId))
+      .collect())
+      .filter((a) => a.action === "eliminated" && a.playerId)
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    const rankByPlayerId = new Map<string, number>();
+    rankByPlayerId.set(winner._id, 1);
+
+    // 1er busté → rang N, 2e → N-1, etc.
+    let rank = N;
+    for (const act of eliminatedActions) {
+      const pid = act.playerId as string;
+      if (rankByPlayerId.has(pid)) continue; // sécurité doublons
+      rankByPlayerId.set(pid, rank);
+      rank--;
+    }
+
+    // Joueurs encore sans rang (typiquement HU loser) → meilleur rang libre.
+    const taken = new Set(rankByPlayerId.values());
+    const remaining = players.filter((p) => !rankByPlayerId.has(p._id));
+    // Si plusieurs (rare : multi-bust final non logué), classer par chips desc.
+    remaining.sort((a, b) => (b.chips ?? 0) - (a.chips ?? 0));
+    let candidate = 2;
+    for (const p of remaining) {
+      while (taken.has(candidate)) candidate++;
+      rankByPlayerId.set(p._id, candidate);
+      taken.add(candidate);
+      candidate++;
+    }
+
+    // Patch les players + s'assurer que les éliminés ont bien eliminatedAt.
+    const now = Date.now();
+    const changes: Array<{ playerId: string; oldRank?: number; newRank: number }> = [];
+    for (const p of players) {
+      const newRank = rankByPlayerId.get(p._id);
+      if (newRank == null) continue;
+      const patch: Record<string, any> = {};
+      if (p.tournamentRank !== newRank) patch.tournamentRank = newRank;
+      if (newRank !== 1 && !p.eliminatedAt) patch.eliminatedAt = now;
+      if (newRank !== 1 && (!p.isFolded || !p.hasActed)) {
+        patch.isFolded = true;
+        patch.hasActed = true;
+      }
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(p._id, patch);
+        changes.push({ playerId: p._id, oldRank: p.tournamentRank, newRank });
+      }
+    }
+
+    // Reconstruit finalRanking + prizes.
+    const totalPot = (table.maxPlayers ?? N) * (table.buyIn ?? 0);
+    const usersById = new Map<string, string>();
+    for (const p of players) {
+      const u = await ctx.db.get(p.userId);
+      usersById.set(p.userId, (u && (u as any).name) || "Joueur");
+    }
+    const finalRanking = players
+      .map((p) => {
+        const position = rankByPlayerId.get(p._id) ?? 0;
+        const prizeRow = t.prizeStructure.find((pz: any) => pz.position === position);
+        const prize = prizeRow ? Math.floor((totalPot * prizeRow.percentage) / 100) : 0;
+        return {
+          userId: p.userId,
+          position,
+          prize,
+          playerName: usersById.get(p.userId) ?? "Joueur",
+        };
+      })
+      .sort((a, b) => a.position - b.position);
+
+    await ctx.db.patch(args.tableId, {
+      modules: {
+        ...table.modules,
+        tournament: {
+          ...t,
+          finalRanking,
+        },
+      },
+    });
+
+    return { ok: true, changes, finalRanking };
+  },
+});
+
 // Recalcule prizeStructure + finalRanking d'un tournoi déjà terminé selon
 // la fonction computePrizeStructure courante (utile après évolution des règles).
 export const recomputeFinalRanking = mutation({

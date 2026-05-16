@@ -1289,28 +1289,33 @@ async function prepareNextHand(ctx: any, tableId: string) {
     const stillIn = players.filter(
       (p: any) => !p.eliminatedAt && p.chips > 0
     ).length;
-    let rankCounter = stillIn;
-    for (const player of players) {
-      if (!player.eliminatedAt && player.chips === 0) {
-        await ctx.db.patch(player._id, {
-          eliminatedAt: now,
-          tournamentRank: rankCounter,
-        });
-        // BUG fixé : `player.name` n'existe pas (le nom est sur la table
-        // users). Sans le fetch ci-dessous, l'insert dans gameActions
-        // explosait sur le schema (playerName: v.string() requis), le
-        // try/catch silencieux de scheduleStartNextHand absorbait l'erreur
-        // et la chaîne de mains s'arrêtait → table figée en phase=waiting.
-        const user = await ctx.db.get(player.userId);
-        await addActionToFeed(ctx, tableId, {
-          playerId: player._id,
-          playerName: user?.name || "Joueur",
-          action: "eliminated",
-          amount: rankCounter,
-          isSystem: true,
-        });
-        rankCounter--;
-      }
+    // Plus petit handContribution = plus petit stack au début de la main
+    // = a busté en premier → reçoit la pire place (rang le plus élevé).
+    const newlyEliminated = players
+      .filter((p: any) => !p.eliminatedAt && p.chips === 0)
+      .sort((a: any, b: any) => (a.handContribution ?? 0) - (b.handContribution ?? 0));
+    // Le premier busté de cette main doit recevoir la place = total des
+    // joueurs encore "vivants au début de la main" = stillIn + nb bustés.
+    let rankCounter = stillIn + newlyEliminated.length;
+    for (const player of newlyEliminated) {
+      await ctx.db.patch(player._id, {
+        eliminatedAt: now,
+        tournamentRank: rankCounter,
+      });
+      // BUG fixé : `player.name` n'existe pas (le nom est sur la table
+      // users). Sans le fetch ci-dessous, l'insert dans gameActions
+      // explosait sur le schema (playerName: v.string() requis), le
+      // try/catch silencieux de scheduleStartNextHand absorbait l'erreur
+      // et la chaîne de mains s'arrêtait → table figée en phase=waiting.
+      const user = await ctx.db.get(player.userId);
+      await addActionToFeed(ctx, tableId, {
+        playerId: player._id,
+        playerName: user?.name || "Joueur",
+        action: "eliminated",
+        amount: rankCounter,
+        isSystem: true,
+      });
+      rankCounter--;
     }
   }
 
@@ -2122,14 +2127,26 @@ async function endTournament(ctx: any, tableId: string) {
     if (ra !== rb) return ra - rb;
     return (b.chips ?? 0) - (a.chips ?? 0);
   });
-  // Affecter les ranks manquants : le pire rang libre après le winner
-  let nextRank = 2;
-  for (const p of others) {
-    if (!p.tournamentRank) {
-      await ctx.db.patch(p._id, { tournamentRank: nextRank });
-      (p as any).tournamentRank = nextRank;
-    }
-    nextRank = Math.max(nextRank + 1, (p.tournamentRank ?? nextRank) + 1);
+  // Affecter les ranks manquants en remplissant les trous (typiquement le HU
+  // loser éliminé sur la toute dernière main : prepareNextHand n'a pas tourné,
+  // donc il arrive ici sans tournamentRank — il doit hériter du meilleur rang
+  // libre après le winner, pas d'un rang > N).
+  const takenRanks = new Set<number>(
+    players
+      .map((p: any) => p.tournamentRank)
+      .filter((r: any): r is number => typeof r === "number")
+  );
+  takenRanks.add(1); // winner
+  const missingRanked = others
+    .filter((p: any) => !p.tournamentRank)
+    .sort((a: any, b: any) => (b.chips ?? 0) - (a.chips ?? 0));
+  let candidateRank = 2;
+  for (const p of missingRanked) {
+    while (takenRanks.has(candidateRank)) candidateRank++;
+    await ctx.db.patch(p._id, { tournamentRank: candidateRank });
+    (p as any).tournamentRank = candidateRank;
+    takenRanks.add(candidateRank);
+    candidateRank++;
   }
   const allPlayers = [winnerUpdated, ...others];
   allPlayers.sort((a: any, b: any) => (a.tournamentRank ?? 999) - (b.tournamentRank ?? 999));
